@@ -1,17 +1,17 @@
 use crate::interaction::SurfaceInteraction;
-use crate::intersection::Intersection;
+use crate::intersection::{Intersection, Intersections};
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Point3, Vector3};
 
 pub trait Shape<'shp> {
-    fn ray_intersections(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>>;
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp>;
 }
 
 #[derive(Debug)]
 pub struct Sphere {}
 
 impl<'shp> Shape<'shp> for Sphere {
-    fn ray_intersections(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>> {
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp> {
         let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(sphere_to_ray);
@@ -19,7 +19,7 @@ impl<'shp> Shape<'shp> for Sphere {
         let discriminant = b * b - 4.0 * a * c;
 
         if discriminant < 0.0 {
-            vec![]
+            Intersections::empty()
         } else {
             let t1 = (-1.0 * b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-1.0 * b + discriminant.sqrt()) / (2.0 * a);
@@ -33,7 +33,7 @@ impl<'shp> Shape<'shp> for Sphere {
                 interaction: SurfaceInteraction { shape: self },
             };
 
-            vec![intr1, intr2]
+            Intersections::new(vec![intr1, intr2])
         }
     }
 }
@@ -56,16 +56,16 @@ mod tests {
         };
         let sphere = Sphere {};
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections.values.len(), 2);
         assert_eq!(
-            intersections[0],
+            intersections.values[0],
             Intersection {
                 t: 4.0,
                 interaction: SurfaceInteraction { shape: &sphere }
             },
         );
         assert_eq!(
-            intersections[1],
+            intersections.values[1],
             Intersection {
                 t: 6.0,
                 interaction: SurfaceInteraction { shape: &sphere }
@@ -81,16 +81,16 @@ mod tests {
         };
         let sphere = Sphere {};
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections.values.len(), 2);
         assert_eq!(
-            intersections[0],
+            intersections.values[0],
             Intersection {
                 t: 5.0,
                 interaction: SurfaceInteraction { shape: &sphere }
             },
         );
         assert_eq!(
-            intersections[1],
+            intersections.values[1],
             Intersection {
                 t: 5.0,
                 interaction: SurfaceInteraction { shape: &sphere }
@@ -106,7 +106,7 @@ mod tests {
         };
         let sphere = Sphere {};
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.len(), 0);
+        assert_eq!(intersections.values.len(), 0);
     }
 
     #[test]
@@ -117,16 +117,16 @@ mod tests {
         };
         let sphere = Sphere {};
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections.values.len(), 2);
         assert_eq!(
-            intersections[0],
+            intersections.values[0],
             Intersection {
                 t: -1.0,
                 interaction: SurfaceInteraction { shape: &sphere }
             },
         );
         assert_eq!(
-            intersections[1],
+            intersections.values[1],
             Intersection {
                 t: 1.0,
                 interaction: SurfaceInteraction { shape: &sphere }
@@ -142,16 +142,16 @@ mod tests {
         };
         let sphere = Sphere {};
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.len(), 2);
+        assert_eq!(intersections.values.len(), 2);
         assert_eq!(
-            intersections[0],
+            intersections.values[0],
             Intersection {
                 t: -6.0,
                 interaction: SurfaceInteraction { shape: &sphere }
             },
         );
         assert_eq!(
-            intersections[1],
+            intersections.values[1],
             Intersection {
                 t: -4.0,
                 interaction: SurfaceInteraction { shape: &sphere }
