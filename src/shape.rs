@@ -4,14 +4,14 @@ use crate::ray::Ray;
 use cgmath::{InnerSpace, Point3, Vector3};
 
 pub trait Shape<'shp> {
-    fn ray_intersection(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>>;
+    fn ray_intersections(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>>;
 }
 
 #[derive(Debug)]
 pub struct Sphere {}
 
 impl<'shp> Shape<'shp> for Sphere {
-    fn ray_intersection(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>> {
+    fn ray_intersections(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>> {
         let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(sphere_to_ray);
@@ -55,7 +55,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let sphere = Sphere {};
-        let intersections = sphere.ray_intersection(&ray);
+        let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
@@ -80,7 +80,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let sphere = Sphere {};
-        let intersections = sphere.ray_intersection(&ray);
+        let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
@@ -105,7 +105,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let sphere = Sphere {};
-        let intersections = sphere.ray_intersection(&ray);
+        let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.len(), 0);
     }
 
@@ -116,7 +116,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let sphere = Sphere {};
-        let intersections = sphere.ray_intersection(&ray);
+        let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
@@ -141,7 +141,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let sphere = Sphere {};
-        let intersections = sphere.ray_intersection(&ray);
+        let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
