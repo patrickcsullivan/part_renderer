@@ -1,16 +1,17 @@
 use crate::interaction::SurfaceInteraction;
+use crate::intersection::Intersection;
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Point3, Vector3};
 
 pub trait Shape<'shp> {
-    fn ray_intersection(&'shp self, ray: &Ray) -> Vec<(f32, SurfaceInteraction<'shp>)>;
+    fn ray_intersection(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>>;
 }
 
 #[derive(Debug)]
 pub struct Sphere {}
 
 impl<'shp> Shape<'shp> for Sphere {
-    fn ray_intersection(&'shp self, ray: &Ray) -> Vec<(f32, SurfaceInteraction<'shp>)> {
+    fn ray_intersection(&'shp self, ray: &Ray) -> Vec<Intersection<'shp>> {
         let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(sphere_to_ray);
@@ -23,10 +24,16 @@ impl<'shp> Shape<'shp> for Sphere {
             let t1 = (-1.0 * b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-1.0 * b + discriminant.sqrt()) / (2.0 * a);
 
-            let si1 = SurfaceInteraction { shape: self };
-            let si2 = SurfaceInteraction { shape: self };
+            let intr1 = Intersection {
+                t: t1,
+                interaction: SurfaceInteraction { shape: self },
+            };
+            let intr2 = Intersection {
+                t: t2,
+                interaction: SurfaceInteraction { shape: self },
+            };
 
-            vec![(t1, si1), (t2, si2)]
+            vec![intr1, intr2]
         }
     }
 }
@@ -34,6 +41,7 @@ impl<'shp> Shape<'shp> for Sphere {
 #[cfg(test)]
 mod tests {
     use crate::interaction::SurfaceInteraction;
+    use crate::intersection::Intersection;
     use crate::ray::Ray;
     use crate::shape::Sphere;
     use cgmath::{Point3, Vector3};
@@ -51,11 +59,17 @@ mod tests {
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
-            (4.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: 4.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
         assert_eq!(
             intersections[1],
-            (6.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: 6.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
     }
 
@@ -70,11 +84,17 @@ mod tests {
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
-            (5.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: 5.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
         assert_eq!(
             intersections[1],
-            (5.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: 5.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
     }
 
@@ -100,11 +120,17 @@ mod tests {
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
-            (-1.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: -1.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
         assert_eq!(
             intersections[1],
-            (1.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: 1.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
     }
 
@@ -119,11 +145,17 @@ mod tests {
         assert_eq!(intersections.len(), 2);
         assert_eq!(
             intersections[0],
-            (-6.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: -6.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
         assert_eq!(
             intersections[1],
-            (-4.0, SurfaceInteraction { shape: &sphere }),
+            Intersection {
+                t: -4.0,
+                interaction: SurfaceInteraction { shape: &sphere }
+            },
         );
     }
 }

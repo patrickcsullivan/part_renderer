@@ -1,5 +1,6 @@
 mod color;
 mod interaction;
+mod intersection;
 mod ray;
 mod shape;
 
