@@ -1,6 +1,7 @@
 use crate::interaction::SurfaceInteraction;
 use crate::intersection::{Intersection, Intersections};
 use crate::ray::Ray;
+use crate::transform::Transform;
 use cgmath::{InnerSpace, Matrix4, Point3, Vector3};
 
 pub trait Shape<'shp, 'mat> {
@@ -40,6 +41,10 @@ impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
     }
 
     fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat> {
+        // Transforming the ray from world to object space is analagous to
+        // transforming the sphere from object to world space.
+        let ray = self.world_to_object.transform(ray);
+
         let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(sphere_to_ray);
@@ -73,7 +78,7 @@ mod tests {
     use crate::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::Sphere;
-    use cgmath::{Point3, Vector3};
+    use cgmath::{Matrix4, Point3, Transform, Vector3};
 
     use super::Shape;
 
@@ -191,5 +196,33 @@ mod tests {
                 interaction: SurfaceInteraction { shape: &sphere }
             },
         );
+    }
+
+    #[test]
+    fn ray_intersects_scaled_sphere() {
+        let ray = Ray {
+            origin: Point3::new(0.0, 0.0, -5.0),
+            direction: Vector3::new(0.0, 0.0, 1.0),
+        };
+        let obj_to_world = Matrix4::from_scale(2.0);
+        let world_to_obj = obj_to_world.inverse_transform().unwrap();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj);
+        let intersections = sphere.ray_intersections(&ray);
+        assert_eq!(intersections.values.len(), 2);
+        assert!(intersections.values[0].t.eq(&3.0));
+        assert!(intersections.values[1].t.eq(&7.0));
+    }
+
+    #[test]
+    fn ray_misses_translated_sphere() {
+        let ray = Ray {
+            origin: Point3::new(0.0, 0.0, -5.0),
+            direction: Vector3::new(0.0, 0.0, 1.0),
+        };
+        let obj_to_world = Matrix4::from_translation(Vector3::new(5.0, 0.0, 0.0));
+        let world_to_obj = obj_to_world.inverse_transform().unwrap();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj);
+        let intersections = sphere.ray_intersections(&ray);
+        assert_eq!(intersections.values.len(), 0);
     }
 }
