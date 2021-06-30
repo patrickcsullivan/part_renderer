@@ -3,6 +3,7 @@ mod interaction;
 mod intersection;
 mod ray;
 mod shape;
+mod transform;
 
 use image::ImageBuffer;
 

@@ -1,4 +1,4 @@
-use cgmath::{Point3, Vector3};
+use cgmath::{Matrix4, Point3, Transform, Vector3};
 
 pub struct Ray {
     pub origin: Point3<f32>,
@@ -12,10 +12,23 @@ impl Ray {
     }
 }
 
+impl crate::transform::Transform<Ray> for Matrix4<f32> {
+    fn transform(&self, ray: &Ray) -> Ray {
+        Ray {
+            origin: self.transform_point(ray.origin),
+            // It's important to leave direction unnormalized so that the ray
+            // can shink or grow when we apply transformations that are intended
+            // to scale an object.
+            direction: self.transform_vector(ray.direction),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Ray;
-    use cgmath::{Point3, Vector3};
+    use crate::transform::Transform;
+    use cgmath::{Matrix4, Point3, Vector3};
 
     #[test]
     fn at_t() {
@@ -23,15 +36,33 @@ mod tests {
             origin: Point3::new(2.0, 3.0, 4.0),
             direction: Vector3::new(1.0, 0.0, 0.0),
         };
-        assert_approx_eq_point(ray.at_t(0.0), Point3::new(2.0, 3.0, 4.0));
-        assert_approx_eq_point(ray.at_t(1.0), Point3::new(3.0, 3.0, 4.0));
-        assert_approx_eq_point(ray.at_t(-1.0), Point3::new(1.0, 3.0, 4.0));
-        assert_approx_eq_point(ray.at_t(2.5), Point3::new(4.5, 3.0, 4.0));
+        assert_eq!(ray.at_t(0.0), Point3::new(2.0, 3.0, 4.0));
+        assert_eq!(ray.at_t(1.0), Point3::new(3.0, 3.0, 4.0));
+        assert_eq!(ray.at_t(-1.0), Point3::new(1.0, 3.0, 4.0));
+        assert_eq!(ray.at_t(2.5), Point3::new(4.5, 3.0, 4.0));
     }
 
-    fn assert_approx_eq_point(p1: Point3<f32>, p2: Point3<f32>) {
-        assert!((p1.x - p2.x).abs() < f32::EPSILON);
-        assert!((p1.y - p2.y).abs() < f32::EPSILON);
-        assert!((p1.z - p2.z).abs() < f32::EPSILON);
+    #[test]
+    fn translating() {
+        let ray = Ray {
+            origin: Point3::new(1.0, 2.0, 3.0),
+            direction: Vector3::new(0.0, 1.0, 0.0),
+        };
+        let t: Matrix4<f32> = Matrix4::from_translation(Vector3::new(3.0, 4.0, 5.0));
+        let ray = t.transform(&ray);
+        assert_eq!(ray.origin, Point3::new(4.0, 6.0, 8.0));
+        assert_eq!(ray.direction, Vector3::new(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn scaling() {
+        let ray = Ray {
+            origin: Point3::new(1.0, 2.0, 3.0),
+            direction: Vector3::new(0.0, 1.0, 0.0),
+        };
+        let t: Matrix4<f32> = Matrix4::from_nonuniform_scale(2.0, 3.0, 4.0);
+        let ray = t.transform(&ray);
+        assert_eq!(ray.origin, Point3::new(2.0, 6.0, 12.0));
+        assert_eq!(ray.direction, Vector3::new(0.0, 3.0, 0.0));
     }
 }
