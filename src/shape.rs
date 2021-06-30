@@ -1,17 +1,45 @@
 use crate::interaction::SurfaceInteraction;
 use crate::intersection::{Intersection, Intersections};
 use crate::ray::Ray;
-use cgmath::{InnerSpace, Point3, Vector3};
+use cgmath::{InnerSpace, Matrix4, Point3, Vector3};
 
-pub trait Shape<'shp> {
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp>;
+pub trait Shape<'shp, 'mat> {
+    /// Returns a reference to the matrix that transforms the shape from object
+    /// space to world space.
+    fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32>;
+
+    /// Returns a reference to the matrix that transforms the shape from world
+    /// space to object space.
+    fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32>;
+
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat>;
 }
 
 #[derive(Debug)]
-pub struct Sphere {}
+pub struct Sphere<'mat> {
+    object_to_world: &'mat Matrix4<f32>,
+    world_to_object: &'mat Matrix4<f32>,
+}
 
-impl<'shp> Shape<'shp> for Sphere {
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp> {
+impl<'mat> Sphere<'mat> {
+    pub fn new(object_to_world: &'mat Matrix4<f32>, world_to_object: &'mat Matrix4<f32>) -> Self {
+        Sphere {
+            object_to_world,
+            world_to_object,
+        }
+    }
+}
+
+impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
+    fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32> {
+        self.object_to_world
+    }
+
+    fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32> {
+        self.world_to_object
+    }
+
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat> {
         let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * ray.direction.dot(sphere_to_ray);
@@ -42,6 +70,7 @@ impl<'shp> Shape<'shp> for Sphere {
 mod tests {
     use crate::interaction::SurfaceInteraction;
     use crate::intersection::Intersection;
+    use crate::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::Sphere;
     use cgmath::{Point3, Vector3};
@@ -54,7 +83,8 @@ mod tests {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere {};
+        let identity = identity4();
+        let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert_eq!(
@@ -79,7 +109,8 @@ mod tests {
             origin: Point3::new(0.0, 1.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere {};
+        let identity = identity4();
+        let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert_eq!(
@@ -104,7 +135,8 @@ mod tests {
             origin: Point3::new(0.0, 2.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere {};
+        let identity = identity4();
+        let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 0);
     }
@@ -115,7 +147,8 @@ mod tests {
             origin: Point3::new(0.0, 0.0, 0.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere {};
+        let identity = identity4();
+        let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert_eq!(
@@ -140,7 +173,8 @@ mod tests {
             origin: Point3::new(0.0, 0.0, 5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let sphere = Sphere {};
+        let identity = identity4();
+        let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert_eq!(
