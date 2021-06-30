@@ -42,45 +42,72 @@ mod hit_tests {
     #[test]
     fn when_all_positive_t() {
         let sphere = Sphere {};
-        let i1 = Intersection {
-            t: 1.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        };
-        let i2 = Intersection {
-            t: 2.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        };
-        let intersections = Intersections::new(vec![i1, i2]);
+        let intersections = Intersections::new(vec![
+            Intersection {
+                t: 1.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+            Intersection {
+                t: 2.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+        ]);
         assert_eq!(intersections.hit(), Some(&intersections.values[0]));
     }
 
     #[test]
     fn when_some_negative_t() {
         let sphere = Sphere {};
-        let i1 = Intersection {
-            t: -1.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        };
-        let i2 = Intersection {
-            t: 1.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        };
-        let intersections = Intersections::new(vec![i1, i2]);
+        let intersections = Intersections::new(vec![
+            Intersection {
+                t: -1.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+            Intersection {
+                t: 1.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+        ]);
         assert_eq!(intersections.hit(), Some(&intersections.values[1]));
     }
 
     #[test]
     fn when_all_negative_t() {
         let sphere = Sphere {};
-        let i1 = Intersection {
-            t: -2.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        };
-        let i2 = Intersection {
-            t: -1.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        };
-        let intersections = Intersections::new(vec![i1, i2]);
+        let intersections = Intersections::new(vec![
+            Intersection {
+                t: -2.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+            Intersection {
+                t: -1.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+        ]);
         assert_eq!(intersections.hit(), None);
+    }
+
+    #[test]
+    fn always_lowest_positive() {
+        let sphere = Sphere {};
+        let intersections = Intersections::new(vec![
+            Intersection {
+                t: 5.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+            Intersection {
+                t: 7.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+            Intersection {
+                t: -3.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+            Intersection {
+                t: 2.0,
+                interaction: SurfaceInteraction { shape: &sphere },
+            },
+        ]);
+        assert_eq!(intersections.hit(), Some(&intersections.values[3]));
     }
 }
