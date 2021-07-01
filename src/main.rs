@@ -6,6 +6,8 @@ mod ray;
 mod shape;
 mod transform;
 
+const TEST_EPSILON: f32 = 0.0001;
+
 fn main() {
     println!("Hello, world!");
     demo();

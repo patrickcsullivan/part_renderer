@@ -1,8 +1,7 @@
 use crate::interaction::SurfaceInteraction;
 use crate::intersection::{Intersection, Intersections};
 use crate::ray::Ray;
-use crate::transform::Transform;
-use cgmath::{InnerSpace, Matrix4, Point3, Vector3};
+use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Vector3};
 
 pub trait Shape<'shp, 'mat> {
     /// Returns a reference to the matrix that transforms the shape from object
@@ -29,6 +28,16 @@ impl<'mat> Sphere<'mat> {
             world_to_object,
         }
     }
+
+    pub fn normal_at(&self, p: Point3<f32>) -> Vector3<f32> {
+        use cgmath::Transform;
+        let obj_p = self.world_to_object.transform_point(p);
+        let obj_n = obj_p - Point3::new(0.0, 0.0, 0.0);
+        self.world_to_object
+            .transpose()
+            .transform_vector(obj_n)
+            .normalize()
+    }
 }
 
 impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
@@ -43,6 +52,7 @@ impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
     fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat> {
         // Transforming the ray from world to object space is analagous to
         // transforming the sphere from object to world space.
+        use crate::transform::Transform;
         let ray = self.world_to_object.transform(ray);
 
         let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
@@ -78,7 +88,7 @@ mod tests {
     use crate::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::Sphere;
-    use cgmath::{Matrix4, Point3, Transform, Vector3};
+    use cgmath::{InnerSpace, Matrix4, Point3, Rad, Transform, Vector3};
 
     use super::Shape;
 
@@ -224,5 +234,45 @@ mod tests {
         let sphere = Sphere::new(&obj_to_world, &world_to_obj);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 0);
+    }
+
+    #[test]
+    fn normal_at_nonaxial_point() {
+        let identity = identity4();
+        let sphere = Sphere::new(&identity, &identity);
+        let point = Point3::new(
+            f32::sqrt(3.0) / 3.0,
+            f32::sqrt(3.0) / 3.0,
+            f32::sqrt(3.0) / 3.0,
+        );
+
+        let normal = sphere.normal_at(point);
+        let expected = Vector3::new(
+            f32::sqrt(3.0) / 3.0,
+            f32::sqrt(3.0) / 3.0,
+            f32::sqrt(3.0) / 3.0,
+        );
+        let diff = expected - normal;
+
+        assert!(diff.x.abs() < crate::TEST_EPSILON);
+        assert!(diff.y.abs() < crate::TEST_EPSILON);
+        assert!(diff.z.abs() < crate::TEST_EPSILON);
+    }
+
+    #[test]
+    fn normal_on_transformed_sphere() {
+        let obj_to_world = Matrix4::from_nonuniform_scale(1.0, 0.5, 1.0)
+            * Matrix4::from_angle_z(Rad(std::f32::consts::PI / 5.0));
+        let world_to_obj = obj_to_world.inverse_transform().unwrap();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj);
+        let point = Point3::new(0.0, f32::sqrt(2.0) / 2.0, f32::sqrt(2.0) / -2.0);
+
+        let normal = sphere.normal_at(point);
+        let expected = Vector3::new(0.0, 0.97014, -0.24254);
+        let diff = expected - normal;
+
+        assert!(diff.x.abs() < crate::TEST_EPSILON);
+        assert!(diff.y.abs() < crate::TEST_EPSILON);
+        assert!(diff.z.abs() < crate::TEST_EPSILON);
     }
 }
