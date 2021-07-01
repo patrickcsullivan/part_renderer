@@ -254,9 +254,9 @@ mod tests {
         );
         let diff = expected - normal;
 
-        assert!(diff.x.abs() < crate::TEST_EPSILON);
-        assert!(diff.y.abs() < crate::TEST_EPSILON);
-        assert!(diff.z.abs() < crate::TEST_EPSILON);
+        assert!(diff.x.abs() < crate::EPSILON);
+        assert!(diff.y.abs() < crate::EPSILON);
+        assert!(diff.z.abs() < crate::EPSILON);
     }
 
     #[test]
@@ -271,8 +271,8 @@ mod tests {
         let expected = Vector3::new(0.0, 0.97014, -0.24254);
         let diff = expected - normal;
 
-        assert!(diff.x.abs() < crate::TEST_EPSILON);
-        assert!(diff.y.abs() < crate::TEST_EPSILON);
-        assert!(diff.z.abs() < crate::TEST_EPSILON);
+        assert!(diff.x.abs() < crate::EPSILON);
+        assert!(diff.y.abs() < crate::EPSILON);
+        assert!(diff.z.abs() < crate::EPSILON);
     }
 }
