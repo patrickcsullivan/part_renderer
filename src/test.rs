@@ -44,7 +44,7 @@ impl ApproxEq for cgmath::Vector3<f32> {
     }
 }
 
-impl<'shp, 'mtrx> ApproxEq for crate::interaction::SurfaceInteraction<'shp, 'mtrx> {
+impl<'shp, 'mtrx, 'mtrl> ApproxEq for crate::interaction::SurfaceInteraction<'shp, 'mtrx, 'mtrl> {
     fn approx_eq(&self, _other: &Self) -> bool {
         // TODO: For now it doesn't seem possible to compare two trait object
         // references. It might be necessary to give shape's some sort of id so
@@ -55,7 +55,7 @@ impl<'shp, 'mtrx> ApproxEq for crate::interaction::SurfaceInteraction<'shp, 'mtr
     }
 }
 
-impl<'shp, 'mtrx> ApproxEq for crate::intersection::Intersection<'shp, 'mtrx> {
+impl<'shp, 'mtrx, 'mtrl> ApproxEq for crate::intersection::Intersection<'shp, 'mtrx, 'mtrl> {
     fn approx_eq(&self, other: &Self) -> bool {
         self.t.approx_eq(&other.t) && self.interaction.approx_eq(&other.interaction)
     }

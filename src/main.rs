@@ -1,3 +1,5 @@
+use crate::material::Material;
+
 mod color;
 mod interaction;
 mod intersection;
@@ -36,7 +38,8 @@ fn demo() {
     let pixel_size = wall_width / canvas_width as f32;
 
     let identity = identity4();
-    let sphere = Sphere::new(&identity, &identity);
+    let material = Material::default();
+    let sphere = Sphere::new(&identity, &identity, &material);
 
     let red = image::Rgb([255_u8, 0_u8, 0_u8]);
     let black = image::Rgb([0_u8, 0_u8, 0_u8]);

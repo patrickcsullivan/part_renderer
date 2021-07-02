@@ -2,25 +2,25 @@ use crate::interaction::SurfaceInteraction;
 use std::cmp::Ordering;
 
 #[derive(Debug)]
-pub struct Intersection<'shp, 'mat> {
+pub struct Intersection<'shp, 'mtrx, 'mtrl> {
     pub t: f32,
-    pub interaction: SurfaceInteraction<'shp, 'mat>,
+    pub interaction: SurfaceInteraction<'shp, 'mtrx, 'mtrl>,
 }
 
-pub struct Intersections<'shp, 'mat> {
-    pub values: Vec<Intersection<'shp, 'mat>>,
+pub struct Intersections<'shp, 'mtrx, 'mtrl> {
+    pub values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>,
 }
 
-impl<'shp, 'mat> Intersections<'shp, 'mat> {
+impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
     pub fn empty() -> Self {
         Self { values: vec![] }
     }
 
-    pub fn new(values: Vec<Intersection<'shp, 'mat>>) -> Self {
+    pub fn new(values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>) -> Self {
         Self { values }
     }
 
-    pub fn hit(&self) -> Option<&Intersection<'shp, 'mat>> {
+    pub fn hit(&self) -> Option<&Intersection<'shp, 'mtrx, 'mtrl>> {
         self.values.iter().filter(|v| v.t > 0.0).min_by(|x, y| {
             if x.t < y.t {
                 Ordering::Less
@@ -37,6 +37,7 @@ impl<'shp, 'mat> Intersections<'shp, 'mat> {
 mod hit_tests {
     use crate::interaction::SurfaceInteraction;
     use crate::intersection::{Intersection, Intersections};
+    use crate::material::Material;
     use crate::matrix::identity4;
     use crate::shape::Sphere;
     use crate::test::ApproxEq;
@@ -44,7 +45,8 @@ mod hit_tests {
     #[test]
     fn when_all_positive_t() {
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 1.0,
@@ -67,7 +69,8 @@ mod hit_tests {
     #[test]
     fn when_some_negative_t() {
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -1.0,
@@ -90,7 +93,8 @@ mod hit_tests {
     #[test]
     fn when_all_negative_t() {
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -2.0,
@@ -111,7 +115,8 @@ mod hit_tests {
     #[test]
     fn always_lowest_positive() {
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 5.0,

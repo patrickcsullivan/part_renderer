@@ -1,12 +1,13 @@
 use crate::interaction::SurfaceInteraction;
 use crate::intersection::{Intersection, Intersections};
+use crate::material::Material;
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Vector3};
 use std::fmt::Debug;
 
 /// Describes the geometric properties of a primitive and provides a ray
 /// intersection function.
-pub trait Shape<'shp, 'mtrx>: Debug {
+pub trait Shape<'shp, 'mtrx, 'mtrl>: Debug {
     /// Returns a reference to the matrix that transforms the shape from object
     /// space to world space.
     fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32>;
@@ -15,12 +16,16 @@ pub trait Shape<'shp, 'mtrx>: Debug {
     /// space to object space.
     fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32>;
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx>;
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl>;
+
+    // TODO: Eventually, store the material/shading properties in a Primitive
+    // instead of in the Shape.
+    fn material(&self) -> &'mtrl Material;
 }
 
-impl<'shp, 'mtrx, T> Shape<'shp, 'mtrx> for &T
+impl<'shp, 'mtrx, 'mtrl, T> Shape<'shp, 'mtrx, 'mtrl> for &T
 where
-    T: Shape<'shp, 'mtrx>,
+    T: Shape<'shp, 'mtrx, 'mtrl>,
 {
     fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32> {
         (*self).object_to_world()
@@ -30,22 +35,32 @@ where
         (*self).world_to_object()
     }
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx> {
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl> {
         (*self).ray_intersections(ray)
+    }
+
+    fn material(&self) -> &'mtrl Material {
+        (*self).material()
     }
 }
 
 #[derive(Debug)]
-pub struct Sphere<'mtrx> {
+pub struct Sphere<'mtrx, 'mtrl> {
     object_to_world: &'mtrx Matrix4<f32>,
     world_to_object: &'mtrx Matrix4<f32>,
+    material: &'mtrl Material,
 }
 
-impl<'mtrx> Sphere<'mtrx> {
-    pub fn new(object_to_world: &'mtrx Matrix4<f32>, world_to_object: &'mtrx Matrix4<f32>) -> Self {
+impl<'mtrx, 'mtrl> Sphere<'mtrx, 'mtrl> {
+    pub fn new(
+        object_to_world: &'mtrx Matrix4<f32>,
+        world_to_object: &'mtrx Matrix4<f32>,
+        material: &'mtrl Material,
+    ) -> Self {
         Sphere {
             object_to_world,
             world_to_object,
+            material,
         }
     }
 
@@ -60,7 +75,7 @@ impl<'mtrx> Sphere<'mtrx> {
     }
 }
 
-impl<'shp, 'mtrx> Shape<'shp, 'mtrx> for Sphere<'mtrx> {
+impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
     fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32> {
         self.object_to_world
     }
@@ -69,7 +84,7 @@ impl<'shp, 'mtrx> Shape<'shp, 'mtrx> for Sphere<'mtrx> {
         self.world_to_object
     }
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx> {
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl> {
         // Transforming the ray from world to object space is analagous to
         // transforming the sphere from object to world space.
         use crate::transform::Transform;
@@ -103,10 +118,15 @@ impl<'shp, 'mtrx> Shape<'shp, 'mtrx> for Sphere<'mtrx> {
             Intersections::new(vec![intr1, intr2])
         }
     }
+
+    fn material(&self) -> &'mtrl Material {
+        self.material
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::material::Material;
     use crate::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::Sphere;
@@ -122,7 +142,8 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert!(intersections.values[0].t.approx_eq(&4.0));
@@ -136,7 +157,8 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert!(intersections.values[0].t.eq(&5.0));
@@ -150,7 +172,8 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 0);
     }
@@ -162,7 +185,8 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert!(intersections.values[0].t.eq(&-1.0));
@@ -176,7 +200,8 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert!(intersections.values[0].t.eq(&-6.0));
@@ -191,7 +216,8 @@ mod tests {
         };
         let obj_to_world = Matrix4::from_scale(2.0);
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
-        let sphere = Sphere::new(&obj_to_world, &world_to_obj);
+        let material = Material::default();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
         assert!(intersections.values[0].t.eq(&3.0));
@@ -206,7 +232,8 @@ mod tests {
         };
         let obj_to_world = Matrix4::from_translation(Vector3::new(5.0, 0.0, 0.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
-        let sphere = Sphere::new(&obj_to_world, &world_to_obj);
+        let material = Material::default();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 0);
     }
@@ -214,7 +241,8 @@ mod tests {
     #[test]
     fn normal_at_nonaxial_point() {
         let identity = identity4();
-        let sphere = Sphere::new(&identity, &identity);
+        let material = Material::default();
+        let sphere = Sphere::new(&identity, &identity, &material);
         let point = Point3::new(
             f32::sqrt(3.0) / 3.0,
             f32::sqrt(3.0) / 3.0,
@@ -235,7 +263,8 @@ mod tests {
         let obj_to_world = Matrix4::from_nonuniform_scale(1.0, 0.5, 1.0)
             * Matrix4::from_angle_z(Rad(std::f32::consts::PI / 5.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
-        let sphere = Sphere::new(&obj_to_world, &world_to_obj);
+        let material = Material::default();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let point = Point3::new(0.0, f32::sqrt(2.0) / 2.0, f32::sqrt(2.0) / -2.0);
 
         let normal = sphere.normal_at(point);
