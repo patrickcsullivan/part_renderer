@@ -4,43 +4,45 @@ use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Vector3};
 use std::fmt::Debug;
 
-pub trait Shape<'shp, 'mat>: Debug {
+/// Describes the geometric properties of a primitive and provides a ray
+/// intersection function.
+pub trait Shape<'shp, 'mtrx>: Debug {
     /// Returns a reference to the matrix that transforms the shape from object
     /// space to world space.
-    fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32>;
+    fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32>;
 
     /// Returns a reference to the matrix that transforms the shape from world
     /// space to object space.
-    fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32>;
+    fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32>;
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat>;
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx>;
 }
 
-impl<'shp, 'mat, T> Shape<'shp, 'mat> for &T
+impl<'shp, 'mtrx, T> Shape<'shp, 'mtrx> for &T
 where
-    T: Shape<'shp, 'mat>,
+    T: Shape<'shp, 'mtrx>,
 {
-    fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32> {
+    fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32> {
         (*self).object_to_world()
     }
 
-    fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32> {
+    fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32> {
         (*self).world_to_object()
     }
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat> {
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx> {
         (*self).ray_intersections(ray)
     }
 }
 
 #[derive(Debug)]
-pub struct Sphere<'mat> {
-    object_to_world: &'mat Matrix4<f32>,
-    world_to_object: &'mat Matrix4<f32>,
+pub struct Sphere<'mtrx> {
+    object_to_world: &'mtrx Matrix4<f32>,
+    world_to_object: &'mtrx Matrix4<f32>,
 }
 
-impl<'mat> Sphere<'mat> {
-    pub fn new(object_to_world: &'mat Matrix4<f32>, world_to_object: &'mat Matrix4<f32>) -> Self {
+impl<'mtrx> Sphere<'mtrx> {
+    pub fn new(object_to_world: &'mtrx Matrix4<f32>, world_to_object: &'mtrx Matrix4<f32>) -> Self {
         Sphere {
             object_to_world,
             world_to_object,
@@ -58,16 +60,16 @@ impl<'mat> Sphere<'mat> {
     }
 }
 
-impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
-    fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32> {
+impl<'shp, 'mtrx> Shape<'shp, 'mtrx> for Sphere<'mtrx> {
+    fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32> {
         self.object_to_world
     }
 
-    fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32> {
+    fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32> {
         self.world_to_object
     }
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat> {
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx> {
         // Transforming the ray from world to object space is analagous to
         // transforming the sphere from object to world space.
         use crate::transform::Transform;
