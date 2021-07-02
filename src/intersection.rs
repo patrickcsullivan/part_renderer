@@ -35,6 +35,7 @@ impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
 
 #[cfg(test)]
 mod hit_tests {
+    use crate::color::Rgb;
     use crate::interaction::SurfaceInteraction;
     use crate::intersection::{Intersection, Intersections};
     use crate::material::Material;
@@ -42,10 +43,20 @@ mod hit_tests {
     use crate::shape::Sphere;
     use crate::test::ApproxEq;
 
+    fn test_material() -> Material {
+        Material {
+            color: Rgb::new(0.0, 0.0, 0.0),
+            ambient: 0.0,
+            diffuse: 0.0,
+            specular: 0.0,
+            shininess: 0.0,
+        }
+    }
+
     #[test]
     fn when_all_positive_t() {
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
@@ -69,7 +80,7 @@ mod hit_tests {
     #[test]
     fn when_some_negative_t() {
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
@@ -93,7 +104,7 @@ mod hit_tests {
     #[test]
     fn when_all_negative_t() {
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {
@@ -115,7 +126,7 @@ mod hit_tests {
     #[test]
     fn always_lowest_positive() {
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = Intersections::new(vec![
             Intersection {

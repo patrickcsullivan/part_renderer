@@ -13,6 +13,7 @@ mod ray;
 mod shape;
 mod transform;
 mod vector;
+mod world;
 
 #[cfg(test)]
 mod test;

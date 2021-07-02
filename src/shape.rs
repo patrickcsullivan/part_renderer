@@ -126,14 +126,23 @@ impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
 
 #[cfg(test)]
 mod tests {
+    use crate::color::Rgb;
     use crate::material::Material;
     use crate::matrix::identity4;
     use crate::ray::Ray;
-    use crate::shape::Sphere;
+    use crate::shape::{Shape, Sphere};
     use crate::test::ApproxEq;
     use cgmath::{Matrix4, Point3, Rad, Transform, Vector3};
 
-    use super::Shape;
+    fn test_material() -> Material {
+        Material {
+            color: Rgb::new(0.0, 0.0, 0.0),
+            ambient: 0.0,
+            diffuse: 0.0,
+            specular: 0.0,
+            shininess: 0.0,
+        }
+    }
 
     #[test]
     fn ray_intersects_at_two_points() {
@@ -142,7 +151,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
@@ -157,7 +166,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
@@ -172,7 +181,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 0);
@@ -185,7 +194,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
@@ -200,7 +209,7 @@ mod tests {
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
@@ -216,7 +225,7 @@ mod tests {
         };
         let obj_to_world = Matrix4::from_scale(2.0);
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
@@ -232,7 +241,7 @@ mod tests {
         };
         let obj_to_world = Matrix4::from_translation(Vector3::new(5.0, 0.0, 0.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 0);
@@ -241,7 +250,7 @@ mod tests {
     #[test]
     fn normal_at_nonaxial_point() {
         let identity = identity4();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let point = Point3::new(
             f32::sqrt(3.0) / 3.0,
@@ -263,7 +272,7 @@ mod tests {
         let obj_to_world = Matrix4::from_nonuniform_scale(1.0, 0.5, 1.0)
             * Matrix4::from_angle_z(Rad(std::f32::consts::PI / 5.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
-        let material = Material::default();
+        let material = test_material();
         let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let point = Point3::new(0.0, f32::sqrt(2.0) / 2.0, f32::sqrt(2.0) / -2.0);
 

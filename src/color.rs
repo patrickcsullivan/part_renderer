@@ -21,12 +21,6 @@ impl Rgb {
     }
 }
 
-impl Default for Rgb {
-    fn default() -> Rgb {
-        Rgb::black()
-    }
-}
-
 impl Add<Rgb> for Rgb {
     type Output = Rgb;
 

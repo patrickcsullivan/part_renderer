@@ -20,15 +20,3 @@ impl Material {
         }
     }
 }
-
-impl Default for Material {
-    fn default() -> Self {
-        Self {
-            color: Rgb::new(0.0, 0.0, 0.0),
-            ambient: 0.0,
-            diffuse: 0.0,
-            specular: 0.0,
-            shininess: 0.0,
-        }
-    }
-}
