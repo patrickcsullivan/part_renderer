@@ -32,6 +32,12 @@ impl ApproxEq for f32 {
     }
 }
 
+impl ApproxEq for crate::color::Rgb {
+    fn approx_eq(&self, other: &Self) -> bool {
+        self.r.approx_eq(&other.r) && self.g.approx_eq(&other.g) && self.b.approx_eq(&other.b)
+    }
+}
+
 impl ApproxEq for cgmath::Point3<f32> {
     fn approx_eq(&self, other: &Self) -> bool {
         self.x.approx_eq(&other.x) && self.y.approx_eq(&other.y) && self.z.approx_eq(&other.z)

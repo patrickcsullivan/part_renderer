@@ -11,6 +11,16 @@ impl Rgb {
     pub fn new(r: f32, g: f32, b: f32) -> Rgb {
         Rgb { r, g, b }
     }
+
+    pub fn black() -> Rgb {
+        Rgb::new(0.0, 0.0, 0.0)
+    }
+}
+
+impl Default for Rgb {
+    fn default() -> Rgb {
+        Rgb::black()
+    }
 }
 
 impl Add<Rgb> for Rgb {
