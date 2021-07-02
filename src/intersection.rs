@@ -1,7 +1,7 @@
 use crate::interaction::SurfaceInteraction;
 use std::cmp::Ordering;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Intersection<'shp, 'mat> {
     pub t: f32,
     pub interaction: SurfaceInteraction<'shp, 'mat>,
@@ -48,11 +48,15 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
             Intersection {
                 t: 2.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
         ]);
         assert!(intersections
@@ -67,11 +71,15 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
             Intersection {
                 t: 1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
         ]);
         assert!(intersections
@@ -86,11 +94,15 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -2.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
             Intersection {
                 t: -1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
         ]);
         assert!(intersections.hit().approx_eq(&None));
@@ -103,19 +115,27 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 5.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
             Intersection {
                 t: 7.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
             Intersection {
                 t: -3.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
             Intersection {
                 t: 2.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(&sphere),
+                },
             },
         ]);
         assert!(intersections

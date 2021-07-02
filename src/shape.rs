@@ -2,8 +2,9 @@ use crate::interaction::SurfaceInteraction;
 use crate::intersection::{Intersection, Intersections};
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Vector3};
+use std::fmt::Debug;
 
-pub trait Shape<'shp, 'mat> {
+pub trait Shape<'shp, 'mat>: Debug {
     /// Returns a reference to the matrix that transforms the shape from object
     /// space to world space.
     fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32>;
@@ -13,6 +14,23 @@ pub trait Shape<'shp, 'mat> {
     fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32>;
 
     fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat>;
+}
+
+impl<'shp, 'mat, T> Shape<'shp, 'mat> for &T
+where
+    T: Shape<'shp, 'mat>,
+{
+    fn object_to_world(&self) -> &'mat cgmath::Matrix4<f32> {
+        (*self).object_to_world()
+    }
+
+    fn world_to_object(&self) -> &'mat cgmath::Matrix4<f32> {
+        (*self).world_to_object()
+    }
+
+    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mat> {
+        (*self).ray_intersections(ray)
+    }
 }
 
 #[derive(Debug)]
@@ -69,11 +87,15 @@ impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
 
             let intr1 = Intersection {
                 t: t1,
-                interaction: SurfaceInteraction { shape: self },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(self),
+                },
             };
             let intr2 = Intersection {
                 t: t2,
-                interaction: SurfaceInteraction { shape: self },
+                interaction: SurfaceInteraction {
+                    shape: Box::new(self),
+                },
             };
 
             Intersections::new(vec![intr1, intr2])
