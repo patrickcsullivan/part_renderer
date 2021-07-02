@@ -39,6 +39,7 @@ mod hit_tests {
     use crate::intersection::{Intersection, Intersections};
     use crate::matrix::identity4;
     use crate::shape::Sphere;
+    use crate::test::ApproxEq;
 
     #[test]
     fn when_all_positive_t() {
@@ -54,7 +55,9 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert_eq!(intersections.hit(), Some(&intersections.values[0]));
+        assert!(intersections
+            .hit()
+            .approx_eq(&Some(&intersections.values[0])));
     }
 
     #[test]
@@ -71,7 +74,9 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert_eq!(intersections.hit(), Some(&intersections.values[1]));
+        assert!(intersections
+            .hit()
+            .approx_eq(&Some(&intersections.values[1])));
     }
 
     #[test]
@@ -88,7 +93,7 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert_eq!(intersections.hit(), None);
+        assert!(intersections.hit().approx_eq(&None));
     }
 
     #[test]
@@ -113,6 +118,8 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert_eq!(intersections.hit(), Some(&intersections.values[3]));
+        assert!(intersections
+            .hit()
+            .approx_eq(&Some(&intersections.values[3])));
     }
 }

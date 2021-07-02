@@ -83,12 +83,11 @@ impl<'shp, 'mat> Shape<'shp, 'mat> for Sphere<'mat> {
 
 #[cfg(test)]
 mod tests {
-    use crate::interaction::SurfaceInteraction;
-    use crate::intersection::Intersection;
     use crate::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::Sphere;
-    use cgmath::{InnerSpace, Matrix4, Point3, Rad, Transform, Vector3};
+    use crate::test::ApproxEq;
+    use cgmath::{Matrix4, Point3, Rad, Transform, Vector3};
 
     use super::Shape;
 
@@ -102,20 +101,8 @@ mod tests {
         let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
-        assert_eq!(
-            intersections.values[0],
-            Intersection {
-                t: 4.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
-        assert_eq!(
-            intersections.values[1],
-            Intersection {
-                t: 6.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
+        assert!(intersections.values[0].t.approx_eq(&4.0));
+        assert!(intersections.values[1].t.approx_eq(&6.0));
     }
 
     #[test]
@@ -128,20 +115,8 @@ mod tests {
         let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
-        assert_eq!(
-            intersections.values[0],
-            Intersection {
-                t: 5.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
-        assert_eq!(
-            intersections.values[1],
-            Intersection {
-                t: 5.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
+        assert!(intersections.values[0].t.eq(&5.0));
+        assert!(intersections.values[1].t.eq(&5.0));
     }
 
     #[test]
@@ -166,20 +141,8 @@ mod tests {
         let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
-        assert_eq!(
-            intersections.values[0],
-            Intersection {
-                t: -1.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
-        assert_eq!(
-            intersections.values[1],
-            Intersection {
-                t: 1.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
+        assert!(intersections.values[0].t.eq(&-1.0));
+        assert!(intersections.values[1].t.eq(&1.0));
     }
 
     #[test]
@@ -192,20 +155,8 @@ mod tests {
         let sphere = Sphere::new(&identity, &identity);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values.len(), 2);
-        assert_eq!(
-            intersections.values[0],
-            Intersection {
-                t: -6.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
-        assert_eq!(
-            intersections.values[1],
-            Intersection {
-                t: -4.0,
-                interaction: SurfaceInteraction { shape: &sphere }
-            },
-        );
+        assert!(intersections.values[0].t.eq(&-6.0));
+        assert!(intersections.values[1].t.eq(&-4.0));
     }
 
     #[test]
@@ -252,11 +203,7 @@ mod tests {
             f32::sqrt(3.0) / 3.0,
             f32::sqrt(3.0) / 3.0,
         );
-        let diff = expected - normal;
-
-        assert!(diff.x.abs() < crate::EPSILON);
-        assert!(diff.y.abs() < crate::EPSILON);
-        assert!(diff.z.abs() < crate::EPSILON);
+        assert!(normal.approx_eq(&expected));
     }
 
     #[test]
@@ -269,10 +216,6 @@ mod tests {
 
         let normal = sphere.normal_at(point);
         let expected = Vector3::new(0.0, 0.97014, -0.24254);
-        let diff = expected - normal;
-
-        assert!(diff.x.abs() < crate::EPSILON);
-        assert!(diff.y.abs() < crate::EPSILON);
-        assert!(diff.z.abs() < crate::EPSILON);
+        assert!(normal.approx_eq(&expected));
     }
 }

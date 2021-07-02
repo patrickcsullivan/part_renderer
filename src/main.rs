@@ -8,7 +8,7 @@ mod transform;
 mod vector;
 
 #[cfg(test)]
-const EPSILON: f32 = 0.0001;
+mod test;
 
 fn main() {
     println!("Hello, world!");

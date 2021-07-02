@@ -6,6 +6,7 @@ pub fn reflect(incoming: Vector3<f32>, normal: Vector3<f32>) -> Vector3<f32> {
 
 #[cfg(test)]
 mod tests {
+    use crate::test::ApproxEq;
     use crate::vector;
     use cgmath::Vector3;
 
@@ -16,11 +17,7 @@ mod tests {
 
         let reflection = vector::reflect(incoming, normal);
         let expected = Vector3::new(1.0, 1.0, 0.0);
-        let diff = expected - reflection;
-
-        assert!(diff.x.abs() < crate::EPSILON);
-        assert!(diff.y.abs() < crate::EPSILON);
-        assert!(diff.z.abs() < crate::EPSILON);
+        assert!(reflection.approx_eq(&expected));
     }
 
     #[test]
@@ -30,10 +27,6 @@ mod tests {
 
         let reflection = vector::reflect(incoming, normal);
         let expected = Vector3::new(1.0, 0.0, 0.0);
-        let diff = expected - reflection;
-
-        assert!(diff.x.abs() < crate::EPSILON);
-        assert!(diff.y.abs() < crate::EPSILON);
-        assert!(diff.z.abs() < crate::EPSILON);
+        assert!(reflection.approx_eq(&expected));
     }
 }

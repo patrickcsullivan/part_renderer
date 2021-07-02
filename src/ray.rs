@@ -27,7 +27,7 @@ impl crate::transform::Transform<Ray> for Matrix4<f32> {
 #[cfg(test)]
 mod tests {
     use super::Ray;
-    use crate::transform::Transform;
+    use crate::{test::ApproxEq, transform::Transform};
     use cgmath::{Matrix4, Point3, Vector3};
 
     #[test]
@@ -36,10 +36,10 @@ mod tests {
             origin: Point3::new(2.0, 3.0, 4.0),
             direction: Vector3::new(1.0, 0.0, 0.0),
         };
-        assert_eq!(ray.at_t(0.0), Point3::new(2.0, 3.0, 4.0));
-        assert_eq!(ray.at_t(1.0), Point3::new(3.0, 3.0, 4.0));
-        assert_eq!(ray.at_t(-1.0), Point3::new(1.0, 3.0, 4.0));
-        assert_eq!(ray.at_t(2.5), Point3::new(4.5, 3.0, 4.0));
+        assert!(ray.at_t(0.0).approx_eq(&Point3::new(2.0, 3.0, 4.0)));
+        assert!(ray.at_t(1.0).approx_eq(&Point3::new(3.0, 3.0, 4.0)));
+        assert!(ray.at_t(-1.0).approx_eq(&Point3::new(1.0, 3.0, 4.0)));
+        assert!(ray.at_t(2.5).approx_eq(&Point3::new(4.5, 3.0, 4.0)));
     }
 
     #[test]
@@ -50,8 +50,8 @@ mod tests {
         };
         let t: Matrix4<f32> = Matrix4::from_translation(Vector3::new(3.0, 4.0, 5.0));
         let ray = t.transform(&ray);
-        assert_eq!(ray.origin, Point3::new(4.0, 6.0, 8.0));
-        assert_eq!(ray.direction, Vector3::new(0.0, 1.0, 0.0));
+        assert!(ray.origin.approx_eq(&Point3::new(4.0, 6.0, 8.0)));
+        assert!(ray.direction.approx_eq(&Vector3::new(0.0, 1.0, 0.0)));
     }
 
     #[test]
@@ -62,7 +62,7 @@ mod tests {
         };
         let t: Matrix4<f32> = Matrix4::from_nonuniform_scale(2.0, 3.0, 4.0);
         let ray = t.transform(&ray);
-        assert_eq!(ray.origin, Point3::new(2.0, 6.0, 12.0));
-        assert_eq!(ray.direction, Vector3::new(0.0, 3.0, 0.0));
+        assert!(ray.origin.approx_eq(&Point3::new(2.0, 6.0, 12.0)));
+        assert!(ray.direction.approx_eq(&Vector3::new(0.0, 3.0, 0.0)));
     }
 }
