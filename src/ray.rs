@@ -7,7 +7,7 @@ pub struct Ray {
 
 impl Ray {
     /// Get the position along the ray for a given parametric value, `t`.
-    fn at_t(&self, t: f32) -> Point3<f32> {
+    pub fn at_t(&self, t: f32) -> Point3<f32> {
         self.origin + self.direction * t
     }
 }

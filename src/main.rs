@@ -1,4 +1,7 @@
-use crate::material::Material;
+use crate::{
+    light::{phong_lighting, PointLight},
+    material::Material,
+};
 
 mod color;
 mod interaction;
@@ -20,6 +23,7 @@ fn main() {
 }
 
 fn demo() {
+    use crate::color::Rgb;
     use crate::matrix::identity4;
     use crate::ray::Ray;
     use cgmath::InnerSpace;
@@ -38,11 +42,9 @@ fn demo() {
     let pixel_size = wall_width / canvas_width as f32;
 
     let identity = identity4();
-    let material = Material::default();
+    let material = Material::new(Rgb::new(1.0, 0.2, 1.0), 0.1, 0.9, 0.9, 200.0);
     let sphere = Sphere::new(&identity, &identity, &material);
-
-    let red = image::Rgb([255_u8, 0_u8, 0_u8]);
-    let black = image::Rgb([0_u8, 0_u8, 0_u8]);
+    let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
 
     let img = ImageBuffer::from_fn(canvas_width, canvas_width, |x, y| {
         let world_x = -1.0 * half_width + pixel_size * x as f32;
@@ -54,11 +56,17 @@ fn demo() {
         };
         let intersections = sphere.ray_intersections(&ray);
 
-        if intersections.hit().is_some() {
-            red
+        let color = if let Some(hit) = intersections.hit() {
+            let p = ray.at_t(hit.t);
+            let n = sphere.normal_at(p);
+            let eye = -1.0 * ray.direction;
+            phong_lighting(&material, &light, &p, &eye, &n)
         } else {
-            black
-        }
+            Rgb::black()
+        };
+
+        let p: image::Rgb<u8> = color.into();
+        p
     });
     let _ = img.save("demo.png");
 }

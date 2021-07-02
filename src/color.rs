@@ -15,6 +15,10 @@ impl Rgb {
     pub fn black() -> Rgb {
         Rgb::new(0.0, 0.0, 0.0)
     }
+
+    pub fn white() -> Rgb {
+        Rgb::new(1.0, 1.0, 1.0)
+    }
 }
 
 impl Default for Rgb {
