@@ -1,7 +1,7 @@
-use crate::shape::Shape;
+use crate::shape::Sphere;
 
 #[derive(Debug)]
 pub struct SurfaceInteraction<'shp, 'mtrx, 'mtrl> {
     /// The shape that the point lies on.
-    pub shape: Box<dyn Shape<'shp, 'mtrx, 'mtrl> + 'shp>,
+    pub shape: &'shp Sphere<'mtrx, 'mtrl>,
 }

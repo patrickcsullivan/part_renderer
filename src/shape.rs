@@ -104,15 +104,11 @@ impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
 
             let intr1 = Intersection {
                 t: t1,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(self),
-                },
+                interaction: SurfaceInteraction { shape: self },
             };
             let intr2 = Intersection {
                 t: t2,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(self),
-                },
+                interaction: SurfaceInteraction { shape: self },
             };
 
             Intersections::new(vec![intr1, intr2])

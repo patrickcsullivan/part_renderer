@@ -61,15 +61,11 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 1.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
             Intersection {
                 t: 2.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
         assert!(intersections
@@ -85,15 +81,11 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -1.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
             Intersection {
                 t: 1.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
         assert!(intersections
@@ -109,15 +101,11 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -2.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
             Intersection {
                 t: -1.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
         assert!(intersections.hit().approx_eq(&None));
@@ -131,27 +119,19 @@ mod hit_tests {
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 5.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
             Intersection {
                 t: 7.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
             Intersection {
                 t: -3.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
             Intersection {
                 t: 2.0,
-                interaction: SurfaceInteraction {
-                    shape: Box::new(&sphere),
-                },
+                interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
         assert!(intersections
