@@ -150,9 +150,9 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 2);
-        assert!(intersections.values[0].t.approx_eq(&4.0));
-        assert!(intersections.values[1].t.approx_eq(&6.0));
+        assert_eq!(intersections.values().len(), 2);
+        assert!(intersections.values()[0].t.approx_eq(&4.0));
+        assert!(intersections.values()[1].t.approx_eq(&6.0));
     }
 
     #[test]
@@ -165,9 +165,9 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 2);
-        assert!(intersections.values[0].t.eq(&5.0));
-        assert!(intersections.values[1].t.eq(&5.0));
+        assert_eq!(intersections.values().len(), 2);
+        assert!(intersections.values()[0].t.eq(&5.0));
+        assert!(intersections.values()[1].t.eq(&5.0));
     }
 
     #[test]
@@ -180,7 +180,7 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 0);
+        assert_eq!(intersections.values().len(), 0);
     }
 
     #[test]
@@ -193,9 +193,9 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 2);
-        assert!(intersections.values[0].t.eq(&-1.0));
-        assert!(intersections.values[1].t.eq(&1.0));
+        assert_eq!(intersections.values().len(), 2);
+        assert!(intersections.values()[0].t.eq(&-1.0));
+        assert!(intersections.values()[1].t.eq(&1.0));
     }
 
     #[test]
@@ -208,9 +208,9 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&identity, &identity, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 2);
-        assert!(intersections.values[0].t.eq(&-6.0));
-        assert!(intersections.values[1].t.eq(&-4.0));
+        assert_eq!(intersections.values().len(), 2);
+        assert!(intersections.values()[0].t.eq(&-6.0));
+        assert!(intersections.values()[1].t.eq(&-4.0));
     }
 
     #[test]
@@ -224,9 +224,9 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 2);
-        assert!(intersections.values[0].t.eq(&3.0));
-        assert!(intersections.values[1].t.eq(&7.0));
+        assert_eq!(intersections.values().len(), 2);
+        assert!(intersections.values()[0].t.eq(&3.0));
+        assert!(intersections.values()[1].t.eq(&7.0));
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
         let material = test_material();
         let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
         let intersections = sphere.ray_intersections(&ray);
-        assert_eq!(intersections.values.len(), 0);
+        assert_eq!(intersections.values().len(), 0);
     }
 
     #[test]

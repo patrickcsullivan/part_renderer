@@ -8,7 +8,7 @@ pub struct Intersection<'shp, 'mtrx, 'mtrl> {
 }
 
 pub struct Intersections<'shp, 'mtrx, 'mtrl> {
-    pub values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>,
+    values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>,
 }
 
 impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
@@ -17,11 +17,27 @@ impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
     }
 
     pub fn new(values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>) -> Self {
-        Self { values }
+        let mut inters = Self { values };
+        inters.filter_and_sort_values();
+        inters
+    }
+
+    pub fn values(&self) -> Vec<&Intersection<'shp, 'mtrx, 'mtrl>> {
+        self.values.iter().collect()
     }
 
     pub fn hit(&self) -> Option<&Intersection<'shp, 'mtrx, 'mtrl>> {
-        self.values.iter().filter(|v| v.t > 0.0).min_by(|x, y| {
+        self.values.iter().find(|i| i.t > 0.0)
+    }
+
+    pub fn append(&mut self, other: &mut Self) {
+        self.values.append(&mut other.values);
+        self.filter_and_sort_values();
+    }
+
+    fn filter_and_sort_values(&mut self) {
+        self.values.retain(|v| v.t.is_finite());
+        self.values.sort_by(|x, y| {
             if x.t < y.t {
                 Ordering::Less
             } else if (x.t - y.t).abs() < f32::EPSILON {
@@ -29,7 +45,7 @@ impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
             } else {
                 Ordering::Greater
             }
-        })
+        });
     }
 }
 
@@ -68,9 +84,10 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert!(intersections
-            .hit()
-            .approx_eq(&Some(&intersections.values[0])));
+        assert!(intersections.hit().approx_eq(&Some(&Intersection {
+            t: 1.0,
+            interaction: SurfaceInteraction { shape: &sphere },
+        })));
     }
 
     #[test]
@@ -88,9 +105,10 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert!(intersections
-            .hit()
-            .approx_eq(&Some(&intersections.values[1])));
+        assert!(intersections.hit().approx_eq(&Some(&Intersection {
+            t: 1.0,
+            interaction: SurfaceInteraction { shape: &sphere },
+        })));
     }
 
     #[test]
@@ -134,8 +152,9 @@ mod hit_tests {
                 interaction: SurfaceInteraction { shape: &sphere },
             },
         ]);
-        assert!(intersections
-            .hit()
-            .approx_eq(&Some(&intersections.values[3])));
+        assert!(intersections.hit().approx_eq(&Some(&Intersection {
+            t: 2.0,
+            interaction: SurfaceInteraction { shape: &sphere },
+        })));
     }
 }
