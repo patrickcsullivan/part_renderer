@@ -1,5 +1,5 @@
 use crate::{
-    light::{phong_lighting, PointLight},
+    light::{phong_shading, PointLight},
     material::Material,
 };
 
@@ -61,7 +61,7 @@ fn demo() {
             let p = ray.at_t(hit.t);
             let n = sphere.normal_at(p);
             let eye = -1.0 * ray.direction;
-            phong_lighting(&material, &light, &p, &eye, &n)
+            phong_shading(&material, &light, &p, &eye, &n)
         } else {
             Rgb::black()
         };

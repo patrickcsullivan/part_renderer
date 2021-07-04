@@ -1,6 +1,6 @@
 use cgmath::{InnerSpace, Point3, Vector3};
 
-use crate::{color::Rgb, material::Material, vector};
+use crate::{color::Rgb, interaction::SurfaceInteraction, material::Material, vector};
 
 pub struct PointLight {
     pub intensity: Rgb,
@@ -16,7 +16,7 @@ impl PointLight {
     }
 }
 
-pub fn phong_lighting(
+pub fn phong_shading(
     material: &Material,
     light: &PointLight,
     position: &Point3<f32>,
@@ -53,9 +53,9 @@ pub fn phong_lighting(
 }
 
 #[cfg(test)]
-mod phong_lighting_tests {
+mod phong_shading_tests {
     use crate::color::Rgb;
-    use crate::light::{phong_lighting, PointLight};
+    use crate::light::{phong_shading, PointLight};
     use crate::material::Material;
     use crate::test::ApproxEq;
     use cgmath::{Point3, Vector3};
@@ -68,7 +68,7 @@ mod phong_lighting_tests {
 
         let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(0.0, 0.0, -10.0));
         let eye = Vector3::new(0.0, 0.0, -1.0);
-        let result = phong_lighting(&material, &light, &position, &eye, &normal);
+        let result = phong_shading(&material, &light, &position, &eye, &normal);
         assert!(result.approx_eq(&Rgb::new(1.9, 1.9, 1.9)));
     }
 
@@ -80,7 +80,7 @@ mod phong_lighting_tests {
 
         let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(0.0, 0.0, -10.0));
         let eye = Vector3::new(0.0, f32::sqrt(2.0) / 2.0, f32::sqrt(2.0) / -2.0);
-        let result = phong_lighting(&material, &light, &position, &eye, &normal);
+        let result = phong_shading(&material, &light, &position, &eye, &normal);
         assert!(result.approx_eq(&Rgb::new(1.0, 1.0, 1.0)));
     }
 
@@ -92,7 +92,7 @@ mod phong_lighting_tests {
 
         let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(0.0, 10.0, -10.0));
         let eye = Vector3::new(0.0, 0.0, -1.0);
-        let result = phong_lighting(&material, &light, &position, &eye, &normal);
+        let result = phong_shading(&material, &light, &position, &eye, &normal);
         assert!(result.approx_eq(&Rgb::new(0.7364, 0.7364, 0.7364)));
     }
 
@@ -104,7 +104,7 @@ mod phong_lighting_tests {
 
         let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(0.0, 10.0, -10.0));
         let eye = Vector3::new(0.0, f32::sqrt(2.0) / -2.0, f32::sqrt(2.0) / -2.0);
-        let result = phong_lighting(&material, &light, &position, &eye, &normal);
+        let result = phong_shading(&material, &light, &position, &eye, &normal);
         assert!(result.approx_eq(&Rgb::new(1.6364, 1.6364, 1.6364)));
     }
 
@@ -116,7 +116,7 @@ mod phong_lighting_tests {
 
         let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(0.0, 10.0, 10.0));
         let eye = Vector3::new(0.0, 0.0, -1.0);
-        let result = phong_lighting(&material, &light, &position, &eye, &normal);
+        let result = phong_shading(&material, &light, &position, &eye, &normal);
         assert!(result.approx_eq(&Rgb::new(0.1, 0.1, 0.1)));
     }
 }
