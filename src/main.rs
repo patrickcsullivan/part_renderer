@@ -25,7 +25,7 @@ mod test;
 
 fn main() {
     println!("Hello, world!");
-    // demo();
+    demo();
     demo_simple();
 }
 

@@ -2,7 +2,7 @@ use crate::interaction::SurfaceInteraction;
 use crate::intersection::{Intersection, Intersections};
 use crate::material::Material;
 use crate::ray::Ray;
-use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Vector3};
+use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Transform, Vector3};
 use std::fmt::Debug;
 
 /// Describes the geometric properties of a primitive and provides a ray
@@ -76,8 +76,9 @@ impl<'mtrx, 'mtrl> Sphere<'mtrx, 'mtrl> {
         }
     }
 
+    /// Returns the normal in world space at a given point on the sphere in
+    /// world space.
     pub fn normal_at(&self, p: Point3<f32>) -> Vector3<f32> {
-        use cgmath::Transform;
         let obj_p = self.world_to_object.transform_point(p);
         let obj_n = obj_p - Point3::new(0.0, 0.0, 0.0);
         let n = self
@@ -110,40 +111,43 @@ impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
         // Transforming the ray from world to object space is analagous to
         // transforming the sphere from object to world space.
         use crate::transform::Transform;
-        let ray = self.world_to_object.transform(ray);
+        let obj_ray = self.world_to_object.transform(ray);
 
-        let sphere_to_ray = ray.origin - Point3::new(0.0, 0.0, 0.0);
-        let a = ray.direction.dot(ray.direction);
-        let b = 2.0 * ray.direction.dot(sphere_to_ray);
+        let sphere_to_ray = obj_ray.origin - Point3::new(0.0, 0.0, 0.0);
+        let a = obj_ray.direction.dot(obj_ray.direction);
+        let b = 2.0 * obj_ray.direction.dot(sphere_to_ray);
         let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
         let discriminant = b * b - 4.0 * a * c;
 
         if discriminant < 0.0 {
             Intersections::empty()
         } else {
-            let neg_ray_direction = ray.direction * -1.0;
-
             let t1 = (-1.0 * b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-1.0 * b + discriminant.sqrt()) / (2.0 * a);
 
-            let p1 = ray.at_t(t1);
-            let p2 = ray.at_t(t2);
+            let obj_p1 = obj_ray.at_t(t1);
+            let obj_p2 = obj_ray.at_t(t2);
+
+            let world_p1 = self.object_to_world.transform_point(obj_p1);
+            let world_p2 = self.object_to_world.transform_point(obj_p2);
+
+            let world_neg_ray_direction = ray.direction * -1.0;
 
             let intr1 = Intersection {
                 t: t1,
                 interaction: SurfaceInteraction {
-                    point: p1,
-                    neg_ray_direction,
-                    normal: self.normal_at(p1),
+                    point: world_p1,
+                    neg_ray_direction: world_neg_ray_direction,
+                    normal: self.normal_at(world_p1),
                     shape: self,
                 },
             };
             let intr2 = Intersection {
                 t: t2,
                 interaction: SurfaceInteraction {
-                    point: p2,
-                    neg_ray_direction,
-                    normal: self.normal_at(p2),
+                    point: world_p2,
+                    neg_ray_direction: world_neg_ray_direction,
+                    normal: self.normal_at(world_p2),
                     shape: self,
                 },
             };
@@ -234,7 +238,7 @@ mod ray_intersects_tests {
     }
 
     #[test]
-    fn intersects_at_tangent() {
+    fn intersects_at_tangent_of_untransformed_sphere() {
         let ray = Ray {
             origin: Point3::new(0.0, 1.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
@@ -244,8 +248,45 @@ mod ray_intersects_tests {
         let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 2);
+
         assert!(intersections.values()[0].t.eq(&5.0));
+        assert!(intersections.values()[0]
+            .interaction
+            .normal
+            .approx_eq(&Vector3::new(0.0, 1.0, 0.0)));
+
         assert!(intersections.values()[1].t.eq(&5.0));
+        assert!(intersections.values()[1]
+            .interaction
+            .normal
+            .approx_eq(&Vector3::new(0.0, 1.0, 0.0)));
+    }
+
+    #[test]
+    fn intersects_at_tangent_of_transformed_sphere() {
+        let ray = Ray {
+            origin: Point3::new(0.0, 0.0, -5.0),
+            direction: Vector3::new(0.0, 0.0, 1.0),
+        };
+        let obj_to_world = Matrix4::from_translation(Vector3::new(0.0, -1.0, 0.0));
+        let world_to_obj = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0));
+        let material = test_material();
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, false, &material);
+        let intersections = sphere.ray_intersections(&ray);
+
+        assert_eq!(intersections.values().len(), 2);
+
+        assert!(intersections.values()[0].t.eq(&5.0));
+        assert!(intersections.values()[0]
+            .interaction
+            .normal
+            .approx_eq(&Vector3::new(0.0, 1.0, 0.0)));
+
+        assert!(intersections.values()[1].t.eq(&5.0));
+        assert!(intersections.values()[1]
+            .interaction
+            .normal
+            .approx_eq(&Vector3::new(0.0, 1.0, 0.0)));
     }
 
     #[test]
