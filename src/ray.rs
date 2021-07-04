@@ -6,6 +6,10 @@ pub struct Ray {
 }
 
 impl Ray {
+    pub fn new(origin: Point3<f32>, direction: Vector3<f32>) -> Self {
+        Self { origin, direction }
+    }
+
     /// Get the position along the ray for a given parametric value, `t`.
     pub fn at_t(&self, t: f32) -> Point3<f32> {
         self.origin + self.direction * t

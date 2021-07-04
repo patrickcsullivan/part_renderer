@@ -1,4 +1,6 @@
-use cgmath::{Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Vector3, Vector4};
+use cgmath::{
+    Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Transform, Vector3, Vector4,
+};
 
 use crate::ray::Ray;
 
@@ -49,14 +51,29 @@ impl Camera {
         }
     }
 
-    // pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
-    //     // Offset from canvase edge to center of pixel.
-    //     let x_offset = (px as f32 + 0.5) * self.pixel_size;
-    //     let y_offset = (py as f32 + 0.5) * self.pixel_size;
+    /// Returns a ray that starts at the camera and passes through the specified
+    /// pixel on the canvas.
+    pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
+        // Offset from canvase edge to center of pixel.
+        let x_offset = (px as f32 + 0.5) * self.pixel_size;
+        let y_offset = (py as f32 + 0.5) * self.pixel_size;
 
-    //     let world_x = self.half_width - x_offset;
-    //     let world_y = self.half_height - y_offset;
-    // }
+        // Compute the pixel'ss position in camera space. By default camera looks
+        // towards -z in LH coordinate system, so +x points left and +y points
+        // up. The canvas is at z = -1.
+        let pixel_cs = Point3::new(
+            self.half_width - x_offset,
+            self.half_height - y_offset,
+            -1.0,
+        );
+
+        let camera_to_world = self.world_to_camera.inverse_transform().unwrap();
+        let pixel_ws = camera_to_world.transform_point(pixel_cs);
+        let ray_origin_ws = camera_to_world.transform_point(Point3::new(0.0, 0.0, 0.0));
+        let ray_direction_ws = (pixel_ws - ray_origin_ws).normalize();
+
+        Ray::new(ray_origin_ws, ray_direction_ws)
+    }
 }
 
 pub fn view_transform(from: Point3<f32>, to: Point3<f32>, up: Vector3<f32>) -> Matrix4<f32> {
@@ -137,5 +154,44 @@ mod pixel_size_tests {
     fn for_vertical_canvas() {
         let camera = Camera::new(125, 200, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
+    }
+}
+
+#[cfg(test)]
+mod ray_for_pixel_tests {
+    use crate::{camera::Camera, matrix::identity4, ray::Ray, test::ApproxEq};
+    use cgmath::{Matrix4, Point3, Rad, Vector3};
+    use std::f32::consts::{PI, SQRT_2};
+
+    #[test]
+    fn through_center_of_canvas() {
+        let camera = Camera::new(201, 101, Rad(PI / 2.0), identity4());
+        let ray = camera.ray_for_pixel(100, 50);
+        assert!(ray.approx_eq(&Ray::new(
+            Point3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, -1.0)
+        )));
+    }
+
+    #[test]
+    fn through_corner_of_canvas() {
+        let camera = Camera::new(201, 101, Rad(PI / 2.0), identity4());
+        let ray = camera.ray_for_pixel(0, 0);
+        assert!(ray.approx_eq(&Ray::new(
+            Point3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.66519, 0.33259, -0.66851),
+        )));
+    }
+
+    #[test]
+    fn for_transformed_camera() {
+        let transform = Matrix4::from_angle_y(Rad(PI / 4.0))
+            * Matrix4::from_translation(Vector3::new(0.0, -2.0, 5.0));
+        let camera = Camera::new(201, 101, Rad(PI / 2.0), transform);
+        let ray = camera.ray_for_pixel(100, 50);
+        assert!(ray.approx_eq(&Ray::new(
+            Point3::new(0.0, 2.0, -5.0),
+            Vector3::new(SQRT_2 / 2.0, 0.0, SQRT_2 / -2.0),
+        )));
     }
 }
