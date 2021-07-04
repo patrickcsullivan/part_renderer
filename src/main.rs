@@ -26,6 +26,34 @@ mod test;
 fn main() {
     println!("Hello, world!");
     demo();
+    demo_simple();
+}
+
+fn demo_simple() {
+    use crate::color::Rgb;
+    use crate::matrix::identity4;
+    use crate::shape::{Shape, Sphere};
+    use cgmath::{Point3, Rad, Vector3};
+    use std::f32::consts::PI;
+
+    let identity = identity4();
+    let material = Material::new(Rgb::new(1.0, 0.2, 1.0), 0.1, 0.9, 0.9, 200.0);
+    let sphere = Sphere::new(&identity, &identity, false, &material);
+    let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
+
+    let camera_transf = view_transform(
+        Point3::new(0.0, 0.0, -2.0),
+        Point3::new(0.0, 0.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
+    );
+    let camera = Camera::new(100, 100, Rad(PI / 2.0), camera_transf);
+
+    let world = WorldBuilder::new()
+        .point_light(light)
+        .sphere(&sphere)
+        .build();
+    let img = world.render(&camera);
+    let _ = img.save("demo_simple.png");
 }
 
 fn demo() {
