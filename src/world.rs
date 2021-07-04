@@ -66,8 +66,8 @@ mod ray_intersections_tests {
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
         let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0);
-        let sphere1 = Sphere::new(&identity, &identity, &material);
-        let sphere2 = Sphere::new(&scale, &inv_scale, &material);
+        let sphere1 = Sphere::new(&identity, &identity, false, &material);
+        let sphere2 = Sphere::new(&scale, &inv_scale, false, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
         let world = WorldBuilder::new()
             .sphere(&sphere1)

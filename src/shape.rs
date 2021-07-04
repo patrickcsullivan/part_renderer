@@ -16,6 +16,11 @@ pub trait Shape<'shp, 'mtrx, 'mtrl>: Debug {
     /// space to object space.
     fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32>;
 
+    /// Returns a flag that indicates whether the shape's normals should be
+    /// flipped from their original directions in order to point to the outside
+    /// of the shape.
+    fn reverse_orientation(&self) -> bool;
+
     fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl>;
 
     // TODO: Eventually, store the material/shading properties in a Primitive
@@ -35,6 +40,10 @@ where
         (*self).world_to_object()
     }
 
+    fn reverse_orientation(&self) -> bool {
+        (*self).reverse_orientation()
+    }
+
     fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl> {
         (*self).ray_intersections(ray)
     }
@@ -48,6 +57,7 @@ where
 pub struct Sphere<'mtrx, 'mtrl> {
     object_to_world: &'mtrx Matrix4<f32>,
     world_to_object: &'mtrx Matrix4<f32>,
+    reverse_orientation: bool,
     material: &'mtrl Material,
 }
 
@@ -55,11 +65,13 @@ impl<'mtrx, 'mtrl> Sphere<'mtrx, 'mtrl> {
     pub fn new(
         object_to_world: &'mtrx Matrix4<f32>,
         world_to_object: &'mtrx Matrix4<f32>,
+        reverse_orientation: bool,
         material: &'mtrl Material,
     ) -> Self {
         Sphere {
             object_to_world,
             world_to_object,
+            reverse_orientation,
             material,
         }
     }
@@ -68,10 +80,16 @@ impl<'mtrx, 'mtrl> Sphere<'mtrx, 'mtrl> {
         use cgmath::Transform;
         let obj_p = self.world_to_object.transform_point(p);
         let obj_n = obj_p - Point3::new(0.0, 0.0, 0.0);
-        self.world_to_object
+        let n = self
+            .world_to_object
             .transpose()
             .transform_vector(obj_n)
-            .normalize()
+            .normalize();
+        if self.reverse_orientation {
+            n * 1.0
+        } else {
+            n
+        }
     }
 }
 
@@ -82,6 +100,10 @@ impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
 
     fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32> {
         self.world_to_object
+    }
+
+    fn reverse_orientation(&self) -> bool {
+        self.reverse_orientation
     }
 
     fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl> {
@@ -99,16 +121,31 @@ impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
         if discriminant < 0.0 {
             Intersections::empty()
         } else {
+            let neg_ray_direction = ray.direction * -1.0;
+
             let t1 = (-1.0 * b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-1.0 * b + discriminant.sqrt()) / (2.0 * a);
 
+            let p1 = ray.at_t(t1);
+            let p2 = ray.at_t(t2);
+
             let intr1 = Intersection {
                 t: t1,
-                interaction: SurfaceInteraction { shape: self },
+                interaction: SurfaceInteraction {
+                    point: p1,
+                    neg_ray_direction,
+                    normal: self.normal_at(p1),
+                    shape: self,
+                },
             };
             let intr2 = Intersection {
                 t: t2,
-                interaction: SurfaceInteraction { shape: self },
+                interaction: SurfaceInteraction {
+                    point: p2,
+                    neg_ray_direction,
+                    normal: self.normal_at(p2),
+                    shape: self,
+                },
             };
 
             Intersections::new(vec![intr1, intr2])
@@ -121,7 +158,7 @@ impl<'shp, 'mtrx, 'mtrl> Shape<'shp, 'mtrx, 'mtrl> for Sphere<'mtrx, 'mtrl> {
 }
 
 #[cfg(test)]
-mod tests {
+mod ray_intersects_tests {
     use crate::color::Rgb;
     use crate::material::Material;
     use crate::matrix::identity4;
@@ -141,14 +178,55 @@ mod tests {
     }
 
     #[test]
-    fn ray_intersects_at_two_points() {
+    fn interactions_includes_surface_calculation() {
         let ray = Ray {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
+        let intersections = sphere.ray_intersections(&ray);
+        assert_eq!(intersections.values().len(), 2);
+
+        assert!(intersections.values()[0].t.approx_eq(&4.0));
+        assert!(intersections.values()[0]
+            .interaction
+            .point
+            .approx_eq(&Point3::new(0.0, 0.0, -1.0)));
+        assert!(intersections.values()[0]
+            .interaction
+            .normal
+            .approx_eq(&Vector3::new(0.0, 0.0, -1.0)));
+        assert!(intersections.values()[0]
+            .interaction
+            .neg_ray_direction
+            .approx_eq(&Vector3::new(0.0, 0.0, -1.0)));
+
+        assert!(intersections.values()[1].t.approx_eq(&6.0));
+        assert!(intersections.values()[1]
+            .interaction
+            .point
+            .approx_eq(&Point3::new(0.0, 0.0, 1.0)));
+        assert!(intersections.values()[1]
+            .interaction
+            .normal
+            .approx_eq(&Vector3::new(0.0, 0.0, 1.0)));
+        assert!(intersections.values()[1]
+            .interaction
+            .neg_ray_direction
+            .approx_eq(&Vector3::new(0.0, 0.0, -1.0)));
+    }
+
+    #[test]
+    fn intersects_at_two_points() {
+        let ray = Ray {
+            origin: Point3::new(0.0, 0.0, -5.0),
+            direction: Vector3::new(0.0, 0.0, 1.0),
+        };
+        let identity = identity4();
+        let material = test_material();
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 2);
         assert!(intersections.values()[0].t.approx_eq(&4.0));
@@ -156,14 +234,14 @@ mod tests {
     }
 
     #[test]
-    fn ray_intersects_at_tangent() {
+    fn intersects_at_tangent() {
         let ray = Ray {
             origin: Point3::new(0.0, 1.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 2);
         assert!(intersections.values()[0].t.eq(&5.0));
@@ -171,14 +249,14 @@ mod tests {
     }
 
     #[test]
-    fn ray_misses() {
+    fn misses() {
         let ray = Ray {
             origin: Point3::new(0.0, 2.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 0);
     }
@@ -191,7 +269,7 @@ mod tests {
         };
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 2);
         assert!(intersections.values()[0].t.eq(&-1.0));
@@ -206,7 +284,7 @@ mod tests {
         };
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 2);
         assert!(intersections.values()[0].t.eq(&-6.0));
@@ -214,7 +292,7 @@ mod tests {
     }
 
     #[test]
-    fn ray_intersects_scaled_sphere() {
+    fn intersects_scaled_sphere() {
         let ray = Ray {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
@@ -222,7 +300,7 @@ mod tests {
         let obj_to_world = Matrix4::from_scale(2.0);
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let material = test_material();
-        let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 2);
         assert!(intersections.values()[0].t.eq(&3.0));
@@ -230,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    fn ray_misses_translated_sphere() {
+    fn misses_translated_sphere() {
         let ray = Ray {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
@@ -238,16 +316,37 @@ mod tests {
         let obj_to_world = Matrix4::from_translation(Vector3::new(5.0, 0.0, 0.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let material = test_material();
-        let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, false, &material);
         let intersections = sphere.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 0);
     }
+}
+
+#[cfg(test)]
+mod normal_tests {
+    use crate::color::Rgb;
+    use crate::material::Material;
+    use crate::matrix::identity4;
+    use crate::ray::Ray;
+    use crate::shape::{Shape, Sphere};
+    use crate::test::ApproxEq;
+    use cgmath::{Matrix4, Point3, Rad, Transform, Vector3};
+
+    fn test_material() -> Material {
+        Material {
+            color: Rgb::new(0.0, 0.0, 0.0),
+            ambient: 0.0,
+            diffuse: 0.0,
+            specular: 0.0,
+            shininess: 0.0,
+        }
+    }
 
     #[test]
-    fn normal_at_nonaxial_point() {
+    fn at_nonaxial_point() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let point = Point3::new(
             f32::sqrt(3.0) / 3.0,
             f32::sqrt(3.0) / 3.0,
@@ -264,12 +363,12 @@ mod tests {
     }
 
     #[test]
-    fn normal_on_transformed_sphere() {
+    fn on_transformed_sphere() {
         let obj_to_world = Matrix4::from_nonuniform_scale(1.0, 0.5, 1.0)
             * Matrix4::from_angle_z(Rad(std::f32::consts::PI / 5.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let material = test_material();
-        let sphere = Sphere::new(&obj_to_world, &world_to_obj, &material);
+        let sphere = Sphere::new(&obj_to_world, &world_to_obj, false, &material);
         let point = Point3::new(0.0, f32::sqrt(2.0) / 2.0, f32::sqrt(2.0) / -2.0);
 
         let normal = sphere.normal_at(point);

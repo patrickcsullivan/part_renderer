@@ -51,6 +51,8 @@ impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
 
 #[cfg(test)]
 mod hit_tests {
+    use cgmath::{Point3, Vector3};
+
     use crate::color::Rgb;
     use crate::interaction::SurfaceInteraction;
     use crate::intersection::{Intersection, Intersections};
@@ -69,61 +71,66 @@ mod hit_tests {
         }
     }
 
+    fn test_interaction<'shp, 'mtrx, 'mtrl>(
+        shape: &'shp Sphere<'mtrx, 'mtrl>,
+    ) -> SurfaceInteraction<'shp, 'mtrx, 'mtrl> {
+        SurfaceInteraction {
+            shape,
+            point: Point3::new(0.0, 0.0, 0.0),
+            neg_ray_direction: Vector3::new(0.0, 0.0, 1.0),
+            normal: Vector3::new(0.0, 0.0, 1.0),
+        }
+    }
+
     #[test]
     fn when_all_positive_t() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
             Intersection {
                 t: 2.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
         ]);
-        assert!(intersections.hit().approx_eq(&Some(&Intersection {
-            t: 1.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        })));
+        assert!(intersections.hit().map(|h| h.t).approx_eq(&Some(1.0)));
     }
 
     #[test]
     fn when_some_negative_t() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
             Intersection {
                 t: 1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
         ]);
-        assert!(intersections.hit().approx_eq(&Some(&Intersection {
-            t: 1.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        })));
+        assert!(intersections.hit().map(|h| h.t).approx_eq(&Some(1.0)));
     }
 
     #[test]
     fn when_all_negative_t() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -2.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
             Intersection {
                 t: -1.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
         ]);
         assert!(intersections.hit().approx_eq(&None));
@@ -133,28 +140,25 @@ mod hit_tests {
     fn always_lowest_positive() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, &material);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 5.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
             Intersection {
                 t: 7.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
             Intersection {
                 t: -3.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
             Intersection {
                 t: 2.0,
-                interaction: SurfaceInteraction { shape: &sphere },
+                interaction: test_interaction(&sphere),
             },
         ]);
-        assert!(intersections.hit().approx_eq(&Some(&Intersection {
-            t: 2.0,
-            interaction: SurfaceInteraction { shape: &sphere },
-        })));
+        assert!(intersections.hit().map(|h| h.t).approx_eq(&Some(2.0)));
     }
 }

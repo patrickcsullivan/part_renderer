@@ -44,7 +44,7 @@ fn demo() {
 
     let identity = identity4();
     let material = Material::new(Rgb::new(1.0, 0.2, 1.0), 0.1, 0.9, 0.9, 200.0);
-    let sphere = Sphere::new(&identity, &identity, &material);
+    let sphere = Sphere::new(&identity, &identity, false, &material);
     let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
 
     let img = ImageBuffer::from_fn(canvas_width, canvas_width, |x, y| {
