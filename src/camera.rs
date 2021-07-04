@@ -32,7 +32,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    fn new(width: u32, height: u32, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
+    pub fn new(width: u32, height: u32, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
         let half_view = (fov / 2.0).tan();
         let aspect = width as f32 / height as f32;
         let (half_width, half_height) = if aspect >= 1.0 {

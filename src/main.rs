@@ -1,6 +1,10 @@
+use cgmath::{Matrix4, Transform};
+
 use crate::{
+    camera::{view_transform, Camera},
     light::{phong_shading, PointLight},
     material::Material,
+    world::WorldBuilder,
 };
 
 mod camera;
@@ -28,47 +32,75 @@ fn demo() {
     use crate::color::Rgb;
     use crate::matrix::identity4;
     use crate::ray::Ray;
-    use cgmath::InnerSpace;
-    use cgmath::Point3;
-    use image::ImageBuffer;
-
     use crate::shape::{Shape, Sphere};
+    use cgmath::{InnerSpace, Point3, Rad, Vector3};
+    use image::ImageBuffer;
+    use std::f32::consts::PI;
 
-    // Assume LH coordinate system.
-    let ray_origin = Point3::new(0.0, 0.0, -5.0);
-    let wall_z = 10.0;
-    let wall_width = 7.0;
-    let half_width = wall_width / 2.0;
+    let floor_material = Material::new(Rgb::new(1.0, 0.9, 0.9), 0.1, 0.9, 0.0, 200.0);
+    let floor_transf = Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
+    let floor_inv_transf = floor_transf.inverse_transform().unwrap();
+    let floor = Sphere::new(&floor_transf, &floor_inv_transf, false, &floor_material);
 
-    let canvas_width = 100; // pixels
-    let pixel_size = wall_width / canvas_width as f32;
+    let left_wall_transf = Matrix4::from_translation(Vector3::new(0.0, 0.0, 5.0))
+        * Matrix4::from_angle_y(Rad(PI / -4.0))
+        * Matrix4::from_angle_x(Rad(PI / 2.0))
+        * Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
+    let left_wall_inv_transf = left_wall_transf.inverse_transform().unwrap();
+    let left_wall = Sphere::new(
+        &left_wall_transf,
+        &left_wall_inv_transf,
+        false,
+        &floor_material,
+    );
 
-    let identity = identity4();
-    let material = Material::new(Rgb::new(1.0, 0.2, 1.0), 0.1, 0.9, 0.9, 200.0);
-    let sphere = Sphere::new(&identity, &identity, false, &material);
-    let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
+    let right_wall_transf = Matrix4::from_translation(Vector3::new(0.0, 0.0, 5.0))
+        * Matrix4::from_angle_y(Rad(PI / 4.0))
+        * Matrix4::from_angle_x(Rad(PI / 2.0))
+        * Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
+    let right_wall_inv_transf = right_wall_transf.inverse_transform().unwrap();
+    let right_wall = Sphere::new(
+        &right_wall_transf,
+        &right_wall_inv_transf,
+        false,
+        &floor_material,
+    );
 
-    let img = ImageBuffer::from_fn(canvas_width, canvas_width, |x, y| {
-        let world_x = -1.0 * half_width + pixel_size * x as f32;
-        let world_y = half_width - pixel_size * y as f32;
-        let point_on_wall = Point3::new(world_x, world_y, wall_z);
-        let ray = Ray {
-            origin: ray_origin,
-            direction: (point_on_wall - ray_origin).normalize(),
-        };
-        let intersections = sphere.ray_intersections(&ray);
+    let middle_material = Material::new(Rgb::new(0.1, 1.0, 0.5), 0.1, 0.7, 0.3, 200.0);
+    let middle_transf = Matrix4::from_translation(Vector3::new(-0.5, 1.0, 0.5));
+    let middle_inv_transf = middle_transf.inverse_transform().unwrap();
+    let middle = Sphere::new(&middle_transf, &middle_inv_transf, false, &middle_material);
 
-        let color = if let Some(hit) = intersections.hit() {
-            let p = ray.at_t(hit.t);
-            let n = sphere.normal_at(p);
-            let eye = -1.0 * ray.direction;
-            phong_shading(&material, &light, &p, &eye, &n)
-        } else {
-            Rgb::black()
-        };
+    let right_material = Material::new(Rgb::new(0.5, 1.0, 0.1), 0.1, 0.7, 0.3, 200.0);
+    let right_transf =
+        Matrix4::from_translation(Vector3::new(1.5, 0.5, -0.5)) * Matrix4::from_scale(0.5);
+    let right_inv_transf = right_transf.inverse_transform().unwrap();
+    let right = Sphere::new(&right_transf, &right_inv_transf, false, &right_material);
 
-        let p: image::Rgb<u8> = color.into();
-        p
-    });
+    let left_material = Material::new(Rgb::new(1.0, 0.8, 0.1), 0.1, 0.7, 0.3, 200.0);
+    let left_transf =
+        Matrix4::from_translation(Vector3::new(-1.5, 0.33, -0.75)) * Matrix4::from_scale(0.33);
+    let left_inv_transf = left_transf.inverse_transform().unwrap();
+    let left = Sphere::new(&left_transf, &left_inv_transf, false, &left_material);
+
+    let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(-10.0, 10.0, -10.0));
+
+    let camera_transf = view_transform(
+        Point3::new(0.0, 1.5, -5.0),
+        Point3::new(0.0, 1.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
+    );
+    let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
+
+    let world = WorldBuilder::new()
+        .point_light(light)
+        .sphere(&floor)
+        .sphere(&left_wall)
+        .sphere(&right_wall)
+        .sphere(&middle)
+        .sphere(&right)
+        .sphere(&left)
+        .build();
+    let img = world.render(&camera);
     let _ = img.save("demo.png");
 }
