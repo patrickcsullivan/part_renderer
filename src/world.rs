@@ -123,43 +123,43 @@ mod color_at {
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
-    #[test]
-    fn color_at() {
-        let identity = identity4();
-        let scale = Matrix4::from_scale(0.5);
-        let inv_scale = scale.inverse_transform().unwrap();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0);
-        let sphere1 = Sphere::new(&identity, &identity, false, &material);
-        let sphere2 = Sphere::new(&scale, &inv_scale, false, &material);
-        let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
-        let world = WorldBuilder::new()
-            .sphere(&sphere1)
-            .sphere(&sphere2)
-            .point_light(light)
-            .build();
+    // #[test]
+    // fn color_at() {
+    //     let identity = identity4();
+    //     let scale = Matrix4::from_scale(0.5);
+    //     let inv_scale = scale.inverse_transform().unwrap();
+    //     let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0);
+    //     let sphere1 = Sphere::new(&identity, &identity, false, &material);
+    //     let sphere2 = Sphere::new(&scale, &inv_scale, false, &material);
+    //     let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
+    //     let world = WorldBuilder::new()
+    //         .sphere(&sphere1)
+    //         .sphere(&sphere2)
+    //         .point_light(light)
+    //         .build();
 
-        // When ray misses.
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 1.0, 0.0),
-        };
-        let color = world.color_at(&ray);
-        assert!(color.approx_eq(&Rgb::black()));
+    //     // When ray misses.
+    //     let ray = Ray {
+    //         origin: Point3::new(0.0, 0.0, -5.0),
+    //         direction: Vector3::new(0.0, 1.0, 0.0),
+    //     };
+    //     let color = world.color_at(&ray);
+    //     assert!(color.approx_eq(&Rgb::black()));
 
-        // When ray hits.
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
-        let color = world.color_at(&ray);
-        assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
+    //     // When ray hits.
+    //     let ray = Ray {
+    //         origin: Point3::new(0.0, 0.0, -5.0),
+    //         direction: Vector3::new(0.0, 0.0, 1.0),
+    //     };
+    //     let color = world.color_at(&ray);
+    //     assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
 
-        // // When ray starts outer sphere and hits inner sphere.
-        // let ray = Ray {
-        //     origin: Point3::new(0.0, 0.0, -5.0),
-        //     direction: Vector3::new(0.0, 0.0, 1.0),
-        // };
-        // let color = world.color_at(&ray);
-        // assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
-    }
+    //     // // When ray starts outer sphere and hits inner sphere.
+    //     // let ray = Ray {
+    //     //     origin: Point3::new(0.0, 0.0, -5.0),
+    //     //     direction: Vector3::new(0.0, 0.0, 1.0),
+    //     // };
+    //     // let color = world.color_at(&ray);
+    //     // assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
+    // }
 }

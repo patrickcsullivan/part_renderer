@@ -3,6 +3,7 @@ use crate::{
     material::Material,
 };
 
+mod camera;
 mod color;
 mod interaction;
 mod intersection;

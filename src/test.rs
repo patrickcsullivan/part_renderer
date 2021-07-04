@@ -52,6 +52,23 @@ impl ApproxEq for cgmath::Vector3<f32> {
     }
 }
 
+impl ApproxEq for cgmath::Vector4<f32> {
+    fn approx_eq(&self, other: &Self) -> bool {
+        self.x.approx_eq(&other.x)
+            && self.y.approx_eq(&other.y)
+            && self.z.approx_eq(&other.z)
+            && self.w.approx_eq(&other.w)
+    }
+}
+impl ApproxEq for cgmath::Matrix4<f32> {
+    fn approx_eq(&self, other: &Self) -> bool {
+        self.x.approx_eq(&other.x)
+            && self.y.approx_eq(&other.y)
+            && self.z.approx_eq(&other.z)
+            && self.w.approx_eq(&other.w)
+    }
+}
+
 impl<'shp, 'mtrx, 'mtrl> ApproxEq for crate::interaction::SurfaceInteraction<'shp, 'mtrx, 'mtrl> {
     fn approx_eq(&self, _other: &Self) -> bool {
         // TODO: For now it doesn't seem possible to compare two trait object
