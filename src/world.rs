@@ -38,6 +38,7 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
             &interaction.point,
             &interaction.neg_ray_direction,
             &interaction.normal,
+            false,
         )
     }
 
