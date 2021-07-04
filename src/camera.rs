@@ -27,18 +27,27 @@ pub struct Camera {
 }
 
 impl Camera {
-    // fn new(width: u32, height: u32, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
-    //     let half_fov = fov / 2.0;
-    //     let aspect = height as f32 / width as f32;
-    //     let (half_width, half_height) = if aspect >= 1.0 {
-    //         // vertical
-    //         (half_fov.0, half_fov.0 / aspect)
-    //     } else {
-    //         // horizontal
-    //         (half_fov.0 * aspect, half_fov.0)
-    //     };
-    //     let pixel_size = half_width * 2.0;
-    // }
+    fn new(width: usize, height: usize, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
+        let half_view = (fov / 2.0).tan();
+        let aspect = width as f32 / height as f32;
+        let (half_width, half_height) = if aspect >= 1.0 {
+            // horizontal
+            (half_view, half_view / aspect)
+        } else {
+            // vertical
+            (half_view * aspect, half_view)
+        };
+        let pixel_size = half_width * 2.0 / width as f32;
+
+        Self {
+            size: (width, height),
+            fov,
+            world_to_camera,
+            half_width,
+            half_height,
+            pixel_size,
+        }
+    }
 
     // pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
     //     // Offset from canvase edge to center of pixel.
@@ -112,16 +121,21 @@ mod view_transform_tests {
     }
 }
 
-// #[cfg(test)]
-// mod pixel_size_tests {
-//     use crate::{camera::Camera, test::ApproxEq};
-//     use cgmath::{Angle, Deg, Rad};
-//     use std::f32::consts::PI;
+#[cfg(test)]
+mod pixel_size_tests {
+    use crate::{camera::Camera, matrix::identity4, test::ApproxEq};
+    use cgmath::{Angle, Deg, Rad};
+    use std::f32::consts::PI;
 
-//     #[test]
-//     fn test() {
-//         let camera = Camera::new((200, 125), Deg(56.25).into());
-//         let pixel_size = camera.pixel_size();
-//         assert!(pixel_size.approx_eq(&0.01));
-//     }
-// }
+    #[test]
+    fn for_horizontal_canvas() {
+        let camera = Camera::new(200, 125, Rad(PI / 2.0), identity4());
+        assert!(camera.pixel_size.approx_eq(&0.01));
+    }
+
+    #[test]
+    fn for_vertical_canvas() {
+        let camera = Camera::new(125, 200, Rad(PI / 2.0), identity4());
+        assert!(camera.pixel_size.approx_eq(&0.01));
+    }
+}
