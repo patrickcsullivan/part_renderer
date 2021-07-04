@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, Transform};
+use cgmath::{Matrix, Matrix4, Transform};
 
 use crate::{
     camera::{view_transform, Camera},
@@ -25,7 +25,7 @@ mod test;
 
 fn main() {
     println!("Hello, world!");
-    demo();
+    // demo();
     demo_simple();
 }
 
@@ -36,21 +36,28 @@ fn demo_simple() {
     use cgmath::{Point3, Rad, Vector3};
     use std::f32::consts::PI;
 
+    let right_transf = Matrix4::from_translation(Vector3::new(2.5, 0.0, 0.0));
+    let left_transf = Matrix4::from_translation(Vector3::new(-2.5, 0.0, 0.0));
+
     let identity = identity4();
     let material = Material::new(Rgb::new(1.0, 0.2, 1.0), 0.1, 0.9, 0.9, 200.0);
-    let sphere = Sphere::new(&identity, &identity, false, &material);
+    let sphere1 = Sphere::new(&identity, &identity, false, &material);
+    let sphere2 = Sphere::new(&right_transf, &left_transf, false, &material);
+    let sphere3 = Sphere::new(&left_transf, &right_transf, false, &material);
     let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
 
     let camera_transf = view_transform(
-        Point3::new(0.0, 0.0, -2.0),
+        Point3::new(0.0, 0.0, -4.0),
         Point3::new(0.0, 0.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
     );
-    let camera = Camera::new(100, 100, Rad(PI / 2.0), camera_transf);
+    let camera = Camera::new(400, 400, Rad(PI / 2.0), camera_transf);
 
     let world = WorldBuilder::new()
         .point_light(light)
-        .sphere(&sphere)
+        .sphere(&sphere1)
+        .sphere(&sphere2)
+        .sphere(&sphere3)
         .build();
     let img = world.render(&camera);
     let _ = img.save("demo_simple.png");
