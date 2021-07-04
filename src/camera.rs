@@ -9,8 +9,11 @@ use crate::ray::Ray;
 /// The camera sits at the origin of camera space and renders images onto a
 /// canvas one unit away.
 pub struct Camera {
-    /// The camera's width and height in pixels.
-    pub size: (usize, usize),
+    /// Canvas's width in pixels.
+    pub width: u32,
+
+    /// Canvas's height in pixels.
+    pub height: u32,
 
     /// The field of view for the largest dimension.
     pub fov: Rad<f32>,
@@ -29,7 +32,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    fn new(width: usize, height: usize, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
+    fn new(width: u32, height: u32, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
         let half_view = (fov / 2.0).tan();
         let aspect = width as f32 / height as f32;
         let (half_width, half_height) = if aspect >= 1.0 {
@@ -42,7 +45,8 @@ impl Camera {
         let pixel_size = half_width * 2.0 / width as f32;
 
         Self {
-            size: (width, height),
+            width,
+            height,
             fov,
             world_to_camera,
             half_width,
@@ -53,7 +57,7 @@ impl Camera {
 
     /// Returns a ray that starts at the camera and passes through the specified
     /// pixel on the canvas.
-    pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
+    pub fn ray_for_pixel(&self, px: u32, py: u32) -> Ray {
         // Offset from canvase edge to center of pixel.
         let x_offset = (px as f32 + 0.5) * self.pixel_size;
         let y_offset = (py as f32 + 0.5) * self.pixel_size;

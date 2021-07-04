@@ -1,4 +1,5 @@
 use crate::{
+    camera::Camera,
     color::Rgb,
     interaction::SurfaceInteraction,
     intersection::{Intersection, Intersections},
@@ -6,6 +7,7 @@ use crate::{
     ray::Ray,
     shape::{Shape, Sphere},
 };
+use image::ImageBuffer;
 
 pub struct World<'shp, 'mtrx, 'mtrl> {
     pub shapes: Vec<&'shp Sphere<'mtrx, 'mtrl>>,
@@ -46,6 +48,15 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
         } else {
             Rgb::black()
         }
+    }
+
+    pub fn render(&self, camera: &Camera) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
+        ImageBuffer::from_fn(camera.width as u32, camera.height as u32, |x, y| {
+            let ray = camera.ray_for_pixel(x, y);
+            let color = self.color_at(&ray);
+            let pixel: image::Rgb<u8> = color.into();
+            pixel
+        })
     }
 }
 
