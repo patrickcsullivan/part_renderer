@@ -73,24 +73,10 @@ fn demo() {
     use image::ImageBuffer;
     use std::f32::consts::PI;
 
+    let identity = identity4();
+
     let floor_material = Material::new(Rgb::new(1.0, 0.9, 0.9), 0.1, 0.9, 0.0, 200.0);
-    let floor_transf = Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
-    let floor_inv_transf = floor_transf.inverse_transform().unwrap();
-    let floor = Object::sphere(&floor_transf, &floor_inv_transf, false);
-
-    let left_wall_transf = Matrix4::from_translation(Vector3::new(0.0, 0.0, 5.0))
-        * Matrix4::from_angle_y(Rad(PI / -4.0))
-        * Matrix4::from_angle_x(Rad(PI / 2.0))
-        * Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
-    let left_wall_inv_transf = left_wall_transf.inverse_transform().unwrap();
-    let left_wall = Object::sphere(&left_wall_transf, &left_wall_inv_transf, false);
-
-    let right_wall_transf = Matrix4::from_translation(Vector3::new(0.0, 0.0, 5.0))
-        * Matrix4::from_angle_y(Rad(PI / 4.0))
-        * Matrix4::from_angle_x(Rad(PI / 2.0))
-        * Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
-    let right_wall_inv_transf = right_wall_transf.inverse_transform().unwrap();
-    let right_wall = Object::sphere(&right_wall_transf, &right_wall_inv_transf, false);
+    let floor = Object::plane(&identity, &identity, false);
 
     let middle_material = Material::new(Rgb::new(0.1, 1.0, 0.5), 0.1, 0.7, 0.3, 200.0);
     let middle_transf = Matrix4::from_translation(Vector3::new(-0.5, 1.0, 0.5));
@@ -123,8 +109,6 @@ fn demo() {
         .point_light(light1)
         .point_light(light2)
         .primitive(Primitive::new(&floor, &floor_material))
-        .primitive(Primitive::new(&left_wall, &floor_material))
-        .primitive(Primitive::new(&right_wall, &floor_material))
         .primitive(Primitive::new(&middle, &middle_material))
         .primitive(Primitive::new(&right, &right_material))
         .primitive(Primitive::new(&left, &left_material))
