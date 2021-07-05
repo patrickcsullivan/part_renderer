@@ -7,6 +7,7 @@ use crate::{
     ray::Ray,
     shape::{Shape, Sphere},
 };
+use cgmath::{InnerSpace, MetricSpace, Point3};
 use image::ImageBuffer;
 
 pub struct World<'shp, 'mtrx, 'mtrl> {
@@ -28,18 +29,23 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
         &self,
         interaction: &SurfaceInteraction<'shp, 'mtrx, 'mtrl>,
     ) -> Rgb {
-        // FIXME: Assumes there is exactly one light. Loop over lights, adding
-        // to color to support multiple lights.
-        let light = self.lights.first().unwrap();
+        self.lights.iter().fold(Rgb::black(), |output, light| {
+            // Shift the interaction point away from the surface slightly, so that
+            // the occlusion check doesn't accidentally intersect the surface.
+            let over_point = interaction.point + interaction.normal * 0.01; // FIXME: This adjustment value seems very high.
+            let in_shadow = self.is_occluded(over_point, light);
 
-        phong_shading(
-            interaction.shape.material(),
-            light,
-            &interaction.point,
-            &interaction.neg_ray_direction,
-            &interaction.normal,
-            false,
-        )
+            let color = phong_shading(
+                interaction.shape.material(),
+                light,
+                &interaction.point,
+                &interaction.neg_ray_direction,
+                &interaction.normal,
+                in_shadow,
+            );
+
+            output + color
+        })
     }
 
     pub fn color_at(&self, ray: &Ray) -> Rgb {
@@ -58,6 +64,21 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
             let pixel: image::Rgb<u8> = color.into();
             pixel
         })
+    }
+
+    /// Returns true if the specified point is occluded from the light.
+    pub fn is_occluded(&self, p: Point3<f32>, light: &PointLight) -> bool {
+        let to_light = light.position - p;
+        let distance = to_light.magnitude();
+
+        let ray = Ray::new(p, to_light.normalize());
+        let intersections = self.ray_intersections(&ray);
+
+        if let Some(hit) = intersections.hit() {
+            hit.t < distance
+        } else {
+            false
+        }
     }
 }
 
@@ -128,7 +149,7 @@ mod ray_intersections_tests {
 }
 
 #[cfg(test)]
-mod color_at {
+mod color_at_tests {
     use crate::{
         color::Rgb, light::PointLight, material::Material, matrix::identity4, ray::Ray,
         shape::Sphere, test::ApproxEq, world::WorldBuilder,
@@ -166,12 +187,51 @@ mod color_at {
         let color = world.color_at(&ray);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
 
-        // // When ray starts outer sphere and hits inner sphere.
-        // let ray = Ray {
-        //     origin: Point3::new(0.0, 0.0, -5.0),
-        //     direction: Vector3::new(0.0, 0.0, 1.0),
-        // };
-        // let color = world.color_at(&ray);
-        // assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
+        // When ray starts outer sphere and hits inner sphere.
+        let ray = Ray {
+            origin: Point3::new(0.0, 0.0, -5.0),
+            direction: Vector3::new(0.0, 0.0, 1.0),
+        };
+        let color = world.color_at(&ray);
+        assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
+    }
+}
+
+#[cfg(test)]
+mod is_occluded_tests {
+    use crate::{
+        color::Rgb, light::PointLight, material::Material, matrix::identity4, ray::Ray,
+        shape::Sphere, test::ApproxEq, world::WorldBuilder,
+    };
+    use cgmath::{Matrix4, Point3, Transform, Vector3};
+
+    #[test]
+    fn is_occluded() {
+        let identity = identity4();
+        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0);
+        let sphere = Sphere::new(&identity, &identity, false, &material);
+        let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
+        let world = WorldBuilder::new()
+            .sphere(&sphere)
+            .point_light(light)
+            .build();
+
+        // The point is above the sphere and collinear with the light, so
+        // the sphere does not block light from the point.
+        let p = Point3::new(0.0, 10.0, 0.0);
+        assert!(!world.is_occluded(p, &world.lights[0]));
+
+        // The sphere is between the point and the light, so it blocks light.
+        let p = Point3::new(10.0, -10.0, 10.0);
+        assert!(world.is_occluded(p, &world.lights[0]));
+
+        // The light is between the point and the sphere, so it is unblocked.
+        let p = Point3::new(-20.0, 20.0, -20.0);
+        assert!(!world.is_occluded(p, &world.lights[0]));
+
+        // The point is between the light and the sphere, so the light in
+        // ublocked..
+        let p = Point3::new(-2.0, 2.0, -2.0);
+        assert!(!world.is_occluded(p, &world.lights[0]));
     }
 }

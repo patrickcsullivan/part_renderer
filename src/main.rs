@@ -118,7 +118,8 @@ fn demo() {
     let left_inv_transf = left_transf.inverse_transform().unwrap();
     let left = Sphere::new(&left_transf, &left_inv_transf, false, &left_material);
 
-    let light = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(-10.0, 10.0, -10.0));
+    let light1 = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(-10.0, 10.0, -10.0));
+    let light2 = PointLight::new(Rgb::new(0.2, 0.0, 0.4), Point3::new(10.0, 10.0, -10.0));
 
     let camera_transf = view_transform(
         Point3::new(0.0, 1.5, -5.0),
@@ -128,7 +129,8 @@ fn demo() {
     let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
 
     let world = WorldBuilder::new()
-        .point_light(light)
+        .point_light(light1)
+        .point_light(light2)
         .sphere(&floor)
         .sphere(&left_wall)
         .sphere(&right_wall)
