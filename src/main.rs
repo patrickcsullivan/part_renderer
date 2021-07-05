@@ -1,12 +1,3 @@
-use cgmath::{Matrix, Matrix4, Transform};
-
-use crate::{
-    camera::{view_transform, Camera},
-    light::{phong_shading, PointLight},
-    material::Material,
-    world::WorldBuilder,
-};
-
 mod camera;
 mod color;
 mod interaction;
@@ -22,6 +13,14 @@ mod world;
 
 #[cfg(test)]
 mod test;
+
+use crate::{
+    camera::{view_transform, Camera},
+    light::{phong_shading, PointLight},
+    material::Material,
+    world::WorldBuilder,
+};
+use cgmath::{Matrix, Matrix4, Transform};
 
 fn main() {
     println!("Hello, world!");
