@@ -1,10 +1,11 @@
-use crate::interaction::SurfaceInteraction;
+use crate::{interaction::SurfaceInteraction, primitive::Primitive};
 use std::cmp::Ordering;
 
 #[derive(Debug)]
 pub struct Intersection<'shp, 'mtrx, 'mtrl> {
     pub t: f32,
-    pub interaction: SurfaceInteraction<'shp, 'mtrx, 'mtrl>,
+    pub interaction: SurfaceInteraction,
+    pub primitive: Primitive<'shp, 'mtrx, 'mtrl>,
 }
 
 pub struct Intersections<'shp, 'mtrx, 'mtrl> {
@@ -58,7 +59,8 @@ mod hit_tests {
     use crate::intersection::{Intersection, Intersections};
     use crate::material::Material;
     use crate::matrix::identity4;
-    use crate::shape::Sphere;
+    use crate::primitive::Primitive;
+    use crate::shape::Object;
     use crate::test::ApproxEq;
 
     fn test_material() -> Material {
@@ -71,11 +73,8 @@ mod hit_tests {
         }
     }
 
-    fn test_interaction<'shp, 'mtrx, 'mtrl>(
-        shape: &'shp Sphere<'mtrx, 'mtrl>,
-    ) -> SurfaceInteraction<'shp, 'mtrx, 'mtrl> {
+    fn test_interaction() -> SurfaceInteraction {
         SurfaceInteraction {
-            shape,
             point: Point3::new(0.0, 0.0, 0.0),
             neg_ray_direction: Vector3::new(0.0, 0.0, 1.0),
             normal: Vector3::new(0.0, 0.0, 1.0),
@@ -86,15 +85,17 @@ mod hit_tests {
     fn when_all_positive_t() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, false, &material);
+        let sphere = Object::sphere(&identity, &identity, false);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 1.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
             Intersection {
                 t: 2.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
         ]);
         assert!(intersections.hit().map(|h| h.t).approx_eq(&Some(1.0)));
@@ -104,15 +105,17 @@ mod hit_tests {
     fn when_some_negative_t() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, false, &material);
+        let sphere = Object::sphere(&identity, &identity, false);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -1.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
             Intersection {
                 t: 1.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
         ]);
         assert!(intersections.hit().map(|h| h.t).approx_eq(&Some(1.0)));
@@ -122,15 +125,17 @@ mod hit_tests {
     fn when_all_negative_t() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, false, &material);
+        let sphere = Object::sphere(&identity, &identity, false);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: -2.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
             Intersection {
                 t: -1.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
         ]);
         assert!(intersections.hit().approx_eq(&None));
@@ -140,23 +145,27 @@ mod hit_tests {
     fn always_lowest_positive() {
         let identity = identity4();
         let material = test_material();
-        let sphere = Sphere::new(&identity, &identity, false, &material);
+        let sphere = Object::sphere(&identity, &identity, false);
         let intersections = Intersections::new(vec![
             Intersection {
                 t: 5.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
             Intersection {
                 t: 7.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
             Intersection {
                 t: -3.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
             Intersection {
                 t: 2.0,
-                interaction: test_interaction(&sphere),
+                interaction: test_interaction(),
+                primitive: Primitive::new(&sphere, &material),
             },
         ]);
         assert!(intersections.hit().map(|h| h.t).approx_eq(&Some(2.0)));

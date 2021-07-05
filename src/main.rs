@@ -5,6 +5,7 @@ mod intersection;
 mod light;
 mod material;
 mod matrix;
+mod primitive;
 mod ray;
 mod shape;
 mod transform;
@@ -18,6 +19,7 @@ use crate::{
     camera::{view_transform, Camera},
     light::{phong_shading, PointLight},
     material::Material,
+    primitive::Primitive,
     world::WorldBuilder,
 };
 use cgmath::{Matrix, Matrix4, Transform};
@@ -31,7 +33,7 @@ fn main() {
 fn demo_simple() {
     use crate::color::Rgb;
     use crate::matrix::identity4;
-    use crate::shape::{Shape, Sphere};
+    use crate::shape::Object;
     use cgmath::{Point3, Rad, Vector3};
     use std::f32::consts::PI;
 
@@ -40,9 +42,9 @@ fn demo_simple() {
 
     let identity = identity4();
     let material = Material::new(Rgb::new(1.0, 0.2, 1.0), 0.1, 0.9, 0.9, 200.0);
-    let sphere1 = Sphere::new(&identity, &identity, false, &material);
-    let sphere2 = Sphere::new(&right_transf, &left_transf, false, &material);
-    let sphere3 = Sphere::new(&left_transf, &right_transf, false, &material);
+    let sphere1 = Object::sphere(&identity, &identity, false);
+    let sphere2 = Object::sphere(&right_transf, &left_transf, false);
+    let sphere3 = Object::sphere(&left_transf, &right_transf, false);
     let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
 
     let camera_transf = view_transform(
@@ -54,9 +56,9 @@ fn demo_simple() {
 
     let world = WorldBuilder::new()
         .point_light(light)
-        .sphere(&sphere1)
-        .sphere(&sphere2)
-        .sphere(&sphere3)
+        .primitive(Primitive::new(&sphere1, &material))
+        .primitive(Primitive::new(&sphere2, &material))
+        .primitive(Primitive::new(&sphere3, &material))
         .build();
     let img = world.render(&camera);
     let _ = img.save("demo_simple.png");
@@ -66,7 +68,7 @@ fn demo() {
     use crate::color::Rgb;
     use crate::matrix::identity4;
     use crate::ray::Ray;
-    use crate::shape::{Shape, Sphere};
+    use crate::shape::Object;
     use cgmath::{InnerSpace, Point3, Rad, Vector3};
     use image::ImageBuffer;
     use std::f32::consts::PI;
@@ -74,48 +76,38 @@ fn demo() {
     let floor_material = Material::new(Rgb::new(1.0, 0.9, 0.9), 0.1, 0.9, 0.0, 200.0);
     let floor_transf = Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
     let floor_inv_transf = floor_transf.inverse_transform().unwrap();
-    let floor = Sphere::new(&floor_transf, &floor_inv_transf, false, &floor_material);
+    let floor = Object::sphere(&floor_transf, &floor_inv_transf, false);
 
     let left_wall_transf = Matrix4::from_translation(Vector3::new(0.0, 0.0, 5.0))
         * Matrix4::from_angle_y(Rad(PI / -4.0))
         * Matrix4::from_angle_x(Rad(PI / 2.0))
         * Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
     let left_wall_inv_transf = left_wall_transf.inverse_transform().unwrap();
-    let left_wall = Sphere::new(
-        &left_wall_transf,
-        &left_wall_inv_transf,
-        false,
-        &floor_material,
-    );
+    let left_wall = Object::sphere(&left_wall_transf, &left_wall_inv_transf, false);
 
     let right_wall_transf = Matrix4::from_translation(Vector3::new(0.0, 0.0, 5.0))
         * Matrix4::from_angle_y(Rad(PI / 4.0))
         * Matrix4::from_angle_x(Rad(PI / 2.0))
         * Matrix4::from_nonuniform_scale(10.0, 0.01, 10.0);
     let right_wall_inv_transf = right_wall_transf.inverse_transform().unwrap();
-    let right_wall = Sphere::new(
-        &right_wall_transf,
-        &right_wall_inv_transf,
-        false,
-        &floor_material,
-    );
+    let right_wall = Object::sphere(&right_wall_transf, &right_wall_inv_transf, false);
 
     let middle_material = Material::new(Rgb::new(0.1, 1.0, 0.5), 0.1, 0.7, 0.3, 200.0);
     let middle_transf = Matrix4::from_translation(Vector3::new(-0.5, 1.0, 0.5));
     let middle_inv_transf = middle_transf.inverse_transform().unwrap();
-    let middle = Sphere::new(&middle_transf, &middle_inv_transf, false, &middle_material);
+    let middle = Object::sphere(&middle_transf, &middle_inv_transf, false);
 
     let right_material = Material::new(Rgb::new(0.5, 1.0, 0.1), 0.1, 0.7, 0.3, 200.0);
     let right_transf =
         Matrix4::from_translation(Vector3::new(1.5, 0.5, -0.5)) * Matrix4::from_scale(0.5);
     let right_inv_transf = right_transf.inverse_transform().unwrap();
-    let right = Sphere::new(&right_transf, &right_inv_transf, false, &right_material);
+    let right = Object::sphere(&right_transf, &right_inv_transf, false);
 
     let left_material = Material::new(Rgb::new(1.0, 0.8, 0.1), 0.1, 0.7, 0.3, 200.0);
     let left_transf =
         Matrix4::from_translation(Vector3::new(-1.5, 0.33, -0.75)) * Matrix4::from_scale(0.33);
     let left_inv_transf = left_transf.inverse_transform().unwrap();
-    let left = Sphere::new(&left_transf, &left_inv_transf, false, &left_material);
+    let left = Object::sphere(&left_transf, &left_inv_transf, false);
 
     let light1 = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(-10.0, 10.0, -10.0));
     let light2 = PointLight::new(Rgb::new(0.2, 0.0, 0.4), Point3::new(10.0, 10.0, -10.0));
@@ -130,12 +122,12 @@ fn demo() {
     let world = WorldBuilder::new()
         .point_light(light1)
         .point_light(light2)
-        .sphere(&floor)
-        .sphere(&left_wall)
-        .sphere(&right_wall)
-        .sphere(&middle)
-        .sphere(&right)
-        .sphere(&left)
+        .primitive(Primitive::new(&floor, &floor_material))
+        .primitive(Primitive::new(&left_wall, &floor_material))
+        .primitive(Primitive::new(&right_wall, &floor_material))
+        .primitive(Primitive::new(&middle, &middle_material))
+        .primitive(Primitive::new(&right, &right_material))
+        .primitive(Primitive::new(&left, &left_material))
         .build();
     let img = world.render(&camera);
     let _ = img.save("demo.png");

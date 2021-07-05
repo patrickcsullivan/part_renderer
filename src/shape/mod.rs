@@ -1,58 +1,81 @@
+mod plane;
 mod sphere;
 
-pub use sphere::Sphere;
-
-use crate::interaction::SurfaceInteraction;
-use crate::intersection::{Intersection, Intersections};
-use crate::material::Material;
-use crate::ray::Ray;
-use cgmath::{InnerSpace, Matrix, Matrix4, Point3, Transform, Vector3};
+use crate::{interaction::SurfaceInteraction, ray::Ray};
+use cgmath::Matrix4;
 use std::fmt::Debug;
 
-/// Describes the geometric properties of a primitive and provides a ray
-/// intersection function.
-pub trait Shape<'shp, 'mtrx, 'mtrl>: Debug {
-    /// Returns a reference to the matrix that transforms the shape from object
-    /// space to world space.
-    fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32>;
-
-    /// Returns a reference to the matrix that transforms the shape from world
-    /// space to object space.
-    fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32>;
-
-    /// Returns a flag that indicates whether the shape's normals should be
-    /// flipped from their original directions in order to point to the outside
-    /// of the shape.
-    fn reverse_orientation(&self) -> bool;
-
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl>;
-
-    // TODO: Eventually, store the material/shading properties in a Primitive
-    // instead of in the Shape.
-    fn material(&self) -> &'mtrl Material;
+/// A transformed 3D object.
+#[derive(Debug)]
+pub struct Object<'mtrx> {
+    object_to_world: &'mtrx Matrix4<f32>,
+    world_to_object: &'mtrx Matrix4<f32>,
+    reverse_orientation: bool,
+    geometry: Geometry,
 }
 
-impl<'shp, 'mtrx, 'mtrl, T> Shape<'shp, 'mtrx, 'mtrl> for &T
-where
-    T: Shape<'shp, 'mtrx, 'mtrl>,
-{
-    fn object_to_world(&self) -> &'mtrx cgmath::Matrix4<f32> {
-        (*self).object_to_world()
+impl<'mtrx> Object<'mtrx> {
+    pub fn sphere(
+        object_to_world: &'mtrx Matrix4<f32>,
+        world_to_object: &'mtrx Matrix4<f32>,
+        reverse_orientation: bool,
+    ) -> Self {
+        Self {
+            object_to_world,
+            world_to_object,
+            reverse_orientation,
+            geometry: Geometry::Sphere(),
+        }
     }
 
-    fn world_to_object(&self) -> &'mtrx cgmath::Matrix4<f32> {
-        (*self).world_to_object()
+    pub fn plane(
+        object_to_world: &'mtrx Matrix4<f32>,
+        world_to_object: &'mtrx Matrix4<f32>,
+        reverse_orientation: bool,
+    ) -> Self {
+        Self {
+            object_to_world,
+            world_to_object,
+            reverse_orientation,
+            geometry: Geometry::Plane(),
+        }
     }
 
-    fn reverse_orientation(&self) -> bool {
-        (*self).reverse_orientation()
+    pub fn ray_intersections(&self, ray: &Ray) -> Vec<(f32, SurfaceInteraction)> {
+        self.geometry.ray_intersections(
+            ray,
+            self.object_to_world,
+            self.world_to_object,
+            self.reverse_orientation,
+        )
     }
+}
 
-    fn ray_intersections(&'shp self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl> {
-        (*self).ray_intersections(ray)
-    }
+/// A description of 3D geometry.
+#[derive(Debug)]
+enum Geometry {
+    Sphere(),
+    Plane(),
+}
 
-    fn material(&self) -> &'mtrl Material {
-        (*self).material()
+impl Geometry {
+    fn ray_intersections(
+        &self,
+        ray: &Ray,
+        object_to_world: &Matrix4<f32>,
+        world_to_object: &Matrix4<f32>,
+        reverse_orientation: bool,
+    ) -> Vec<(f32, SurfaceInteraction)> {
+        match self {
+            Geometry::Sphere() => sphere::ray_intersections(
+                ray,
+                object_to_world,
+                world_to_object,
+                reverse_orientation,
+            ),
+            Geometry::Plane() => {
+                plane::ray_intersections(ray, object_to_world, world_to_object, reverse_orientation)
+            }
+        }
     }
 }
