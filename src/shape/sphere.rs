@@ -91,6 +91,7 @@ mod ray_intersects_tests {
             diffuse: 0.0,
             specular: 0.0,
             shininess: 0.0,
+            reflective: 0.0,
         }
     }
 
@@ -283,6 +284,7 @@ mod normal_tests {
             diffuse: 0.0,
             specular: 0.0,
             shininess: 0.0,
+            reflective: 0.0,
         }
     }
 

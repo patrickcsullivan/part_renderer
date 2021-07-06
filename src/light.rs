@@ -64,7 +64,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_between_light_and_surface() {
-        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0);
+        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0, 0.0);
         let position = Point3::new(0.0, 0.0, 0.0);
         let normal = Vector3::new(0.0, 0.0, -1.0);
 
@@ -76,7 +76,7 @@ mod phong_shading_tests {
 
     #[test]
     fn surface_in_shadow() {
-        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0);
+        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0, 0.0);
         let position = Point3::new(0.0, 0.0, 0.0);
         let normal = Vector3::new(0.0, 0.0, -1.0);
 
@@ -88,7 +88,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_between_light_and_surface_and_offset_45_degrees() {
-        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0);
+        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0, 0.0);
         let position = Point3::new(0.0, 0.0, 0.0);
         let normal = Vector3::new(0.0, 0.0, -1.0);
 
@@ -100,7 +100,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_opposite_surface_light_offset() {
-        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0);
+        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0, 0.0);
         let position = Point3::new(0.0, 0.0, 0.0);
         let normal = Vector3::new(0.0, 0.0, -1.0);
 
@@ -112,7 +112,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_in_reflection_path() {
-        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0);
+        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0, 0.0);
         let position = Point3::new(0.0, 0.0, 0.0);
         let normal = Vector3::new(0.0, 0.0, -1.0);
 
@@ -124,7 +124,7 @@ mod phong_shading_tests {
 
     #[test]
     fn light_behind_surface() {
-        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0);
+        let material = Material::new(Rgb::new(1.0, 1.0, 1.0), 0.1, 0.9, 0.9, 200.0, 0.0);
         let position = Point3::new(0.0, 0.0, 0.0);
         let normal = Vector3::new(0.0, 0.0, -1.0);
 

@@ -139,7 +139,7 @@ mod ray_intersections_tests {
         let identity = identity4();
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0);
+        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0, 0.0);
         let sphere1 = Object::sphere(&identity, &identity, false);
         let sphere2 = Object::sphere(&scale, &inv_scale, false);
         let primitive1 = Primitive::new(&sphere1, &material);
@@ -176,7 +176,7 @@ mod color_at_tests {
         let identity = identity4();
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0);
+        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
         let sphere1 = Object::sphere(&identity, &identity, false);
         let sphere2 = Object::sphere(&scale, &inv_scale, false);
         let primitive1 = Primitive::new(&sphere1, &material);
@@ -225,7 +225,7 @@ mod is_occluded_tests {
     #[test]
     fn is_occluded() {
         let identity = identity4();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0);
+        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
         let sphere = Object::sphere(&identity, &identity, false);
         let primitive = Primitive::new(&sphere, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));

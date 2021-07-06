@@ -70,6 +70,7 @@ mod hit_tests {
             diffuse: 0.0,
             specular: 0.0,
             shininess: 0.0,
+            reflective: 0.0,
         }
     }
 
