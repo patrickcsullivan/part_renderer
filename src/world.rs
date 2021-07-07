@@ -41,14 +41,14 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
         &self,
         interaction: &SurfaceInteraction,
         material: &Material,
+        remaining: usize,
     ) -> Rgb {
-        self.lights.iter().fold(Rgb::black(), |output, light| {
+        self.lights.iter().fold(Rgb::black(), |color, light| {
             // Shift the interaction point away from the surface slightly, so that
             // the occlusion check doesn't accidentally intersect the surface.
-            let over_point = interaction.point + interaction.normal * 0.01; // FIXME: This adjustment value seems very high.
-            let in_shadow = self.is_occluded(over_point, light);
+            let in_shadow = self.is_occluded(interaction.over_point(), light);
 
-            let color = phong_shading(
+            let surface = phong_shading(
                 material,
                 light,
                 &interaction.point,
@@ -57,23 +57,29 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
                 in_shadow,
             );
 
-            output + color
+            let reflected = self.reflected_color(material, interaction, remaining);
+
+            color + surface + reflected
         })
     }
 
-    pub fn color_at(&self, ray: &Ray) -> Rgb {
+    pub fn color_at(&self, ray: &Ray, remaining: usize) -> Rgb {
         let intersections = self.ray_intersections(&ray);
         if let Some(hit) = intersections.hit() {
-            self.shade_surface_interaction(&hit.interaction, &hit.primitive.material)
+            self.shade_surface_interaction(&hit.interaction, &hit.primitive.material, remaining)
         } else {
             Rgb::black()
         }
     }
 
-    pub fn render(&self, camera: &Camera) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
+    pub fn render(
+        &self,
+        camera: &Camera,
+        recursions: usize,
+    ) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
         ImageBuffer::from_fn(camera.width as u32, camera.height as u32, |x, y| {
             let ray = camera.ray_for_pixel(x, y);
-            let color = self.color_at(&ray);
+            let color = self.color_at(&ray, recursions);
             let pixel: image::Rgb<u8> = color.into();
             pixel
         })
@@ -91,6 +97,21 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
             hit.t < distance
         } else {
             false
+        }
+    }
+
+    fn reflected_color(
+        &self,
+        material: &Material,
+        interaction: &SurfaceInteraction,
+        remaining: usize,
+    ) -> Rgb {
+        if remaining < 1 || material.reflective == 0.0 {
+            Rgb::black()
+        } else {
+            let reflect_ray = Ray::new(interaction.over_point(), interaction.reflect());
+            let color = self.color_at(&reflect_ray, remaining - 1);
+            color * material.reflective
         }
     }
 }
@@ -193,7 +214,7 @@ mod color_at_tests {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 1.0, 0.0),
         };
-        let color = world.color_at(&ray);
+        let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::black()));
 
         // When ray hits.
@@ -201,7 +222,7 @@ mod color_at_tests {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let color = world.color_at(&ray);
+        let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
 
         // When ray starts outer sphere and hits inner sphere.
@@ -209,7 +230,7 @@ mod color_at_tests {
             origin: Point3::new(0.0, 0.0, -5.0),
             direction: Vector3::new(0.0, 0.0, 1.0),
         };
-        let color = world.color_at(&ray);
+        let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
     }
 }

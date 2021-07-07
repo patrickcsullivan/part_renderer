@@ -60,7 +60,7 @@ fn demo_simple() {
         .primitive(Primitive::new(&sphere2, &material))
         .primitive(Primitive::new(&sphere3, &material))
         .build();
-    let img = world.render(&camera);
+    let img = world.render(&camera, 5);
     let _ = img.save("demo_simple.png");
 }
 
@@ -120,6 +120,6 @@ fn demo() {
         .primitive(Primitive::new(&left, &left_material))
         .primitive(Primitive::new(&back, &back_material))
         .build();
-    let img = world.render(&camera);
+    let img = world.render(&camera, 5);
     let _ = img.save("demo.png");
 }

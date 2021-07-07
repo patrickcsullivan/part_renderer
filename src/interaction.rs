@@ -1,3 +1,4 @@
+use crate::vector;
 use cgmath::{Point3, Vector3};
 
 #[derive(Debug)]
@@ -10,4 +11,18 @@ pub struct SurfaceInteraction {
 
     /// The surface normal at the interaction point.
     pub normal: Vector3<f32>,
+}
+
+impl SurfaceInteraction {
+    pub fn over_point(&self) -> Point3<f32> {
+        self.point + self.normal * 0.01 // FIXME: This adjustment value seems very high.
+    }
+
+    pub fn under_point(&self) -> Point3<f32> {
+        self.point - self.normal * 0.01 // FIXME: This adjustment value seems very high.
+    }
+
+    pub fn reflect(&self) -> Vector3<f32> {
+        vector::reflect(-1.0 * self.neg_ray_direction, self.normal)
+    }
 }
