@@ -75,15 +75,15 @@ fn demo() {
 
     let identity = identity4();
 
-    let floor_material = Material::new(Rgb::new(1.0, 0.9, 0.9), 0.1, 0.9, 0.0, 200.0, 0.0);
+    let floor_material = Material::new(Rgb::new(1.0, 0.9, 0.9), 0.1, 0.9, 0.0, 200.0, 0.1);
     let floor = Object::plane(&identity, &identity, false);
 
-    let middle_material = Material::new(Rgb::new(0.1, 1.0, 0.5), 0.1, 0.7, 0.3, 200.0, 0.0);
+    let middle_material = Material::new(Rgb::new(0.1, 1.0, 0.5), 0.1, 0.7, 0.3, 200.0, 0.5);
     let middle_transf = Matrix4::from_translation(Vector3::new(-0.5, 0.0, 0.5));
     let middle_inv_transf = middle_transf.inverse_transform().unwrap();
     let middle = Object::sphere(&middle_transf, &middle_inv_transf, false);
 
-    let right_material = Material::new(Rgb::new(0.5, 1.0, 0.1), 0.1, 0.7, 0.3, 200.0, 0.0);
+    let right_material = Material::new(Rgb::new(0.5, 1.0, 0.1), 0.1, 0.7, 0.3, 200.0, 0.25);
     let right_transf =
         Matrix4::from_translation(Vector3::new(1.5, 0.5, -0.5)) * Matrix4::from_scale(0.5);
     let right_inv_transf = right_transf.inverse_transform().unwrap();
@@ -109,7 +109,8 @@ fn demo() {
         Point3::new(0.0, 1.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
     );
-    let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
+    // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
+    let camera = Camera::new(1200, 600, Rad(PI / 3.0), camera_transf);
 
     let world = WorldBuilder::new()
         .point_light(light1)
