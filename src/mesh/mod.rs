@@ -1,8 +1,8 @@
 use crate::axis::Axis3;
 use crate::interaction::SurfaceInteraction;
 use crate::math::baycentric;
+use crate::math::vector;
 use crate::ray::Ray;
-use crate::vector;
 use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
 
 /// A mesh of triangles.

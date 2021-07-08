@@ -12,7 +12,6 @@ mod object;
 mod primitive;
 mod ray;
 mod transform;
-mod vector;
 mod world;
 
 #[cfg(test)]

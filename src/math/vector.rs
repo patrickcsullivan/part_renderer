@@ -1,6 +1,8 @@
 use crate::axis::Axis3;
 use cgmath::{BaseNum, InnerSpace, Vector3};
 
+/// Returns the outgoing vector when the incoming vector is reflected across the
+/// surface normal.
 pub fn reflect(incoming: Vector3<f32>, normal: Vector3<f32>) -> Vector3<f32> {
     incoming - normal * 2.0 * incoming.dot(normal)
 }
@@ -42,9 +44,9 @@ pub fn arbitrary_coordinate_system(v: Vector3<f32>) -> (Vector3<f32>, Vector3<f3
 }
 
 #[cfg(test)]
-mod tests {
+mod reflect_tests {
+    use crate::math::vector;
     use crate::test::ApproxEq;
-    use crate::vector;
     use cgmath::Vector3;
 
     #[test]
