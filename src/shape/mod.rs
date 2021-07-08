@@ -1,8 +1,9 @@
 mod plane;
 mod sphere;
+mod triangle;
 
 use crate::{interaction::SurfaceInteraction, ray::Ray};
-use cgmath::Matrix4;
+use cgmath::{Matrix4, Point3};
 use std::fmt::Debug;
 
 /// A transformed 3D object.
@@ -41,6 +42,22 @@ impl<'mtrx> Object<'mtrx> {
         }
     }
 
+    pub fn triangle(
+        object_to_world: &'mtrx Matrix4<f32>,
+        world_to_object: &'mtrx Matrix4<f32>,
+        reverse_orientation: bool,
+        p1: Point3<f32>,
+        p2: Point3<f32>,
+        p3: Point3<f32>,
+    ) -> Self {
+        Self {
+            object_to_world,
+            world_to_object,
+            reverse_orientation,
+            geometry: Geometry::Triangle(triangle::Triangle::new(p1, p2, p3)),
+        }
+    }
+
     pub fn ray_intersections(&self, ray: &Ray) -> Vec<(f32, SurfaceInteraction)> {
         self.geometry.ray_intersections(
             ray,
@@ -56,6 +73,7 @@ impl<'mtrx> Object<'mtrx> {
 enum Geometry {
     Sphere(),
     Plane(),
+    Triangle(triangle::Triangle),
 }
 
 impl Geometry {
@@ -67,15 +85,21 @@ impl Geometry {
         reverse_orientation: bool,
     ) -> Vec<(f32, SurfaceInteraction)> {
         match self {
-            Geometry::Sphere() => sphere::ray_intersections(
+            Self::Sphere() => sphere::ray_intersections(
                 ray,
                 object_to_world,
                 world_to_object,
                 reverse_orientation,
             ),
-            Geometry::Plane() => {
+            Self::Plane() => {
                 plane::ray_intersections(ray, object_to_world, world_to_object, reverse_orientation)
             }
+            Self::Triangle(triangle) => triangle.ray_intersections(
+                ray,
+                object_to_world,
+                world_to_object,
+                reverse_orientation,
+            ),
         }
     }
 }
