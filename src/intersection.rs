@@ -59,8 +59,8 @@ mod hit_tests {
     use crate::intersection::{Intersection, Intersections};
     use crate::material::Material;
     use crate::matrix::identity4;
+    use crate::object::Object;
     use crate::primitive::Primitive;
-    use crate::shape::Object;
     use crate::test::ApproxEq;
 
     fn test_material() -> Material {

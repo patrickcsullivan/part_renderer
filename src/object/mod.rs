@@ -6,7 +6,7 @@ use crate::{interaction::SurfaceInteraction, ray::Ray};
 use cgmath::{Matrix4, Point3};
 use std::fmt::Debug;
 
-/// A transformed 3D object.
+/// A 3D object that can be transformed and intersected with rays.
 #[derive(Debug)]
 pub struct Object<'mtrx> {
     object_to_world: &'mtrx Matrix4<f32>,

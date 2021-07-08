@@ -98,8 +98,8 @@ pub fn normal(world_to_object: &Matrix4<f32>, reverse_orientation: bool) -> Vect
 #[cfg(test)]
 mod ray_intersects_tests {
     use crate::matrix::identity4;
+    use crate::object::triangle::Triangle;
     use crate::ray::Ray;
-    use crate::shape::triangle::Triangle;
     use crate::test::ApproxEq;
     use cgmath::{Point3, Vector3};
 

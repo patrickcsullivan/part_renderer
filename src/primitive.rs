@@ -1,4 +1,4 @@
-use crate::{material::Material, shape::Object};
+use crate::{material::Material, object::Object};
 
 #[derive(Debug)]
 pub struct Primitive<'shp, 'mtrx, 'mtrl> {

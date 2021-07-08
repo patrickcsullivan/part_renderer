@@ -5,9 +5,9 @@ use crate::{
     intersection::{Intersection, Intersections},
     light::{phong_shading, PointLight},
     material::Material,
+    object::Object,
     primitive::Primitive,
     ray::Ray,
-    shape::Object,
 };
 use cgmath::{InnerSpace, MetricSpace, Point3};
 use image::ImageBuffer;
@@ -150,8 +150,8 @@ impl<'shp, 'mtrx, 'mtrl> WorldBuilder<'shp, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod ray_intersections_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, matrix::identity4, primitive::Primitive,
-        ray::Ray, shape::Object, test::ApproxEq, world::WorldBuilder,
+        color::Rgb, light::PointLight, material::Material, matrix::identity4, object::Object,
+        primitive::Primitive, ray::Ray, test::ApproxEq, world::WorldBuilder,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -187,8 +187,8 @@ mod ray_intersections_tests {
 #[cfg(test)]
 mod color_at_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, matrix::identity4, primitive::Primitive,
-        ray::Ray, shape::Object, test::ApproxEq, world::WorldBuilder,
+        color::Rgb, light::PointLight, material::Material, matrix::identity4, object::Object,
+        primitive::Primitive, ray::Ray, test::ApproxEq, world::WorldBuilder,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -238,8 +238,8 @@ mod color_at_tests {
 #[cfg(test)]
 mod is_occluded_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, matrix::identity4, primitive::Primitive,
-        ray::Ray, shape::Object, test::ApproxEq, world::WorldBuilder,
+        color::Rgb, light::PointLight, material::Material, matrix::identity4, object::Object,
+        primitive::Primitive, ray::Ray, test::ApproxEq, world::WorldBuilder,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
