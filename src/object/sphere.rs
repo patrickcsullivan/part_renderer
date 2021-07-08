@@ -78,7 +78,7 @@ pub fn ray_intersections(
 mod ray_intersects_tests {
     use crate::color::Rgb;
     use crate::material::Material;
-    use crate::matrix::identity4;
+    use crate::math::matrix::identity4;
     use crate::object::sphere::ray_intersections;
     use crate::ray::Ray;
     use crate::test::ApproxEq;
@@ -245,7 +245,7 @@ mod ray_intersects_tests {
 mod normal_tests {
     use crate::color::Rgb;
     use crate::material::Material;
-    use crate::matrix::identity4;
+    use crate::math::matrix::identity4;
     use crate::object::sphere::normal_at;
     use crate::test::ApproxEq;
     use cgmath::{Matrix4, Point3, Rad, Transform, Vector3};

@@ -388,7 +388,7 @@ mod ray_intersects_tests {
     use crate::mesh::Triangle;
     use crate::ray::Ray;
     use crate::test::ApproxEq;
-    use crate::{matrix::identity4, mesh::TiangleMeshBuilder};
+    use crate::{math::matrix::identity4, mesh::TiangleMeshBuilder};
     use cgmath::{Point3, Vector3};
 
     #[test]

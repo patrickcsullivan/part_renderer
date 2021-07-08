@@ -6,7 +6,6 @@ mod intersection;
 mod light;
 mod material;
 mod math;
-mod matrix;
 mod mesh;
 mod object;
 mod primitive;
@@ -34,7 +33,7 @@ fn main() {
 
 fn demo_simple() {
     use crate::color::Rgb;
-    use crate::matrix::identity4;
+    use crate::math::matrix::identity4;
     use crate::object::Object;
     use cgmath::{Point3, Rad, Vector3};
     use std::f32::consts::PI;
@@ -68,7 +67,7 @@ fn demo_simple() {
 
 fn demo() {
     use crate::color::Rgb;
-    use crate::matrix::identity4;
+    use crate::math::matrix::identity4;
     use crate::object::Object;
     use crate::ray::Ray;
     use cgmath::{InnerSpace, Point3, Rad, Vector3};
