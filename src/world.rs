@@ -171,10 +171,7 @@ mod ray_intersections_tests {
             .primitive(primitive2)
             .point_light(light)
             .build();
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let intersections = world.ray_intersections(&ray);
         assert_eq!(intersections.values().len(), 4);
         assert!(intersections.values()[0].t.approx_eq(&4.0));
@@ -210,26 +207,17 @@ mod color_at_tests {
             .build();
 
         // When ray misses.
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 1.0, 0.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
         let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::black()));
 
         // When ray hits.
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
         let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
 
         // When ray starts outer sphere and hits inner sphere.
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
         let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
     }

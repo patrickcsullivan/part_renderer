@@ -1,13 +1,23 @@
 use cgmath::{Matrix4, Point3, Transform, Vector3};
 
+#[derive(Debug)]
 pub struct Ray {
     pub origin: Point3<f32>,
     pub direction: Vector3<f32>,
+
+    /// The upper bound of t in the ray's parametric equation,
+    /// r(t) = o + t*d, 0 < t < time_max
+    /// Limits the ray to a finite segment.
+    pub t_max: f32,
 }
 
 impl Ray {
     pub fn new(origin: Point3<f32>, direction: Vector3<f32>) -> Self {
-        Self { origin, direction }
+        Self {
+            origin,
+            direction,
+            t_max: f32::MAX,
+        }
     }
 
     /// Get the position along the ray for a given parametric value, `t`.
@@ -24,6 +34,7 @@ impl crate::transform::Transform<Ray> for Matrix4<f32> {
             // can shink or grow when we apply transformations that are intended
             // to scale an object.
             direction: self.transform_vector(ray.direction),
+            t_max: ray.t_max,
         }
     }
 }
@@ -39,6 +50,7 @@ mod tests {
         let ray = Ray {
             origin: Point3::new(2.0, 3.0, 4.0),
             direction: Vector3::new(1.0, 0.0, 0.0),
+            t_max: f32::MAX,
         };
         assert!(ray.at_t(0.0).approx_eq(&Point3::new(2.0, 3.0, 4.0)));
         assert!(ray.at_t(1.0).approx_eq(&Point3::new(3.0, 3.0, 4.0)));
@@ -51,6 +63,7 @@ mod tests {
         let ray = Ray {
             origin: Point3::new(1.0, 2.0, 3.0),
             direction: Vector3::new(0.0, 1.0, 0.0),
+            t_max: f32::MAX,
         };
         let t: Matrix4<f32> = Matrix4::from_translation(Vector3::new(3.0, 4.0, 5.0));
         let ray = t.transform(&ray);
@@ -63,6 +76,7 @@ mod tests {
         let ray = Ray {
             origin: Point3::new(1.0, 2.0, 3.0),
             direction: Vector3::new(0.0, 1.0, 0.0),
+            t_max: f32::MAX,
         };
         let t: Matrix4<f32> = Matrix4::from_nonuniform_scale(2.0, 3.0, 4.0);
         let ray = t.transform(&ray);

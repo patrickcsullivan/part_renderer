@@ -1,9 +1,19 @@
+use std::fmt::Debug;
+
 use crate::material::Material;
 
 pub const EPSILON: f32 = 0.0001;
 
-pub trait ApproxEq {
+pub trait ApproxEq: Debug {
     fn approx_eq(&self, other: &Self) -> bool;
+    fn assert_approx_eq(&self, other: &Self) {
+        assert!(
+            self.approx_eq(other),
+            "Values were not approximately equal.\nLeft value: `{:#?}`\nRight value: `{:#?}`\n",
+            self,
+            other
+        );
+    }
 }
 
 impl<T> ApproxEq for &T
@@ -37,6 +47,12 @@ impl ApproxEq for f32 {
 impl ApproxEq for crate::color::Rgb {
     fn approx_eq(&self, other: &Self) -> bool {
         self.r.approx_eq(&other.r) && self.g.approx_eq(&other.g) && self.b.approx_eq(&other.b)
+    }
+}
+
+impl ApproxEq for cgmath::Point2<f32> {
+    fn approx_eq(&self, other: &Self) -> bool {
+        self.x.approx_eq(&other.x) && self.y.approx_eq(&other.y)
     }
 }
 

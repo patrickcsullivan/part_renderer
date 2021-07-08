@@ -97,10 +97,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn interactions_includes_surface_calculation() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let identity = identity4();
         let reverse_orientation = false;
         let intersections = ray_intersections(&ray, &identity, &identity, false);
@@ -137,10 +134,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_at_two_points() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let identity = identity4();
         let reverse_orientation = false;
         let intersections = ray_intersections(&ray, &identity, &identity, false);
@@ -151,10 +145,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_at_tangent_of_untransformed_sphere() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 1.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let identity = identity4();
         let reverse_orientation = false;
         let intersections = ray_intersections(&ray, &identity, &identity, false);
@@ -175,10 +166,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_at_tangent_of_transformed_sphere() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let obj_to_world = Matrix4::from_translation(Vector3::new(0.0, -1.0, 0.0));
         let world_to_obj = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0));
         let reverse_orientation = false;
@@ -201,10 +189,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn misses() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 2.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let identity = identity4();
         let reverse_orientation = false;
         let intersections = ray_intersections(&ray, &identity, &identity, false);
@@ -213,10 +198,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_originates_inside_sphere() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, 0.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let identity = identity4();
         let reverse_orientation = false;
         let intersections = ray_intersections(&ray, &identity, &identity, false);
@@ -227,10 +209,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn sphere_is_behind_ray() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, 5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let identity = identity4();
         let reverse_orientation = false;
         let intersections = ray_intersections(&ray, &identity, &identity, false);
@@ -241,10 +220,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_scaled_sphere() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let obj_to_world = Matrix4::from_scale(2.0);
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let reverse_orientation = false;
@@ -256,10 +232,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn misses_translated_sphere() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.0, -5.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         let obj_to_world = Matrix4::from_translation(Vector3::new(5.0, 0.0, 0.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let reverse_orientation = false;

@@ -105,10 +105,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_parallel_to_triangle() {
-        let ray = Ray {
-            origin: Point3::new(0.0, -1.0, -2.0),
-            direction: Vector3::new(0.0, 1.0, 0.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, -1.0, -2.0), Vector3::new(0.0, 1.0, 0.0));
         let triangle = Triangle::new(
             Point3::new(0.0, 1.0, 0.0),
             Point3::new(-1.0, 0.0, 0.0),
@@ -121,10 +118,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_misses_p1_p3_edge() {
-        let ray = Ray {
-            origin: Point3::new(1.0, 1.0, -2.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(1.0, 1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
         let triangle = Triangle::new(
             Point3::new(0.0, 1.0, 0.0),
             Point3::new(-1.0, 0.0, 0.0),
@@ -137,10 +131,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_misses_p1_p2_edge() {
-        let ray = Ray {
-            origin: Point3::new(-1.0, 1.0, -2.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(-1.0, 1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
         let triangle = Triangle::new(
             Point3::new(0.0, 1.0, 0.0),
             Point3::new(-1.0, 0.0, 0.0),
@@ -153,10 +144,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_misses_p2_p3_edge() {
-        let ray = Ray {
-            origin: Point3::new(0.0, -1.0, -2.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, -1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
         let triangle = Triangle::new(
             Point3::new(0.0, 1.0, 0.0),
             Point3::new(-1.0, 0.0, 0.0),
@@ -169,10 +157,7 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_strikes_triangle() {
-        let ray = Ray {
-            origin: Point3::new(0.0, 0.5, -2.0),
-            direction: Vector3::new(0.0, 0.0, 1.0),
-        };
+        let ray = Ray::new(Point3::new(0.0, 0.5, -2.0), Vector3::new(0.0, 0.0, 1.0));
         let triangle = Triangle::new(
             Point3::new(0.0, 1.0, 0.0),
             Point3::new(-1.0, 0.0, 0.0),

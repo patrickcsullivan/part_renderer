@@ -14,6 +14,14 @@ pub struct SurfaceInteraction {
 }
 
 impl SurfaceInteraction {
+    pub fn new(point: Point3<f32>, neg_ray_direction: Vector3<f32>, normal: Vector3<f32>) -> Self {
+        Self {
+            point,
+            neg_ray_direction,
+            normal,
+        }
+    }
+
     pub fn over_point(&self) -> Point3<f32> {
         self.point + self.normal * 0.01 // FIXME: This adjustment value seems very high.
     }

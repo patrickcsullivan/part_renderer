@@ -1,9 +1,11 @@
+mod axis;
 mod camera;
 mod color;
 mod interaction;
 mod intersection;
 mod light;
 mod material;
+mod math;
 mod matrix;
 mod mesh;
 mod object;
