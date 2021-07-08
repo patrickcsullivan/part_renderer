@@ -11,6 +11,7 @@ mod primitive;
 mod ray;
 mod transform;
 mod world;
+mod world2;
 
 #[cfg(test)]
 mod test;
