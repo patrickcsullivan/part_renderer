@@ -1,5 +1,5 @@
-use crate::axis::Axis3;
 use crate::interaction::SurfaceInteraction;
+use crate::math::axis::Axis3;
 use crate::math::baycentric;
 use crate::math::vector;
 use crate::ray::Ray;

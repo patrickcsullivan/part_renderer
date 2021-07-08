@@ -1,4 +1,3 @@
-mod axis;
 mod camera;
 mod color;
 mod interaction;

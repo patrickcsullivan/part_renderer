@@ -1,4 +1,4 @@
-use crate::axis::Axis3;
+use crate::math::axis::Axis3;
 use cgmath::{BaseNum, InnerSpace, Vector3};
 
 /// Returns the outgoing vector when the incoming vector is reflected across the
