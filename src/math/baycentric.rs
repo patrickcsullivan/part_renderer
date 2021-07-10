@@ -35,7 +35,6 @@ mod into_point2 {
     use crate::test::ApproxEq;
     use cgmath::Point2;
 
-    /// Returns a right triangle.
     const TRIANGLE: (Point2<f32>, Point2<f32>, Point2<f32>) = (
         Point2::new(-1.0, 0.0),
         Point2::new(0.0, 0.0),
@@ -73,7 +72,6 @@ mod into_point3 {
     use crate::test::ApproxEq;
     use cgmath::Point3;
 
-    /// Returns a right triangle.
     const TRIANGLE: (Point3<f32>, Point3<f32>, Point3<f32>) = (
         Point3::new(1.0, 0.0, 0.0),
         Point3::new(0.0, 1.0, 0.0),

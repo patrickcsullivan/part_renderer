@@ -27,7 +27,7 @@ pub fn max_dimension(v: Vector3<f32>) -> Axis3 {
     } else if y > x {
         Axis3::Y
     } else {
-        Axis3::Z
+        Axis3::X
     }
 }
 

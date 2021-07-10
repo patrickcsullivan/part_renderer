@@ -227,14 +227,14 @@ fn world_to_ray_coordinate_space(ray: &Ray) -> Matrix4<f32> {
         Axis3::Z => Matrix4::from_scale(1.0), // identity
     };
 
-    // Align the ray direction wit the positive z axis.
+    // Align the ray direction with the positive z axis.
     let shear = Matrix4::from_cols(
         Vector4::unit_x(),
         Vector4::unit_y(),
         Vector4::new(
             -1.0 * ray.direction.x / ray.direction.z,
             -1.0 * ray.direction.y / ray.direction.z,
-            1.0 / ray.direction.x,
+            1.0 / ray.direction.z,
             0.0,
         ),
         Vector4::unit_w(),
@@ -295,6 +295,107 @@ fn triangle_partial_derivatives(
     let dpdv =
         (-1.0 * delta_uv2_uv3[0] * delta_p1_p3 - delta_uv1_uv3[0] * delta_p2_p3) * inv_determinant;
     Some((dpdu, dpdv))
+}
+
+#[cfg(test)]
+mod world_to_ray_coordinate_space_tests {
+    use super::world_to_ray_coordinate_space;
+    use crate::{ray::Ray, test::ApproxEq, transform::Transform};
+    use cgmath::{InnerSpace, Point3, Vector3};
+
+    #[test]
+    fn moves_ray_orgin_to_coordinate_system_origin() {
+        let ray = Ray::new(
+            Point3::new(1.0, 2.0, 3.0),
+            Vector3::new(-2.0, 4.0, -1.0).normalize(),
+        );
+        let t = world_to_ray_coordinate_space(&ray);
+        let t_ray = t.transform(&ray);
+        t_ray.origin.assert_approx_eq(&Point3::new(0.0, 0.0, 0.0));
+        assert!(
+            ray.direction
+                .magnitude()
+                .approx_eq(&t_ray.direction.magnitude()),
+            "Expected transformed magnitude to equal initial magnitude"
+        );
+        assert!(
+            t_ray.direction.z >= t_ray.direction.x && t_ray.direction.z >= t_ray.direction.y,
+            "Expected direction.z to be greater than or equal to direction.x and direction.y in `{:?}`",
+            t_ray,
+        )
+    }
+
+    #[test]
+    fn aligns_with_positive_z_axis() {
+        // Initiially ray's x component is largest.
+        let ray = Ray::new(
+            Point3::new(1.0, 2.0, 3.0),
+            Vector3::new(3.0, 1.0, 2.0).normalize(),
+        );
+        let t = world_to_ray_coordinate_space(&ray);
+        let t_ray = t.transform(&ray);
+        assert!(
+            is_along_z(&t_ray),
+            "Expected transformed ray direction to point along positive z.\nInitial: `{:#?}`\nTransformed `{:#?}`",
+            ray,
+            t_ray,
+        );
+
+        // Initiially ray's y component is largest.
+        let ray = Ray::new(
+            Point3::new(1.0, 2.0, 3.0),
+            Vector3::new(1.0, 3.0, 2.0).normalize(),
+        );
+        let t = world_to_ray_coordinate_space(&ray);
+        let ray = t.transform(&ray);
+        assert!(
+            is_along_z(&ray),
+            "Expected ray direction to point along positive z axis in `{:#?}`",
+            ray
+        );
+
+        // Initiially ray's z component is largest.
+        let ray = Ray::new(
+            Point3::new(1.0, 2.0, 3.0),
+            Vector3::new(1.0, 2.0, 3.0).normalize(),
+        );
+        let t = world_to_ray_coordinate_space(&ray);
+        let ray = t.transform(&ray);
+        assert!(
+            is_along_z(&ray),
+            "Expected ray direction to point along positive z axis in `{:#?}`",
+            ray
+        );
+    }
+
+    fn is_along_z(ray: &Ray) -> bool {
+        ray.direction.z > 0.0 && ray.direction.x.approx_eq(&0.0) && ray.direction.y.approx_eq(&0.0)
+    }
+}
+
+#[cfg(test)]
+mod find_intersection_location_tests {
+    use super::find_intersection_location;
+    use crate::{ray::Ray, test::ApproxEq};
+    use cgmath::{Point3, Vector3};
+
+    const TRIANGLE: (Point3<f32>, Point3<f32>, Point3<f32>) = (
+        Point3::new(1.0, 0.0, 0.0),
+        Point3::new(0.0, 1.0, 0.0),
+        Point3::new(0.0, 0.0, 1.0),
+    );
+
+    #[test]
+    fn intersects_corners() -> Result<(), String> {
+        let ray = Ray::new(Point3::new(2.0, 0.0, 0.0), Vector3::new(-1.0, 0.0, 0.0));
+        let loc = find_intersection_location(TRIANGLE, &ray);
+        if let Some(loc) = loc {
+            loc.t.assert_approx_eq(&1.0);
+            Ok(())
+        } else {
+            Err("Expected to find intersection.".to_string())
+        }
+    }
 }
 
 #[cfg(test)]

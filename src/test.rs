@@ -6,10 +6,11 @@ pub const EPSILON: f32 = 0.0001;
 
 pub trait ApproxEq: Debug {
     fn approx_eq(&self, other: &Self) -> bool;
+
     fn assert_approx_eq(&self, other: &Self) {
         assert!(
             self.approx_eq(other),
-            "Values were not approximately equal.\nLeft value: `{:#?}`\nRight value: `{:#?}`\n",
+            "Values were not approximately equal.\nLeft value: `{:#?}`\nRight value: `{:#?}`",
             self,
             other
         );
