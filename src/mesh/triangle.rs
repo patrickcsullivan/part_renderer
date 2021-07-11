@@ -84,13 +84,16 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
         let (p0, p1, p2) = self.world_space_vertices();
         let (uv0, uv1, uv2) = self.uv_vertices();
 
-        // Transform triangle vertices to ray coordinate space
+        // Transform triangle vertices to ray coordinate space.
 
+        // Start by translating vertices such that the ray origin would be at
+        // the coordinate system origin.
         let p0t = p0 + (Point3::new(0.0, 0.0, 0.0) - ray.origin);
         let p1t = p1 + (Point3::new(0.0, 0.0, 0.0) - ray.origin);
         let p2t = p2 + (Point3::new(0.0, 0.0, 0.0) - ray.origin);
-
-        // Permute components of triangle vertices and ray direction
+        // Permute components of triangle vertices and ray direction. Swap axes
+        // such that the ray direction's component with the greatest absolute
+        // value is along the z axis.
         let new_z_axis = vector::max_dimension(ray.direction);
         let new_x_axis = match new_z_axis {
             Axis3::X => Axis3::Y,
@@ -106,8 +109,9 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
         let p0t = point::permute(p0t, new_x_axis, new_y_axis, new_z_axis);
         let p1t = point::permute(p1t, new_x_axis, new_y_axis, new_z_axis);
         let p2t = point::permute(p2t, new_x_axis, new_y_axis, new_z_axis);
-
-        // Apply shear transformation to translated vertex positions
+        // Apply shear transformation to translated vertex positions. (Only x
+        // and y shears are applied at this time. Shearing on z is applied
+        // later.)
         let sx = -1.0 * dir_t.x / dir_t.z;
         let sy = -1.0 * dir_t.y / dir_t.z;
         let sz = 1.0 / dir_t.z;
@@ -115,11 +119,12 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
         let p1t = Point3::new(p1t.x + sx * p1t.z, p1t.y + sy * p1t.z, p1t.z);
         let p2t = Point3::new(p2t.x + sx * p2t.z, p2t.y + sy * p2t.z, p2t.z);
 
-        // Compute edge function coefficients
+        // Compute edge function coefficients. Each edge function coefficient
+        // tells us if the z axis is left of, right of, or directly on a
+        // particular edge of the transformed triangle.
         let e0 = p1t.x * p2t.y - p1t.y * p2t.x;
         let e1 = p2t.x * p0t.y - p2t.y * p0t.x;
         let e2 = p0t.x * p1t.y - p0t.y * p1t.x;
-
         // Fall back to double precision test at triangle edges
         let (e0, e1, e2) = if e0 == 0.0 || e1 == 0.0 || e2 == 0.0 {
             let p2txp1ty = p2t.x as f64 * p1t.y as f64;
@@ -136,19 +141,27 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
             (e0, e1, e2)
         };
 
-        // Perform triangle edge and determinant tests
+        // If the z axis is to the left of one edge and to the right of another,
+        // then it cannot be in the triangle.
         if (e0 < 0.0 || e1 < 0.0 || e2 < 0.0) && (e0 > 0.0 || e1 > 0.0 || e2 > 0.0) {
             return None;
         }
+        // If the z axis on all three edges, then the ray is parallel to and
+        // "skims" the triangle. We treat this as a non-intersection.
         let det = e0 + e1 + e2;
         if det == 0.0 {
             return None;
         }
 
-        // Compute scaled hit distance to triangle and test against ray $t$ range
+        // Now apply z shear. We didn't do this earlier because we didn't need
+        // to at that time, and if there had been a ray intersection miss then
+        // that would have been wasted work. Now we need the z shear so we can
+        // find scaled hit distance.
         let p0t = Point3::new(p0t.x, p0t.y, p0t.z * sz);
         let p1t = Point3::new(p1t.x, p1t.y, p1t.z * sz);
         let p2t = Point3::new(p2t.x, p2t.y, p2t.z * sz);
+
+        // Compute scaled hit distance to triangle and test against ray's t range.
         let t_scaled = e0 * p0t.z + e1 * p1t.z + e2 * p2t.z;
         if det < 0.0 && (t_scaled >= 0.0 || t_scaled < ray.t_max * det) {
             return None;
@@ -157,26 +170,24 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
             return None;
         }
 
-        // Compute barycentric coordinates and $t$ value for triangle intersection
+        // Compute t value for triangle intersection
         let inv_det = 1.0 / det;
-        let b0 = e0 * inv_det;
-        let b1 = e1 * inv_det;
-        let b2 = e2 * inv_det;
         let t = t_scaled * inv_det;
 
-        // Ensure that computed triangle $t$ is conservatively greater than zero
-        // Compute $\delta_z$ term for triangle $t$ error bounds
+        // Ensure that computed t is conservatively greater than zero.
+
+        // Compute delta_z term for triangle t error bounds
         let max_zt = p0.z.abs().max(p1.z.abs()).max(p2.z.abs());
         let delta_z = efloat::gamma(3) * max_zt;
-        // Compute $\delta_x$ and $\delta_y$ terms for triangle $t$ error bounds
+        // Compute delta_x and delta_y terms for triangle t error bounds
         let max_xt = p0.x.abs().max(p1.x.abs()).max(p2.x.abs());
         let max_yt = p0.y.abs().max(p1.y.abs()).max(p2.y.abs());
         let delta_x = efloat::gamma(5) * max_xt;
         let delta_y = efloat::gamma(5) * max_yt;
-        // Compute $\delta_e$ term for triangle $t$ error bounds
+        // Compute delta_e term for triangle t error bounds
         let delta_e =
             2.0 * (efloat::gamma(2) * max_xt * max_yt + delta_y * max_xt + delta_x * max_yt);
-        // Compute $\delta_t$ term for triangle $t$ error bounds and check _t_
+        // Compute delta_t term for triangle t error bounds and check _t_
         let max_e = e0.abs().max(e1.abs()).max(e2.abs());
         let delta_t = 3.0
             * (efloat::gamma(3) * max_e * max_xt + delta_e * max_zt + delta_z * max_e)
@@ -186,6 +197,11 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
         }
 
         // Partial deriviates went here...
+
+        // Compute baycentric coordinates.
+        let b0 = e0 * inv_det;
+        let b1 = e1 * inv_det;
+        let b2 = e2 * inv_det;
 
         // Compute error bounds for triangle intersection
         let x_abs_sum = (b0 * p0.x).abs() + (b1 * p1.x).abs() + (b2 * p2.x).abs();
@@ -267,7 +283,7 @@ fn triangle_partial_derivatives(
 }
 
 #[cfg(test)]
-mod ray_intersection_test {
+mod ray_intersection_tests {
     use crate::math::matrix::identity4;
     use crate::mesh::{triangle::Triangle, TiangleMeshBuilder, TriangleMesh};
     use crate::ray::Ray;
