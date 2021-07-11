@@ -1,5 +1,6 @@
 mod camera;
 mod color;
+mod efloat;
 mod interaction;
 mod intersection;
 mod light;

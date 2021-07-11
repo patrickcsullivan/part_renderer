@@ -17,7 +17,7 @@ pub fn face_forward<S: BaseNum>(v1: Vector3<S>, v2: Vector3<S>) -> Vector3<S> {
     }
 }
 
-/// Return the axis along which the vector has the greatest magnitude.
+/// Returns the axis along which the vector has the greatest magnitude.
 pub fn max_dimension(v: Vector3<f32>) -> Axis3 {
     let x = v.x.abs();
     let y = v.y.abs();
@@ -29,6 +29,25 @@ pub fn max_dimension(v: Vector3<f32>) -> Axis3 {
     } else {
         Axis3::X
     }
+}
+
+/// Returns the vector's component on the given axis.
+pub fn component(v: Vector3<f32>, axis: Axis3) -> f32 {
+    match axis {
+        Axis3::X => v.x,
+        Axis3::Y => v.y,
+        Axis3::Z => v.z,
+    }
+}
+
+/// Returns a new vector whose components are taken from the components of the
+/// given vector.
+pub fn permute(v: Vector3<f32>, new_x: Axis3, new_y: Axis3, new_z: Axis3) -> Vector3<f32> {
+    Vector3::new(
+        component(v, new_x),
+        component(v, new_y),
+        component(v, new_z),
+    )
 }
 
 /// Returns two arbitrary vectors that are perpendicular to each other and the

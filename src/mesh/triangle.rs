@@ -1,7 +1,6 @@
+use crate::efloat;
 use crate::interaction::SurfaceInteraction;
-use crate::math::axis::Axis3;
-use crate::math::baycentric;
-use crate::math::vector;
+use crate::math::{axis::Axis3, baycentric, point, vector};
 use crate::mesh::TriangleMesh;
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
@@ -82,28 +81,136 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
     }
 
     fn ray_intersection(&'shape self, ray: &Ray) -> Option<(f32, SurfaceInteraction)> {
-        let vertices = self.world_space_vertices();
+        let (p0, p1, p2) = self.world_space_vertices();
+        let (uv0, uv1, uv2) = self.uv_vertices();
 
-        if let Some(IntersectionLocation { t, baycentric }) =
-            find_intersection_location(vertices, ray)
-        {
-            let uv_vertices = self.uv_vertices();
+        // Transform triangle vertices to ray coordinate space
 
-            if let Some((_dpdu, _dpdv)) = triangle_partial_derivatives(vertices, uv_vertices) {
-                let world_space_hit = baycentric::into_point3(vertices, baycentric);
-                let _uv_hit = baycentric::into_point2(uv_vertices, baycentric);
-                let normal = (vertices.0 - vertices.2)
-                    .cross(vertices.1 - vertices.2)
-                    .normalize();
-                let interaction =
-                    SurfaceInteraction::new(world_space_hit, -1.0 * ray.direction, normal);
-                Some((t, interaction))
-            } else {
-                None
-            }
+        let p0t = p0 + (Point3::new(0.0, 0.0, 0.0) - ray.origin);
+        let p1t = p1 + (Point3::new(0.0, 0.0, 0.0) - ray.origin);
+        let p2t = p2 + (Point3::new(0.0, 0.0, 0.0) - ray.origin);
+
+        // Permute components of triangle vertices and ray direction
+        let new_z_axis = vector::max_dimension(ray.direction);
+        let new_x_axis = match new_z_axis {
+            Axis3::X => Axis3::Y,
+            Axis3::Y => Axis3::Z,
+            Axis3::Z => Axis3::X,
+        };
+        let new_y_axis = match new_x_axis {
+            Axis3::X => Axis3::Y,
+            Axis3::Y => Axis3::Z,
+            Axis3::Z => Axis3::X,
+        };
+        let dir_t = vector::permute(ray.direction, new_x_axis, new_y_axis, new_z_axis);
+        let p0t = point::permute(p0t, new_x_axis, new_y_axis, new_z_axis);
+        let p1t = point::permute(p1t, new_x_axis, new_y_axis, new_z_axis);
+        let p2t = point::permute(p2t, new_x_axis, new_y_axis, new_z_axis);
+
+        // Apply shear transformation to translated vertex positions
+        let sx = -1.0 * dir_t.x / dir_t.z;
+        let sy = -1.0 * dir_t.y / dir_t.z;
+        let sz = 1.0 / dir_t.z;
+        let p0t = Point3::new(p0t.x + sx * p0t.z, p0t.y + sy * p0t.z, p0t.z);
+        let p1t = Point3::new(p1t.x + sx * p1t.z, p1t.y + sy * p1t.z, p1t.z);
+        let p2t = Point3::new(p2t.x + sx * p2t.z, p2t.y + sy * p2t.z, p2t.z);
+
+        // Compute edge function coefficients
+        let e0 = p1t.x * p2t.y - p1t.y * p2t.x;
+        let e1 = p2t.x * p0t.y - p2t.y * p0t.x;
+        let e2 = p0t.x * p1t.y - p0t.y * p1t.x;
+
+        // Fall back to double precision test at triangle edges
+        let (e0, e1, e2) = if e0 == 0.0 || e1 == 0.0 || e2 == 0.0 {
+            let p2txp1ty = p2t.x as f64 * p1t.y as f64;
+            let p2typ1tx = p2t.y as f64 * p1t.x as f64;
+            let e0 = (p2typ1tx - p2txp1ty) as f32;
+            let p0txp2ty = p0t.x as f64 * p2t.y as f64;
+            let p0typ2tx = p0t.y as f64 * p2t.x as f64;
+            let e1 = (p0typ2tx - p0txp2ty) as f32;
+            let p1txp0ty = p1t.x as f64 * p0t.y as f64;
+            let p1typ0tx = p1t.y as f64 * p0t.x as f64;
+            let e2 = (p1typ0tx - p1txp0ty) as f32;
+            (e0, e1, e2)
         } else {
-            None
+            (e0, e1, e2)
+        };
+
+        // Perform triangle edge and determinant tests
+        if (e0 < 0.0 || e1 < 0.0 || e2 < 0.0) && (e0 > 0.0 || e1 > 0.0 || e2 > 0.0) {
+            return None;
         }
+        let det = e0 + e1 + e2;
+        if det == 0.0 {
+            return None;
+        }
+
+        // Compute scaled hit distance to triangle and test against ray $t$ range
+        let p0t = Point3::new(p0t.x, p0t.y, p0t.z * sz);
+        let p1t = Point3::new(p1t.x, p1t.y, p1t.z * sz);
+        let p2t = Point3::new(p2t.x, p2t.y, p2t.z * sz);
+        let t_scaled = e0 * p0t.z + e1 * p1t.z + e2 * p2t.z;
+        if det < 0.0 && (t_scaled >= 0.0 || t_scaled < ray.t_max * det) {
+            return None;
+        }
+        if det > 0.0 && (t_scaled <= 0.0 || t_scaled > ray.t_max * det) {
+            return None;
+        }
+
+        // Compute barycentric coordinates and $t$ value for triangle intersection
+        let inv_det = 1.0 / det;
+        let b0 = e0 * inv_det;
+        let b1 = e1 * inv_det;
+        let b2 = e2 * inv_det;
+        let t = t_scaled * inv_det;
+
+        // Ensure that computed triangle $t$ is conservatively greater than zero
+        // Compute $\delta_z$ term for triangle $t$ error bounds
+        let max_zt = p0.z.abs().max(p1.z.abs()).max(p2.z.abs());
+        let delta_z = efloat::gamma(3) * max_zt;
+        // Compute $\delta_x$ and $\delta_y$ terms for triangle $t$ error bounds
+        let max_xt = p0.x.abs().max(p1.x.abs()).max(p2.x.abs());
+        let max_yt = p0.y.abs().max(p1.y.abs()).max(p2.y.abs());
+        let delta_x = efloat::gamma(5) * max_xt;
+        let delta_y = efloat::gamma(5) * max_yt;
+        // Compute $\delta_e$ term for triangle $t$ error bounds
+        let delta_e =
+            2.0 * (efloat::gamma(2) * max_xt * max_yt + delta_y * max_xt + delta_x * max_yt);
+        // Compute $\delta_t$ term for triangle $t$ error bounds and check _t_
+        let max_e = e0.abs().max(e1.abs()).max(e2.abs());
+        let delta_t = 3.0
+            * (efloat::gamma(3) * max_e * max_xt + delta_e * max_zt + delta_z * max_e)
+            * inv_det.abs();
+        if t <= delta_t {
+            return None;
+        }
+
+        // Partial deriviates went here...
+
+        // Compute error bounds for triangle intersection
+        let x_abs_sum = (b0 * p0.x).abs() + (b1 * p1.x).abs() + (b2 * p2.x).abs();
+        let y_abs_sum = (b0 * p0.y).abs() + (b1 * p1.y).abs() + (b2 * p2.y).abs();
+        let z_abs_sum = (b0 * p0.z).abs() + (b1 * p1.z).abs() + (b2 * p2.z).abs();
+        let p_error = efloat::gamma(7) * Vector3::new(x_abs_sum, y_abs_sum, z_abs_sum);
+
+        // Interpolate (u,v) coordinates and hit point
+        let p_hit = point::add_point3(vec![b0 * p0, b1 * p1, b2 * p2]);
+        let uv_hit = point::add_point2(vec![b0 * uv0, b1 * uv1, b2 * uv2]);
+
+        // Test intersection against alpha texture went here...
+
+        let dp02 = p0 - p2;
+        let dp12 = p1 - p2;
+        let normal = if self.reverse_orientation() || self.object_to_world_swaps_handedness() {
+            -1.0 * dp02.cross(dp12).normalize()
+        } else {
+            dp02.cross(dp12).normalize()
+        };
+
+        // Fill in SurfaceInteraction for triangle hit
+        let interaction = SurfaceInteraction::new(p_hit, -1.0 * ray.direction, normal);
+
+        Some((t, interaction))
     }
 
     fn does_ray_intersect(&self, ray: &Ray) -> bool {
@@ -112,144 +219,6 @@ impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
 
     fn surface_area(&self) -> f32 {
         todo!()
-    }
-}
-
-struct IntersectionLocation {
-    /// The ray parametric value at which the intersection occurs.
-    t: f32,
-
-    /// The baycentric coordinates of the intersection point in the triangle.
-    baycentric: (f32, f32, f32),
-}
-
-/// Find the point where the ray intersects the triangle defined by the given
-/// vertices in world space. Returns the ray's parametric value and the
-/// triangles baycentric coordinates where the intersection occurs.
-fn find_intersection_location(
-    world_space_vertices: (Point3<f32>, Point3<f32>, Point3<f32>),
-    ray: &Ray,
-) -> Option<IntersectionLocation> {
-    // Transform triangle vertices to ray coordinate space.
-    let to_ray_coordinate_space = world_to_ray_coordinate_space(ray);
-    let (p1, p2, p3) = (
-        to_ray_coordinate_space.transform_point(world_space_vertices.0),
-        to_ray_coordinate_space.transform_point(world_space_vertices.1),
-        to_ray_coordinate_space.transform_point(world_space_vertices.2),
-    );
-
-    // Now that the triangle is in ray coordinate space, the ray starts at
-    // the origin and has a length of 1 in the positive z direction.
-
-    // Determine if the ray will pass to the left of, to the right of, or
-    // through each triangle edge. Do this by projecting the triangle onto
-    // the x-y plane and checking the position of the origin relative to
-    // each edge.
-    let side1 = origin_side(p1, p2);
-    let side2 = origin_side(p2, p3);
-    let side3 = origin_side(p3, p1);
-
-    // If the origin is to the left of one edge and to the right of another,
-    // then it cannot be in the triangle.
-    if (side1 < 0.0 || side2 < 0.0 || side3 < 0.0) && (side1 > 0.0 || side2 > 0.0 || side3 > 0.0) {
-        return None;
-    }
-
-    // If the origin is on all three edges, then the ray is parallel to and
-    // "skims" the triangle. We treat this as a non-intersection.
-    let side_sum = side1 + side2 + side3;
-    if side_sum == 0.0 {
-        return None;
-    }
-
-    // We know that t will equal `t_scaled / side_sum`, so we can check for
-    // out of bounds t values before performing the division.
-    let t_scaled = side1 * p1.z + side2 * p2.z + side3 * p3.z;
-    if side_sum < 0.0 {
-        if t_scaled >= 0.0 {
-            // `t_scaled / side_sum` will be <= 0.
-            return None;
-        }
-        if t_scaled < ray.t_max * side_sum {
-            // `t_scaled / side_sum` will be > ray.t_max.
-            return None;
-        }
-    } else if side_sum > 0.0 {
-        if t_scaled <= 0.0 {
-            // `t_scaled / side_sum` will be <= 0.
-            return None;
-        }
-        if t_scaled > ray.t_max * side_sum {
-            // `t_scaled / side_sum` will be > ray.t_max.
-            return None;
-        }
-    }
-
-    // At this point, we know there must be a valid intersection.
-    let inv_side_sum = 1.0 / side_sum;
-    let t = t_scaled * inv_side_sum;
-
-    // Compute baycentric coordinates.
-    let b1 = side1 * inv_side_sum;
-    let b2 = side2 * inv_side_sum;
-    let b3 = side3 * inv_side_sum;
-
-    Some(IntersectionLocation {
-        t,
-        baycentric: (b1, b2, b3),
-    })
-}
-
-/// Return a matrix that transforms points from world space to a special ray
-/// coordinate space where the ray's origin is at the coordinate system
-/// origin and where the ray's largest component is along the positive z
-/// axis.
-fn world_to_ray_coordinate_space(ray: &Ray) -> Matrix4<f32> {
-    // Translate the ray so that its origin is at the coordinate system
-    // origin.
-    let translate = Matrix4::from_translation(Point3::new(0.0, 0.0, 0.0) - ray.origin);
-
-    // Rotate the x, y, and z axes such that the ray's larget component is
-    // along the z axis.
-    let permute = match vector::max_dimension(ray.direction) {
-        Axis3::X => Matrix4::new(
-            0.0, 0.0, 1.0, 0.0, // column 0
-            1.0, 0.0, 0.0, 0.0, // column 1
-            0.0, 1.0, 0.0, 0.0, // column 2
-            0.0, 0.0, 0.0, 1.0, // column 3
-        ),
-        Axis3::Y => Matrix4::new(
-            0.0, 1.0, 0.0, 0.0, // column 0
-            0.0, 0.0, 1.0, 0.0, // column 1
-            1.0, 0.0, 0.0, 0.0, // column 2
-            0.0, 0.0, 0.0, 1.0, // column 3
-        ),
-        Axis3::Z => Matrix4::from_scale(1.0), // identity
-    };
-
-    // Align the ray direction with the positive z axis.
-    let shear = Matrix4::from_cols(
-        Vector4::unit_x(),
-        Vector4::unit_y(),
-        Vector4::new(
-            -1.0 * ray.direction.x / ray.direction.z,
-            -1.0 * ray.direction.y / ray.direction.z,
-            1.0 / ray.direction.z,
-            0.0,
-        ),
-        Vector4::unit_w(),
-    );
-
-    shear * permute * translate
-}
-
-// TODO: Write docs. This is the edge function.
-fn origin_side(p1: Point3<f32>, p2: Point3<f32>) -> f32 {
-    let side_f32 = p1.x * p2.y - p2.x * p1.y;
-    if side_f32 == 0.0 {
-        (p1.x as f64 * p2.y as f64 - p2.x as f64 * p1.y as f64) as f32
-    } else {
-        side_f32
     }
 }
 
@@ -298,231 +267,141 @@ fn triangle_partial_derivatives(
 }
 
 #[cfg(test)]
-mod world_to_ray_coordinate_space_tests {
-    use super::world_to_ray_coordinate_space;
-    use crate::{ray::Ray, test::ApproxEq, transform::Transform};
-    use cgmath::{InnerSpace, Point3, Vector3};
-
-    #[test]
-    fn moves_ray_orgin_to_coordinate_system_origin() {
-        let ray = Ray::new(
-            Point3::new(1.0, 2.0, 3.0),
-            Vector3::new(-2.0, 4.0, -1.0).normalize(),
-        );
-        let t = world_to_ray_coordinate_space(&ray);
-        let t_ray = t.transform(&ray);
-        t_ray.origin.assert_approx_eq(&Point3::new(0.0, 0.0, 0.0));
-        assert!(
-            ray.direction
-                .magnitude()
-                .approx_eq(&t_ray.direction.magnitude()),
-            "Expected transformed magnitude to equal initial magnitude"
-        );
-        assert!(
-            t_ray.direction.z >= t_ray.direction.x && t_ray.direction.z >= t_ray.direction.y,
-            "Expected direction.z to be greater than or equal to direction.x and direction.y in `{:?}`",
-            t_ray,
-        )
-    }
-
-    #[test]
-    fn aligns_with_positive_z_axis() {
-        // Initiially ray's x component is largest.
-        let ray = Ray::new(
-            Point3::new(1.0, 2.0, 3.0),
-            Vector3::new(3.0, 1.0, 2.0).normalize(),
-        );
-        let t = world_to_ray_coordinate_space(&ray);
-        let t_ray = t.transform(&ray);
-        assert!(
-            is_along_z(&t_ray),
-            "Expected transformed ray direction to point along positive z.\nInitial: `{:#?}`\nTransformed `{:#?}`",
-            ray,
-            t_ray,
-        );
-
-        // Initiially ray's y component is largest.
-        let ray = Ray::new(
-            Point3::new(1.0, 2.0, 3.0),
-            Vector3::new(1.0, 3.0, 2.0).normalize(),
-        );
-        let t = world_to_ray_coordinate_space(&ray);
-        let ray = t.transform(&ray);
-        assert!(
-            is_along_z(&ray),
-            "Expected ray direction to point along positive z axis in `{:#?}`",
-            ray
-        );
-
-        // Initiially ray's z component is largest.
-        let ray = Ray::new(
-            Point3::new(1.0, 2.0, 3.0),
-            Vector3::new(1.0, 2.0, 3.0).normalize(),
-        );
-        let t = world_to_ray_coordinate_space(&ray);
-        let ray = t.transform(&ray);
-        assert!(
-            is_along_z(&ray),
-            "Expected ray direction to point along positive z axis in `{:#?}`",
-            ray
-        );
-    }
-
-    fn is_along_z(ray: &Ray) -> bool {
-        ray.direction.z > 0.0 && ray.direction.x.approx_eq(&0.0) && ray.direction.y.approx_eq(&0.0)
-    }
-}
-
-#[cfg(test)]
-mod find_intersection_location_tests {
-    use super::find_intersection_location;
-    use crate::{ray::Ray, test::ApproxEq};
-    use cgmath::{Point3, Vector3};
-
-    const TRIANGLE: (Point3<f32>, Point3<f32>, Point3<f32>) = (
-        Point3::new(1.0, 0.0, 0.0),
-        Point3::new(0.0, 1.0, 0.0),
-        Point3::new(0.0, 0.0, 1.0),
-    );
-
-    #[test]
-    fn intersects_corners() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(2.0, 0.0, 0.0), Vector3::new(-1.0, 0.0, 0.0));
-        let loc = find_intersection_location(TRIANGLE, &ray);
-        if let Some(loc) = loc {
-            loc.t.assert_approx_eq(&1.0);
-            Ok(())
-        } else {
-            Err("Expected to find intersection.".to_string())
-        }
-    }
-}
-
-#[cfg(test)]
-mod ray_intersects_tests {
+mod ray_intersection_test {
+    use crate::math::matrix::identity4;
+    use crate::mesh::{triangle::Triangle, TiangleMeshBuilder, TriangleMesh};
     use crate::ray::Ray;
     use crate::test::ApproxEq;
-    use crate::{math::matrix::identity4, mesh::TiangleMeshBuilder};
     use cgmath::{Point3, Vector3};
 
     #[test]
-    fn ray_parallel_to_triangle() {
+    fn parallel_ray_misses() {
         let identity = identity4();
-        let object_space_vertices = vec![
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(-1.0, 0.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-        ];
-        let triangle_vertex_indices = vec![(0, 1, 2)];
         let mesh = TiangleMeshBuilder::new(
             &identity,
             &identity,
             false,
-            object_space_vertices,
-            triangle_vertex_indices,
+            vec![
+                Point3::new(0.0, 1.0, 0.0),
+                Point3::new(-1.0, 0.0, 0.0),
+                Point3::new(1.0, 0.0, 0.0),
+            ],
+            vec![(0, 1, 2)],
         )
         .build();
         let triangle = mesh.triangle_at(0);
         let ray = Ray::new(Point3::new(0.0, -1.0, -2.0), Vector3::new(0.0, 1.0, 0.0));
-        let intersection = triangle.ray_intersection(&ray);
-        assert!(intersection.is_none());
+        let result = triangle.ray_intersection(&ray);
+        assert!(result.is_none(), "Expected to not find intersection.")
     }
 
     #[test]
-    fn ray_misses_p1_p3_edge() {
+    fn outside_p1_p3_misses() {
         let identity = identity4();
-        let object_space_vertices = vec![
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(-1.0, 0.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-        ];
-        let triangle_vertex_indices = vec![(0, 1, 2)];
         let mesh = TiangleMeshBuilder::new(
             &identity,
             &identity,
             false,
-            object_space_vertices,
-            triangle_vertex_indices,
+            vec![
+                Point3::new(0.0, 1.0, 0.0),
+                Point3::new(-1.0, 0.0, 0.0),
+                Point3::new(1.0, 0.0, 0.0),
+            ],
+            vec![(0, 1, 2)],
         )
         .build();
         let triangle = mesh.triangle_at(0);
         let ray = Ray::new(Point3::new(1.0, 1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
-        let intersection = triangle.ray_intersection(&ray);
-        assert!(intersection.is_none());
+        let result = triangle.ray_intersection(&ray);
+        assert!(result.is_none(), "Expected to not find intersection.")
     }
 
     #[test]
-    fn ray_misses_p1_p2_edge() {
+    fn outside_p1_p2_misses() {
         let identity = identity4();
-        let object_space_vertices = vec![
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(-1.0, 0.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-        ];
-        let triangle_vertex_indices = vec![(0, 1, 2)];
         let mesh = TiangleMeshBuilder::new(
             &identity,
             &identity,
             false,
-            object_space_vertices,
-            triangle_vertex_indices,
+            vec![
+                Point3::new(0.0, 1.0, 0.0),
+                Point3::new(-1.0, 0.0, 0.0),
+                Point3::new(1.0, 0.0, 0.0),
+            ],
+            vec![(0, 1, 2)],
         )
         .build();
         let triangle = mesh.triangle_at(0);
         let ray = Ray::new(Point3::new(-1.0, 1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
-        let intersection = triangle.ray_intersection(&ray);
-        assert!(intersection.is_none());
+        let result = triangle.ray_intersection(&ray);
+        assert!(result.is_none(), "Expected to not find intersection.")
     }
 
     #[test]
-    fn ray_misses_p2_p3_edge() {
+    fn outside_p2_p3_misses() {
         let identity = identity4();
-        let object_space_vertices = vec![
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(-1.0, 0.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-        ];
-        let triangle_vertex_indices = vec![(0, 1, 2)];
         let mesh = TiangleMeshBuilder::new(
             &identity,
             &identity,
             false,
-            object_space_vertices,
-            triangle_vertex_indices,
+            vec![
+                Point3::new(0.0, 1.0, 0.0),
+                Point3::new(-1.0, 0.0, 0.0),
+                Point3::new(1.0, 0.0, 0.0),
+            ],
+            vec![(0, 1, 2)],
         )
         .build();
         let triangle = mesh.triangle_at(0);
         let ray = Ray::new(Point3::new(0.0, -1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
-        let intersection = triangle.ray_intersection(&ray);
-        assert!(intersection.is_none());
+        let result = triangle.ray_intersection(&ray);
+        assert!(result.is_none(), "Expected to not find intersection.")
+    }
+
+    #[test]
+    fn skimming_misses() {
+        let identity = identity4();
+        let mesh = TiangleMeshBuilder::new(
+            &identity,
+            &identity,
+            false,
+            vec![
+                Point3::new(0.0, 1.0, 0.0),
+                Point3::new(-1.0, 0.0, 0.0),
+                Point3::new(1.0, 0.0, 0.0),
+            ],
+            vec![(0, 1, 2)],
+        )
+        .build();
+        let triangle = mesh.triangle_at(0);
+        let ray = Ray::new(Point3::new(0.0, -1.0, 0.0), Vector3::new(0.0, 1.0, 0.0));
+        let result = triangle.ray_intersection(&ray);
+        assert!(result.is_none(), "Expected to not find intersection.")
     }
 
     #[test]
     fn ray_strikes_triangle() -> Result<(), String> {
         let identity = identity4();
-        let object_space_vertices = vec![
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(-1.0, 0.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-        ];
-        let triangle_vertex_indices = vec![(0, 1, 2)];
         let mesh = TiangleMeshBuilder::new(
             &identity,
             &identity,
             false,
-            object_space_vertices,
-            triangle_vertex_indices,
+            vec![
+                Point3::new(0.0, 1.0, 0.0),
+                Point3::new(-1.0, 0.0, 0.0),
+                Point3::new(1.0, 0.0, 0.0),
+            ],
+            vec![(0, 1, 2)],
         )
         .build();
         let triangle = mesh.triangle_at(0);
         let ray = Ray::new(Point3::new(0.0, 0.5, -2.0), Vector3::new(0.0, 0.0, 1.0));
-        let intersection = triangle.ray_intersection(&ray);
-
-        if let Some((t, _interaction)) = intersection {
+        let result = triangle.ray_intersection(&ray);
+        if let Some((t, interaction)) = result {
             assert!(t.approx_eq(&2.0));
             Ok(())
         } else {
-            Err("Expected intersection. Found none.".to_string())
+            Err("Expected to find intersection.".to_string())
         }
     }
 }
