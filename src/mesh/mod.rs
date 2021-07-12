@@ -1,9 +1,10 @@
+pub mod stl;
 pub mod triangle;
 
 use cgmath::{Matrix4, Point2, Point3, Transform, Vector3};
 
 /// A mesh of triangles.
-pub struct TriangleMesh<'mtrx> {
+pub struct Mesh<'mtrx> {
     object_to_world: &'mtrx Matrix4<f32>,
     world_to_object: &'mtrx Matrix4<f32>,
     reverse_orientation: bool,
@@ -25,7 +26,7 @@ pub struct TriangleMesh<'mtrx> {
     uvs: Option<Vec<Point2<f32>>>,
 }
 
-pub struct TiangleMeshBuilder<'mtrx> {
+pub struct MeshBuilder<'mtrx> {
     object_to_world: &'mtrx Matrix4<f32>,
     world_to_object: &'mtrx Matrix4<f32>,
     reverse_orientation: bool,
@@ -36,7 +37,7 @@ pub struct TiangleMeshBuilder<'mtrx> {
     uvs: Option<Vec<Point2<f32>>>,
 }
 
-impl<'mtrx> TiangleMeshBuilder<'mtrx> {
+impl<'mtrx> MeshBuilder<'mtrx> {
     pub fn new(
         object_to_world: &'mtrx Matrix4<f32>,
         world_to_object: &'mtrx Matrix4<f32>,
@@ -71,8 +72,8 @@ impl<'mtrx> TiangleMeshBuilder<'mtrx> {
         self
     }
 
-    pub fn build(self) -> TriangleMesh<'mtrx> {
-        TriangleMesh {
+    pub fn build(self) -> Mesh<'mtrx> {
+        Mesh {
             object_to_world: self.object_to_world,
             world_to_object: self.world_to_object,
             reverse_orientation: self.reverse_orientation,

@@ -1,17 +1,17 @@
 use crate::efloat;
 use crate::interaction::SurfaceInteraction;
 use crate::math::{axis::Axis3, baycentric, point, vector};
-use crate::mesh::TriangleMesh;
+use crate::mesh::Mesh;
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
 
 /// A reference to an individual triangle in a mesh.
-pub struct Triangle<'tm, 'mtrx> {
-    mesh: &'tm TriangleMesh<'mtrx>,
+pub struct Triangle<'msh, 'mtrx> {
+    mesh: &'msh Mesh<'mtrx>,
     index_in_mesh: usize,
 }
 
-impl<'tm, 'mtrx> Triangle<'tm, 'mtrx> {
+impl<'msh, 'mtrx> Triangle<'msh, 'mtrx> {
     pub fn object_space_vertices(&self) -> (Point3<f32>, Point3<f32>, Point3<f32>) {
         let (i1, i2, i3) = self.mesh.triangle_vertex_indices[self.index_in_mesh];
         let p1 = self
@@ -54,8 +54,8 @@ impl<'tm, 'mtrx> Triangle<'tm, 'mtrx> {
     }
 }
 
-impl<'tm, 'mtrx> TriangleMesh<'mtrx> {
-    pub fn triangle_at(&'tm self, index: usize) -> Triangle<'tm, 'mtrx> {
+impl<'msh, 'mtrx> Mesh<'mtrx> {
+    pub fn triangle_at(&'msh self, index: usize) -> Triangle<'msh, 'mtrx> {
         Triangle {
             mesh: self,
             index_in_mesh: index,
@@ -63,7 +63,7 @@ impl<'tm, 'mtrx> TriangleMesh<'mtrx> {
     }
 }
 
-impl<'shape, 'tm, 'mtrx> Triangle<'tm, 'mtrx> {
+impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
     fn object_to_world(&self) -> &'mtrx Matrix4<f32> {
         self.mesh.object_to_world
     }
@@ -285,7 +285,7 @@ fn triangle_partial_derivatives(
 #[cfg(test)]
 mod ray_intersection_tests {
     use crate::math::matrix::identity4;
-    use crate::mesh::{triangle::Triangle, TiangleMeshBuilder, TriangleMesh};
+    use crate::mesh::{triangle::Triangle, Mesh, MeshBuilder};
     use crate::ray::Ray;
     use crate::test::ApproxEq;
     use cgmath::{Point3, Vector3};
@@ -293,7 +293,7 @@ mod ray_intersection_tests {
     #[test]
     fn parallel_ray_misses() {
         let identity = identity4();
-        let mesh = TiangleMeshBuilder::new(
+        let mesh = MeshBuilder::new(
             &identity,
             &identity,
             false,
@@ -314,7 +314,7 @@ mod ray_intersection_tests {
     #[test]
     fn outside_p1_p3_misses() {
         let identity = identity4();
-        let mesh = TiangleMeshBuilder::new(
+        let mesh = MeshBuilder::new(
             &identity,
             &identity,
             false,
@@ -335,7 +335,7 @@ mod ray_intersection_tests {
     #[test]
     fn outside_p1_p2_misses() {
         let identity = identity4();
-        let mesh = TiangleMeshBuilder::new(
+        let mesh = MeshBuilder::new(
             &identity,
             &identity,
             false,
@@ -356,7 +356,7 @@ mod ray_intersection_tests {
     #[test]
     fn outside_p2_p3_misses() {
         let identity = identity4();
-        let mesh = TiangleMeshBuilder::new(
+        let mesh = MeshBuilder::new(
             &identity,
             &identity,
             false,
@@ -377,7 +377,7 @@ mod ray_intersection_tests {
     #[test]
     fn skimming_misses() {
         let identity = identity4();
-        let mesh = TiangleMeshBuilder::new(
+        let mesh = MeshBuilder::new(
             &identity,
             &identity,
             false,
@@ -398,7 +398,7 @@ mod ray_intersection_tests {
     #[test]
     fn ray_strikes_triangle() -> Result<(), String> {
         let identity = identity4();
-        let mesh = TiangleMeshBuilder::new(
+        let mesh = MeshBuilder::new(
             &identity,
             &identity,
             false,
