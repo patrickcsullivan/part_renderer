@@ -21,6 +21,7 @@ use crate::{
     camera::{view_transform, Camera},
     light::{phong_shading, PointLight},
     material::Material,
+    mesh::Mesh,
     primitive::Primitive,
     world::WorldBuilder,
 };
@@ -103,15 +104,27 @@ fn demo() {
     let back_inv_transf = back_transf.inverse_transform().unwrap();
     let back = Object::sphere(&back_transf, &back_inv_transf, false);
 
-    let triangle_material = Material::new(Rgb::new(0.3, 0.3, 0.5), 0.1, 0.7, 0.3, 200.0, 0.8);
-    let triangle = Object::triangle(
-        &identity,
-        &identity,
-        false,
-        Point3::new(0.0, 0.0, 0.1),
-        Point3::new(0.6, 0.2, -0.1),
-        Point3::new(0.3, 0.5, 0.0),
-    );
+    let file = std::fs::File::open("cube_corner.stl").unwrap();
+    let mut reader = std::io::BufReader::new(&file);
+    let mesh_transf = Matrix4::from_translation(Vector3::new(-0.0, 1.0, 0.5))
+        * Matrix4::from_angle_z(Rad(PI / 6.0))
+        * Matrix4::from_angle_y(Rad(PI / 4.0));
+    let mesh_inv_transf = middle_transf.inverse_transform().unwrap();
+    let mesh = Mesh::from_stl(&mesh_transf, &mesh_inv_transf, false, &mut reader).unwrap();
+    let triangle_material = Material::new(Rgb::new(1.0, 0.8, 0.1), 0.1, 0.7, 0.3, 100.0, 0.2);
+    let triangle1 = Object::triangle(&mesh, 0);
+    let triangle2 = Object::triangle(&mesh, 1);
+    let triangle3 = Object::triangle(&mesh, 2);
+    let triangle4 = Object::triangle(&mesh, 3);
+
+    // let triangle = Object::triangle(
+    //     &identity,
+    //     &identity,
+    //     false,
+    //     Point3::new(0.0, 0.0, 0.1),
+    //     Point3::new(0.6, 0.2, -0.1),
+    //     Point3::new(0.3, 0.5, 0.0),
+    // );
 
     let light1 = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(-10.0, 10.0, -10.0));
     let light2 = PointLight::new(Rgb::new(0.2, 0.0, 0.4), Point3::new(10.0, 10.0, -10.0));
@@ -132,7 +145,10 @@ fn demo() {
         .primitive(Primitive::new(&right, &right_material))
         .primitive(Primitive::new(&left, &left_material))
         .primitive(Primitive::new(&back, &back_material))
-        .primitive(Primitive::new(&triangle, &triangle_material))
+        .primitive(Primitive::new(&triangle1, &triangle_material))
+        .primitive(Primitive::new(&triangle2, &triangle_material))
+        .primitive(Primitive::new(&triangle3, &triangle_material))
+        .primitive(Primitive::new(&triangle4, &triangle_material))
         .build();
     let img = world.render(&camera, 5);
     let _ = img.save("demo.png");

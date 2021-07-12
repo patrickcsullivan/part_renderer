@@ -6,6 +6,7 @@ use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
 
 /// A reference to an individual triangle in a mesh.
+#[derive(Debug, Clone, Copy)]
 pub struct Triangle<'msh, 'mtrx> {
     mesh: &'msh Mesh<'mtrx>,
     index_in_mesh: usize,
@@ -64,23 +65,23 @@ impl<'msh, 'mtrx> Mesh<'mtrx> {
 }
 
 impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
-    fn object_to_world(&self) -> &'mtrx Matrix4<f32> {
+    pub fn object_to_world(&self) -> &'mtrx Matrix4<f32> {
         self.mesh.object_to_world
     }
 
-    fn world_to_object(&self) -> &'mtrx Matrix4<f32> {
+    pub fn world_to_object(&self) -> &'mtrx Matrix4<f32> {
         self.mesh.world_to_object
     }
 
-    fn object_to_world_swaps_handedness(&self) -> bool {
+    pub fn object_to_world_swaps_handedness(&self) -> bool {
         false // FIXME
     }
 
-    fn reverse_orientation(&self) -> bool {
+    pub fn reverse_orientation(&self) -> bool {
         self.mesh.reverse_orientation
     }
 
-    fn ray_intersection(&'shape self, ray: &Ray) -> Option<(f32, SurfaceInteraction)> {
+    pub fn ray_intersection(&'shape self, ray: &Ray) -> Option<(f32, SurfaceInteraction)> {
         let (p0, p1, p2) = self.world_space_vertices();
         let (uv0, uv1, uv2) = self.uv_vertices();
 

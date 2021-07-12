@@ -2,32 +2,32 @@ use crate::{interaction::SurfaceInteraction, primitive::Primitive};
 use std::cmp::Ordering;
 
 #[derive(Debug)]
-pub struct Intersection<'shp, 'mtrx, 'mtrl> {
+pub struct Intersection<'msh, 'shp, 'mtrx, 'mtrl> {
     pub t: f32,
     pub interaction: SurfaceInteraction,
-    pub primitive: Primitive<'shp, 'mtrx, 'mtrl>,
+    pub primitive: Primitive<'msh, 'shp, 'mtrx, 'mtrl>,
 }
 
-pub struct Intersections<'shp, 'mtrx, 'mtrl> {
-    values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>,
+pub struct Intersections<'msh, 'shp, 'mtrx, 'mtrl> {
+    values: Vec<Intersection<'msh, 'shp, 'mtrx, 'mtrl>>,
 }
 
-impl<'shp, 'mtrx, 'mtrl> Intersections<'shp, 'mtrx, 'mtrl> {
+impl<'msh, 'shp, 'mtrx, 'mtrl> Intersections<'msh, 'shp, 'mtrx, 'mtrl> {
     pub fn empty() -> Self {
         Self { values: vec![] }
     }
 
-    pub fn new(values: Vec<Intersection<'shp, 'mtrx, 'mtrl>>) -> Self {
+    pub fn new(values: Vec<Intersection<'msh, 'shp, 'mtrx, 'mtrl>>) -> Self {
         let mut inters = Self { values };
         inters.filter_and_sort_values();
         inters
     }
 
-    pub fn values(&self) -> Vec<&Intersection<'shp, 'mtrx, 'mtrl>> {
+    pub fn values(&self) -> Vec<&Intersection<'msh, 'shp, 'mtrx, 'mtrl>> {
         self.values.iter().collect()
     }
 
-    pub fn hit(&self) -> Option<&Intersection<'shp, 'mtrx, 'mtrl>> {
+    pub fn hit(&self) -> Option<&Intersection<'msh, 'shp, 'mtrx, 'mtrl>> {
         self.values.iter().find(|i| i.t > 0.0)
     }
 

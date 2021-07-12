@@ -12,13 +12,13 @@ use crate::{
 use cgmath::{InnerSpace, MetricSpace, Point3};
 use image::ImageBuffer;
 
-pub struct World<'shp, 'mtrx, 'mtrl> {
-    pub primitives: Vec<Primitive<'shp, 'mtrx, 'mtrl>>,
+pub struct World<'msh, 'shp, 'mtrx, 'mtrl> {
+    pub primitives: Vec<Primitive<'msh, 'shp, 'mtrx, 'mtrl>>,
     pub lights: Vec<PointLight>,
 }
 
-impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
-    fn ray_intersections(&self, ray: &Ray) -> Intersections<'shp, 'mtrx, 'mtrl> {
+impl<'msh, 'shp, 'mtrx, 'mtrl> World<'msh, 'shp, 'mtrx, 'mtrl> {
+    fn ray_intersections(&self, ray: &Ray) -> Intersections<'msh, 'shp, 'mtrx, 'mtrl> {
         let mut inters = Intersections::empty();
         for primitive in &self.primitives {
             let values = primitive
@@ -116,12 +116,12 @@ impl<'shp, 'mtrx, 'mtrl> World<'shp, 'mtrx, 'mtrl> {
     }
 }
 
-pub struct WorldBuilder<'shp, 'mtrx, 'mtrl> {
-    pub primitives: Vec<Primitive<'shp, 'mtrx, 'mtrl>>,
+pub struct WorldBuilder<'msh, 'shp, 'mtrx, 'mtrl> {
+    pub primitives: Vec<Primitive<'msh, 'shp, 'mtrx, 'mtrl>>,
     pub lights: Vec<PointLight>,
 }
 
-impl<'shp, 'mtrx, 'mtrl> WorldBuilder<'shp, 'mtrx, 'mtrl> {
+impl<'msh, 'shp, 'mtrx, 'mtrl> WorldBuilder<'msh, 'shp, 'mtrx, 'mtrl> {
     pub fn new() -> Self {
         Self {
             primitives: vec![],
@@ -129,14 +129,14 @@ impl<'shp, 'mtrx, 'mtrl> WorldBuilder<'shp, 'mtrx, 'mtrl> {
         }
     }
 
-    pub fn build(self) -> World<'shp, 'mtrx, 'mtrl> {
+    pub fn build(self) -> World<'msh, 'shp, 'mtrx, 'mtrl> {
         World {
             primitives: self.primitives,
             lights: self.lights,
         }
     }
 
-    pub fn primitive(mut self, sphere: Primitive<'shp, 'mtrx, 'mtrl>) -> Self {
+    pub fn primitive(mut self, sphere: Primitive<'msh, 'shp, 'mtrx, 'mtrl>) -> Self {
         self.primitives.push(sphere);
         self
     }

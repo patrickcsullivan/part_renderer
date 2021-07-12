@@ -1,21 +1,24 @@
 mod plane;
 mod sphere;
-mod triangle;
 
-use crate::{interaction::SurfaceInteraction, ray::Ray};
+use crate::{
+    interaction::SurfaceInteraction,
+    mesh::{Mesh, Triangle},
+    ray::Ray,
+};
 use cgmath::{Matrix4, Point3};
 use std::fmt::Debug;
 
 /// A 3D object that can be transformed and intersected with rays.
 #[derive(Debug)]
-pub struct Object<'mtrx> {
+pub struct Object<'msh, 'mtrx> {
     object_to_world: &'mtrx Matrix4<f32>,
     world_to_object: &'mtrx Matrix4<f32>,
     reverse_orientation: bool,
-    geometry: Geometry,
+    geometry: Geometry<'msh, 'mtrx>,
 }
 
-impl<'mtrx> Object<'mtrx> {
+impl<'msh, 'mtrx> Object<'msh, 'mtrx> {
     pub fn sphere(
         object_to_world: &'mtrx Matrix4<f32>,
         world_to_object: &'mtrx Matrix4<f32>,
@@ -42,19 +45,12 @@ impl<'mtrx> Object<'mtrx> {
         }
     }
 
-    pub fn triangle(
-        object_to_world: &'mtrx Matrix4<f32>,
-        world_to_object: &'mtrx Matrix4<f32>,
-        reverse_orientation: bool,
-        p1: Point3<f32>,
-        p2: Point3<f32>,
-        p3: Point3<f32>,
-    ) -> Self {
+    pub fn triangle(mesh: &'mtrx Mesh, index_in_mesh: usize) -> Self {
         Self {
-            object_to_world,
-            world_to_object,
-            reverse_orientation,
-            geometry: Geometry::Triangle(triangle::Triangle::new(p1, p2, p3)),
+            object_to_world: mesh.object_to_world,
+            world_to_object: mesh.world_to_object,
+            reverse_orientation: mesh.reverse_orientation,
+            geometry: Geometry::Triangle(mesh.triangle_at(index_in_mesh)),
         }
     }
 
@@ -70,13 +66,13 @@ impl<'mtrx> Object<'mtrx> {
 
 /// A description of 3D geometry.
 #[derive(Debug)]
-enum Geometry {
+enum Geometry<'msh, 'mtrx> {
     Sphere(),
     Plane(),
-    Triangle(triangle::Triangle),
+    Triangle(Triangle<'msh, 'mtrx>),
 }
 
-impl Geometry {
+impl<'msh, 'mtrx> Geometry<'msh, 'mtrx> {
     fn ray_intersections(
         &self,
         ray: &Ray,
@@ -94,12 +90,10 @@ impl Geometry {
             Self::Plane() => {
                 plane::ray_intersections(ray, object_to_world, world_to_object, reverse_orientation)
             }
-            Self::Triangle(triangle) => triangle.ray_intersections(
-                ray,
-                object_to_world,
-                world_to_object,
-                reverse_orientation,
-            ),
+            Self::Triangle(triangle) => match triangle.ray_intersection(ray) {
+                Some((t, interaction)) => vec![(t, interaction)],
+                None => vec![],
+            },
         }
     }
 }
