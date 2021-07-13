@@ -62,6 +62,11 @@ impl<'msh, 'mtrx> Mesh<'mtrx> {
             index_in_mesh: index,
         }
     }
+
+    pub fn triangles(&'msh self) -> Vec<Triangle<'msh, 'mtrx>> {
+        let triangle_count = self.triangle_vertex_indices.len();
+        (0..triangle_count).map(|i| self.triangle_at(i)).collect()
+    }
 }
 
 impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {

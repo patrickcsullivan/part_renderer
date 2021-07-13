@@ -1,6 +1,8 @@
 //! Contains data structures that can be used to construct a renderable 3D
 //! world.
-use crate::{interaction::SurfaceInteraction, material::Material, ray::Ray, shape::Shape};
+use crate::{
+    interaction::SurfaceInteraction, material::Material, mesh::Mesh, ray::Ray, shape::Shape,
+};
 
 /// Combines a reference to a shape and a reference to a material. This is the
 /// basic primitive used in the construction of any renderable.
@@ -8,6 +10,12 @@ use crate::{interaction::SurfaceInteraction, material::Material, ray::Ray, shape
 pub struct Primitive<'shp, 'msh, 'mtrx, 'mtrl> {
     pub shape: &'shp Shape<'msh, 'mtrx>,
     pub material: &'mtrl Material,
+}
+
+impl<'shp, 'msh, 'mtrx, 'mtrl> Primitive<'shp, 'msh, 'mtrx, 'mtrl> {
+    pub fn new(shape: &'shp Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
+        Self { shape, material }
+    }
 }
 
 // A data structure representing a scene that can be rendered by casting rays
@@ -41,6 +49,16 @@ impl<'shp, 'msh, 'mtrx, 'mtrl> Renderable<'shp, 'msh, 'mtrx, 'mtrl> {
                         .map(|(t, p, interaction)| (t, p, interaction))
                 })
                 .min_by(|(t1, _, _), (t2, _, _)| cmp_ignore_nan(t1, t2)),
+        }
+    }
+
+    pub fn push_renderable(self, r: Self) -> Self {
+        match self {
+            Renderable::Primitive(p) => Self::Vector(vec![Renderable::Primitive(p), r]),
+            Renderable::Vector(mut rs) => {
+                rs.push(r);
+                Self::Vector(rs)
+            }
         }
     }
 }
