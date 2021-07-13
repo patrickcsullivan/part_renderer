@@ -2,7 +2,7 @@ use crate::interaction::SurfaceInteraction;
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix, Matrix4, Transform, Vector3};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Plane<'mtrx> {
     pub object_to_world: &'mtrx Matrix4<f32>,
     pub world_to_object: &'mtrx Matrix4<f32>,

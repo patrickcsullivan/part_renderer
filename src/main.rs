@@ -57,9 +57,9 @@ fn demo_simple() {
 
     let world = World::new(
         Renderable::Vector(vec![
-            Renderable::primitive(&sphere1, &material),
-            Renderable::primitive(&sphere2, &material),
-            Renderable::primitive(&sphere3, &material),
+            Renderable::primitive(sphere1, &material),
+            Renderable::primitive(sphere2, &material),
+            Renderable::primitive(sphere3, &material),
         ]),
         vec![light],
     );
@@ -128,15 +128,15 @@ fn demo() {
 
     let world = World::new(
         Renderable::Vector(vec![
-            Renderable::primitive(&floor, &floor_material),
-            Renderable::primitive(&middle, &middle_material),
-            Renderable::primitive(&right, &right_material),
-            Renderable::primitive(&left, &left_material),
-            Renderable::primitive(&back, &back_material),
-            Renderable::primitive(&triangle1, &triangle_material),
-            Renderable::primitive(&triangle2, &triangle_material),
-            Renderable::primitive(&triangle3, &triangle_material),
-            Renderable::primitive(&triangle4, &triangle_material),
+            Renderable::primitive(floor, &floor_material),
+            Renderable::primitive(middle, &middle_material),
+            Renderable::primitive(right, &right_material),
+            Renderable::primitive(left, &left_material),
+            Renderable::primitive(back, &back_material),
+            Renderable::primitive(triangle1, &triangle_material),
+            Renderable::primitive(triangle2, &triangle_material),
+            Renderable::primitive(triangle3, &triangle_material),
+            Renderable::primitive(triangle4, &triangle_material),
         ]),
         vec![light1, light2],
     );

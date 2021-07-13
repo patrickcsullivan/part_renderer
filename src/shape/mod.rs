@@ -11,7 +11,7 @@ use std::fmt::Debug;
 
 use self::{plane::Plane, sphere::Sphere};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Shape<'msh, 'mtrx> {
     Sphere(Sphere<'mtrx>),
     Plane(Plane<'mtrx>),

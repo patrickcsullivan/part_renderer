@@ -92,7 +92,7 @@ impl ApproxEq for crate::ray::Ray {
     }
 }
 
-impl<'shp, 'msh, 'mtrx, 'mtrl> ApproxEq for crate::interaction::SurfaceInteraction {
+impl<'msh, 'mtrx, 'mtrl> ApproxEq for crate::interaction::SurfaceInteraction {
     fn approx_eq(&self, _other: &Self) -> bool {
         // TODO: For now it doesn't seem possible to compare two trait object
         // references. It might be necessary to give shape's some sort of id so

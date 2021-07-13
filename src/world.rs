@@ -10,13 +10,13 @@ use crate::{
 use cgmath::{InnerSpace, Point3};
 use image::ImageBuffer;
 
-pub struct World<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub renderable: Renderable<'shp, 'msh, 'mtrx, 'mtrl>,
+pub struct World<'msh, 'mtrx, 'mtrl> {
+    pub renderable: Renderable<'msh, 'mtrx, 'mtrl>,
     pub lights: Vec<PointLight>,
 }
 
-impl<'shp, 'msh, 'mtrx, 'mtrl> World<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub fn new(renderable: Renderable<'shp, 'msh, 'mtrx, 'mtrl>, lights: Vec<PointLight>) -> Self {
+impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
+    pub fn new(renderable: Renderable<'msh, 'mtrx, 'mtrl>, lights: Vec<PointLight>) -> Self {
         Self { renderable, lights }
     }
 
@@ -113,8 +113,8 @@ mod color_at_tests {
         let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
         let sphere1 = Shape::sphere(&identity, &identity, false);
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
-        let primitive1 = Renderable::primitive(&sphere1, &material);
-        let primitive2 = Renderable::primitive(&sphere2, &material);
+        let primitive1 = Renderable::primitive(sphere1, &material);
+        let primitive2 = Renderable::primitive(sphere2, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
         let world = World::new(
             Renderable::Vector(vec![primitive1, primitive2]),
@@ -151,7 +151,7 @@ mod is_occluded_tests {
         let identity = identity4();
         let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
         let sphere = Shape::sphere(&identity, &identity, false);
-        let primitive = Renderable::primitive(&sphere, &material);
+        let primitive = Renderable::primitive(sphere, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
         let world = World::new(primitive, vec![light]);
 

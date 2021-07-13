@@ -4,29 +4,23 @@ use crate::{
     interaction::SurfaceInteraction, material::Material, mesh::Mesh, ray::Ray, shape::Shape,
 };
 
+// A data structure representing a scene that can be rendered by casting rays
+// into it.
+pub enum Renderable<'msh, 'mtrx, 'mtrl> {
+    Primitive(Primitive<'msh, 'mtrx, 'mtrl>),
+    Vector(Vec<Renderable<'msh, 'mtrx, 'mtrl>>),
+}
+
 /// Combines a reference to a shape and a reference to a material. This is the
 /// basic primitive used in the construction of any renderable.
-#[derive(Debug, Clone)]
-pub struct Primitive<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub shape: &'shp Shape<'msh, 'mtrx>,
+#[derive(Debug, Clone, Copy)]
+pub struct Primitive<'msh, 'mtrx, 'mtrl> {
+    pub shape: Shape<'msh, 'mtrx>,
     pub material: &'mtrl Material,
 }
 
-impl<'shp, 'msh, 'mtrx, 'mtrl> Primitive<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub fn new(shape: &'shp Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
-        Self { shape, material }
-    }
-}
-
-// A data structure representing a scene that can be rendered by casting rays
-// into it.
-pub enum Renderable<'shp, 'msh, 'mtrx, 'mtrl> {
-    Primitive(Primitive<'shp, 'msh, 'mtrx, 'mtrl>),
-    Vector(Vec<Renderable<'shp, 'msh, 'mtrx, 'mtrl>>),
-}
-
-impl<'shp, 'msh, 'mtrx, 'mtrl> Renderable<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub fn primitive(shape: &'shp Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
+impl<'msh, 'mtrx, 'mtrl> Renderable<'msh, 'mtrx, 'mtrl> {
+    pub fn primitive(shape: Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
         Self::Primitive(Primitive { shape, material })
     }
 
@@ -36,7 +30,7 @@ impl<'shp, 'msh, 'mtrx, 'mtrl> Renderable<'shp, 'msh, 'mtrx, 'mtrl> {
     pub fn ray_intersection(
         &self,
         ray: &Ray,
-    ) -> Option<(f32, Primitive<'shp, 'msh, 'mtrx, 'mtrl>, SurfaceInteraction)> {
+    ) -> Option<(f32, Primitive<'msh, 'mtrx, 'mtrl>, SurfaceInteraction)> {
         match self {
             Renderable::Primitive(p) => p
                 .shape
@@ -49,16 +43,6 @@ impl<'shp, 'msh, 'mtrx, 'mtrl> Renderable<'shp, 'msh, 'mtrx, 'mtrl> {
                         .map(|(t, p, interaction)| (t, p, interaction))
                 })
                 .min_by(|(t1, _, _), (t2, _, _)| cmp_ignore_nan(t1, t2)),
-        }
-    }
-
-    pub fn push_renderable(self, r: Self) -> Self {
-        match self {
-            Renderable::Primitive(p) => Self::Vector(vec![Renderable::Primitive(p), r]),
-            Renderable::Vector(mut rs) => {
-                rs.push(r);
-                Self::Vector(rs)
-            }
         }
     }
 }
@@ -85,8 +69,8 @@ mod ray_intersections_tests {
         let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0, 0.0);
         let sphere1 = Shape::sphere(&identity, &identity, false);
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
-        let primitive1 = Renderable::primitive(&sphere1, &material);
-        let primitive2 = Renderable::primitive(&sphere2, &material);
+        let primitive1 = Renderable::primitive(sphere1, &material);
+        let primitive2 = Renderable::primitive(sphere2, &material);
         let renderable = Renderable::Vector(vec![primitive1, primitive2]);
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
         if let Some((t, _, _)) = renderable.ray_intersection(&ray) {
