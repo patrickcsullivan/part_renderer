@@ -21,7 +21,7 @@ use crate::{
     material::Material,
     mesh::Mesh,
     renderable::{Primitive, Renderable},
-    world::WorldBuilder,
+    world::World,
 };
 use cgmath::{Matrix, Matrix4, Transform};
 
@@ -55,14 +55,14 @@ fn demo_simple() {
     );
     let camera = Camera::new(400, 400, Rad(PI / 2.0), camera_transf);
 
-    let world = WorldBuilder::new()
-        .point_light(light)
-        .renderables(vec![
+    let world = World::new(
+        Renderable::Vector(vec![
             Renderable::primitive(&sphere1, &material),
             Renderable::primitive(&sphere2, &material),
             Renderable::primitive(&sphere3, &material),
-        ])
-        .build();
+        ]),
+        vec![light],
+    );
     let img = world.render(&camera, 5);
     let _ = img.save("demo_simple.png");
 }
@@ -126,10 +126,8 @@ fn demo() {
     // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
     let camera = Camera::new(1200, 600, Rad(PI / 3.0), camera_transf);
 
-    let world = WorldBuilder::new()
-        .point_light(light1)
-        .point_light(light2)
-        .renderables(vec![
+    let world = World::new(
+        Renderable::Vector(vec![
             Renderable::primitive(&floor, &floor_material),
             Renderable::primitive(&middle, &middle_material),
             Renderable::primitive(&right, &right_material),
@@ -139,8 +137,9 @@ fn demo() {
             Renderable::primitive(&triangle2, &triangle_material),
             Renderable::primitive(&triangle3, &triangle_material),
             Renderable::primitive(&triangle4, &triangle_material),
-        ])
-        .build();
+        ]),
+        vec![light1, light2],
+    );
     let img = world.render(&camera, 5);
     let _ = img.save("demo.png");
 }

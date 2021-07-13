@@ -16,6 +16,10 @@ pub struct World<'shp, 'msh, 'mtrx, 'mtrl> {
 }
 
 impl<'shp, 'msh, 'mtrx, 'mtrl> World<'shp, 'msh, 'mtrx, 'mtrl> {
+    pub fn new(renderable: Renderable<'shp, 'msh, 'mtrx, 'mtrl>, lights: Vec<PointLight>) -> Self {
+        Self { renderable, lights }
+    }
+
     pub fn shade_surface_interaction(
         &self,
         interaction: &SurfaceInteraction,
@@ -93,42 +97,11 @@ impl<'shp, 'msh, 'mtrx, 'mtrl> World<'shp, 'msh, 'mtrx, 'mtrl> {
     }
 }
 
-pub struct WorldBuilder<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub renderable: Renderable<'shp, 'msh, 'mtrx, 'mtrl>,
-    pub lights: Vec<PointLight>,
-}
-
-impl<'shp, 'msh, 'mtrx, 'mtrl> WorldBuilder<'shp, 'msh, 'mtrx, 'mtrl> {
-    pub fn new() -> Self {
-        Self {
-            renderable: Renderable::Vector(vec![]),
-            lights: vec![],
-        }
-    }
-
-    pub fn build(self) -> World<'shp, 'msh, 'mtrx, 'mtrl> {
-        World {
-            renderable: self.renderable,
-            lights: self.lights,
-        }
-    }
-
-    pub fn renderables(mut self, renderables: Vec<Renderable<'shp, 'msh, 'mtrx, 'mtrl>>) -> Self {
-        self.renderable = Renderable::Vector(renderables);
-        self
-    }
-
-    pub fn point_light(mut self, point_light: PointLight) -> Self {
-        self.lights.push(point_light);
-        self
-    }
-}
-
 #[cfg(test)]
 mod color_at_tests {
     use crate::{
         color::Rgb, light::PointLight, material::Material, math::matrix::identity4, ray::Ray,
-        renderable::Renderable, shape::Shape, test::ApproxEq, world::WorldBuilder,
+        renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -143,10 +116,10 @@ mod color_at_tests {
         let primitive1 = Renderable::primitive(&sphere1, &material);
         let primitive2 = Renderable::primitive(&sphere2, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
-        let world = WorldBuilder::new()
-            .renderables(vec![primitive1, primitive2])
-            .point_light(light)
-            .build();
+        let world = World::new(
+            Renderable::Vector(vec![primitive1, primitive2]),
+            vec![light],
+        );
 
         // When ray misses.
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
@@ -169,7 +142,7 @@ mod color_at_tests {
 mod is_occluded_tests {
     use crate::{
         color::Rgb, light::PointLight, material::Material, math::matrix::identity4,
-        renderable::Renderable, shape::Shape, test::ApproxEq, world::WorldBuilder,
+        renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -180,10 +153,7 @@ mod is_occluded_tests {
         let sphere = Shape::sphere(&identity, &identity, false);
         let primitive = Renderable::primitive(&sphere, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
-        let world = WorldBuilder::new()
-            .renderables(vec![primitive])
-            .point_light(light)
-            .build();
+        let world = World::new(primitive, vec![light]);
 
         // The point is above the sphere and collinear with the light, so
         // the sphere does not block light from the point.
