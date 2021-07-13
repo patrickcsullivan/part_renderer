@@ -1,7 +1,11 @@
 //! Contains data structures that can be used to construct a renderable 3D
 //! world.
 use crate::{
-    interaction::SurfaceInteraction, material::Material, mesh::Mesh, ray::Ray, shape::Shape,
+    interaction::SurfaceInteraction,
+    material::Material,
+    mesh::{Mesh, Triangle},
+    ray::Ray,
+    shape::Shape,
 };
 
 // A data structure representing a scene that can be rendered by casting rays
@@ -44,6 +48,22 @@ impl<'msh, 'mtrx, 'mtrl> Renderable<'msh, 'mtrx, 'mtrl> {
                 })
                 .min_by(|(t1, _, _), (t2, _, _)| cmp_ignore_nan(t1, t2)),
         }
+    }
+
+    pub fn from_mesh(mesh: &'msh Mesh<'mtrx>, material: &'mtrl Material) -> Self {
+        let renderables = mesh
+            .triangles()
+            .into_iter()
+            .map(|t| Self::from_triangle(t, material))
+            .collect();
+        Self::Vector(renderables)
+    }
+
+    pub fn from_triangle(triangle: Triangle<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
+        Self::Primitive(Primitive {
+            shape: Shape::Triangle(triangle),
+            material,
+        })
     }
 }
 
