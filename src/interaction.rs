@@ -1,7 +1,7 @@
 use crate::math::vector;
 use cgmath::{Point3, Vector3};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct SurfaceInteraction {
     /// The point in space where the interaction occurs.
     pub point: Point3<f32>,

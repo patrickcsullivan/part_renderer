@@ -2,41 +2,20 @@ use crate::{
     camera::Camera,
     color::Rgb,
     interaction::SurfaceInteraction,
-    intersection::{Intersection, Intersections},
     light::{phong_shading, PointLight},
     material::Material,
-    object::Object,
-    primitive::Primitive,
     ray::Ray,
+    renderable::Renderable,
 };
-use cgmath::{InnerSpace, MetricSpace, Point3};
+use cgmath::{InnerSpace, Point3};
 use image::ImageBuffer;
 
-pub struct World<'msh, 'shp, 'mtrx, 'mtrl> {
-    pub primitives: Vec<Primitive<'msh, 'shp, 'mtrx, 'mtrl>>,
+pub struct World<'shp, 'msh, 'mtrx, 'mtrl> {
+    pub renderable: Renderable<'shp, 'msh, 'mtrx, 'mtrl>,
     pub lights: Vec<PointLight>,
 }
 
-impl<'msh, 'shp, 'mtrx, 'mtrl> World<'msh, 'shp, 'mtrx, 'mtrl> {
-    fn ray_intersections(&self, ray: &Ray) -> Intersections<'msh, 'shp, 'mtrx, 'mtrl> {
-        let mut inters = Intersections::empty();
-        for primitive in &self.primitives {
-            let values = primitive
-                .object
-                .ray_intersections(&ray)
-                .into_iter()
-                .map(|(t, interaction)| Intersection {
-                    t,
-                    interaction,
-                    primitive: Primitive::new(primitive.object, primitive.material),
-                })
-                .collect();
-            let mut new_inters = Intersections::new(values);
-            inters.append(&mut new_inters);
-        }
-        inters
-    }
-
+impl<'shp, 'msh, 'mtrx, 'mtrl> World<'shp, 'msh, 'mtrx, 'mtrl> {
     pub fn shade_surface_interaction(
         &self,
         interaction: &SurfaceInteraction,
@@ -64,9 +43,8 @@ impl<'msh, 'shp, 'mtrx, 'mtrl> World<'msh, 'shp, 'mtrx, 'mtrl> {
     }
 
     pub fn color_at(&self, ray: &Ray, remaining: usize) -> Rgb {
-        let intersections = self.ray_intersections(&ray);
-        if let Some(hit) = intersections.hit() {
-            self.shade_surface_interaction(&hit.interaction, &hit.primitive.material, remaining)
+        if let Some((_t, primitive, interaction)) = self.renderable.ray_intersection(&ray) {
+            self.shade_surface_interaction(&interaction, primitive.material, remaining)
         } else {
             Rgb::black()
         }
@@ -78,6 +56,7 @@ impl<'msh, 'shp, 'mtrx, 'mtrl> World<'msh, 'shp, 'mtrx, 'mtrl> {
         recursions: usize,
     ) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
         ImageBuffer::from_fn(camera.width as u32, camera.height as u32, |x, y| {
+            println!("At ({}, {})", x, y);
             let ray = camera.ray_for_pixel(x, y);
             let color = self.color_at(&ray, recursions);
             let pixel: image::Rgb<u8> = color.into();
@@ -91,10 +70,8 @@ impl<'msh, 'shp, 'mtrx, 'mtrl> World<'msh, 'shp, 'mtrx, 'mtrl> {
         let distance = to_light.magnitude();
 
         let ray = Ray::new(p, to_light.normalize());
-        let intersections = self.ray_intersections(&ray);
-
-        if let Some(hit) = intersections.hit() {
-            hit.t < distance
+        if let Some((t, _, _)) = self.renderable.ray_intersection(&ray) {
+            t < distance
         } else {
             false
         }
@@ -116,28 +93,28 @@ impl<'msh, 'shp, 'mtrx, 'mtrl> World<'msh, 'shp, 'mtrx, 'mtrl> {
     }
 }
 
-pub struct WorldBuilder<'msh, 'shp, 'mtrx, 'mtrl> {
-    pub primitives: Vec<Primitive<'msh, 'shp, 'mtrx, 'mtrl>>,
+pub struct WorldBuilder<'shp, 'msh, 'mtrx, 'mtrl> {
+    pub renderable: Renderable<'shp, 'msh, 'mtrx, 'mtrl>,
     pub lights: Vec<PointLight>,
 }
 
-impl<'msh, 'shp, 'mtrx, 'mtrl> WorldBuilder<'msh, 'shp, 'mtrx, 'mtrl> {
+impl<'shp, 'msh, 'mtrx, 'mtrl> WorldBuilder<'shp, 'msh, 'mtrx, 'mtrl> {
     pub fn new() -> Self {
         Self {
-            primitives: vec![],
+            renderable: Renderable::Vector(vec![]),
             lights: vec![],
         }
     }
 
-    pub fn build(self) -> World<'msh, 'shp, 'mtrx, 'mtrl> {
+    pub fn build(self) -> World<'shp, 'msh, 'mtrx, 'mtrl> {
         World {
-            primitives: self.primitives,
+            renderable: self.renderable,
             lights: self.lights,
         }
     }
 
-    pub fn primitive(mut self, sphere: Primitive<'msh, 'shp, 'mtrx, 'mtrl>) -> Self {
-        self.primitives.push(sphere);
+    pub fn renderables(mut self, renderables: Vec<Renderable<'shp, 'msh, 'mtrx, 'mtrl>>) -> Self {
+        self.renderable = Renderable::Vector(renderables);
         self
     }
 
@@ -148,44 +125,10 @@ impl<'msh, 'shp, 'mtrx, 'mtrl> WorldBuilder<'msh, 'shp, 'mtrx, 'mtrl> {
 }
 
 #[cfg(test)]
-mod ray_intersections_tests {
-    use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, object::Object,
-        primitive::Primitive, ray::Ray, test::ApproxEq, world::WorldBuilder,
-    };
-    use cgmath::{Matrix4, Point3, Transform, Vector3};
-
-    #[test]
-    fn ray_intersects_spheres() {
-        let identity = identity4();
-        let scale = Matrix4::from_scale(0.5);
-        let inv_scale = scale.inverse_transform().unwrap();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0, 0.0);
-        let sphere1 = Object::sphere(&identity, &identity, false);
-        let sphere2 = Object::sphere(&scale, &inv_scale, false);
-        let primitive1 = Primitive::new(&sphere1, &material);
-        let primitive2 = Primitive::new(&sphere2, &material);
-        let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
-        let world = WorldBuilder::new()
-            .primitive(primitive1)
-            .primitive(primitive2)
-            .point_light(light)
-            .build();
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
-        let intersections = world.ray_intersections(&ray);
-        assert_eq!(intersections.values().len(), 4);
-        assert!(intersections.values()[0].t.approx_eq(&4.0));
-        assert!(intersections.values()[1].t.approx_eq(&4.5));
-        assert!(intersections.values()[2].t.approx_eq(&5.5));
-        assert!(intersections.values()[3].t.approx_eq(&6.0));
-    }
-}
-
-#[cfg(test)]
 mod color_at_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, object::Object,
-        primitive::Primitive, ray::Ray, test::ApproxEq, world::WorldBuilder,
+        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, ray::Ray,
+        renderable::Renderable, shape::Shape, test::ApproxEq, world::WorldBuilder,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -195,14 +138,13 @@ mod color_at_tests {
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
         let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
-        let sphere1 = Object::sphere(&identity, &identity, false);
-        let sphere2 = Object::sphere(&scale, &inv_scale, false);
-        let primitive1 = Primitive::new(&sphere1, &material);
-        let primitive2 = Primitive::new(&sphere2, &material);
+        let sphere1 = Shape::sphere(&identity, &identity, false);
+        let sphere2 = Shape::sphere(&scale, &inv_scale, false);
+        let primitive1 = Renderable::primitive(&sphere1, &material);
+        let primitive2 = Renderable::primitive(&sphere2, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
         let world = WorldBuilder::new()
-            .primitive(primitive1)
-            .primitive(primitive2)
+            .renderables(vec![primitive1, primitive2])
             .point_light(light)
             .build();
 
@@ -226,8 +168,8 @@ mod color_at_tests {
 #[cfg(test)]
 mod is_occluded_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, object::Object,
-        primitive::Primitive, ray::Ray, test::ApproxEq, world::WorldBuilder,
+        color::Rgb, light::PointLight, material::Material, math::matrix::identity4,
+        renderable::Renderable, shape::Shape, test::ApproxEq, world::WorldBuilder,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -235,11 +177,11 @@ mod is_occluded_tests {
     fn is_occluded() {
         let identity = identity4();
         let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
-        let sphere = Object::sphere(&identity, &identity, false);
-        let primitive = Primitive::new(&sphere, &material);
+        let sphere = Shape::sphere(&identity, &identity, false);
+        let primitive = Renderable::primitive(&sphere, &material);
         let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
         let world = WorldBuilder::new()
-            .primitive(primitive)
+            .renderables(vec![primitive])
             .point_light(light)
             .build();
 
