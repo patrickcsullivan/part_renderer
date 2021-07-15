@@ -1,7 +1,7 @@
-use crate::efloat;
 use crate::interaction::SurfaceInteraction;
 use crate::math::{axis::Axis3, baycentric, point, vector};
 use crate::mesh::Mesh;
+use crate::number::efloat;
 use crate::ray::Ray;
 use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
 
