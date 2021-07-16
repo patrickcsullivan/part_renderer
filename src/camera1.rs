@@ -1,14 +1,13 @@
+use crate::ray::Ray;
 use cgmath::{
     Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Transform, Vector3, Vector4,
 };
-
-use crate::ray::Ray;
 
 /// A camera that is used to view a scene.
 ///
 /// The camera sits at the origin of camera space and renders images onto a
 /// canvas one unit away.
-pub struct Camera {
+pub struct Camera1 {
     /// Canvas's width in pixels.
     pub width: u32,
 
@@ -31,7 +30,7 @@ pub struct Camera {
     pixel_size: f32,
 }
 
-impl Camera {
+impl Camera1 {
     pub fn new(width: u32, height: u32, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
         let half_view = (fov / 2.0).tan();
         let aspect = width as f32 / height as f32;
@@ -96,7 +95,7 @@ pub fn view_transform(from: Point3<f32>, to: Point3<f32>, up: Vector3<f32>) -> M
 
 #[cfg(test)]
 mod view_transform_tests {
-    use crate::{camera::view_transform, math::matrix::identity4, test::ApproxEq};
+    use crate::{camera1::view_transform, math::matrix::identity4, test::ApproxEq};
     use cgmath::{Matrix4, Point3, Vector3, Vector4};
 
     #[test]
@@ -144,32 +143,32 @@ mod view_transform_tests {
 
 #[cfg(test)]
 mod pixel_size_tests {
-    use crate::{camera::Camera, math::matrix::identity4, test::ApproxEq};
+    use crate::{camera1::Camera1, math::matrix::identity4, test::ApproxEq};
     use cgmath::{Angle, Deg, Rad};
     use std::f32::consts::PI;
 
     #[test]
     fn for_horizontal_canvas() {
-        let camera = Camera::new(200, 125, Rad(PI / 2.0), identity4());
+        let camera = Camera1::new(200, 125, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
     }
 
     #[test]
     fn for_vertical_canvas() {
-        let camera = Camera::new(125, 200, Rad(PI / 2.0), identity4());
+        let camera = Camera1::new(125, 200, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
     }
 }
 
 #[cfg(test)]
 mod ray_for_pixel_tests {
-    use crate::{camera::Camera, math::matrix::identity4, ray::Ray, test::ApproxEq};
+    use crate::{camera1::Camera1, math::matrix::identity4, ray::Ray, test::ApproxEq};
     use cgmath::{Matrix4, Point3, Rad, Vector3};
     use std::f32::consts::{PI, SQRT_2};
 
     #[test]
     fn through_center_of_canvas() {
-        let camera = Camera::new(201, 101, Rad(PI / 2.0), identity4());
+        let camera = Camera1::new(201, 101, Rad(PI / 2.0), identity4());
         let ray = camera.ray_for_pixel(100, 50);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
@@ -179,7 +178,7 @@ mod ray_for_pixel_tests {
 
     #[test]
     fn through_corner_of_canvas() {
-        let camera = Camera::new(201, 101, Rad(PI / 2.0), identity4());
+        let camera = Camera1::new(201, 101, Rad(PI / 2.0), identity4());
         let ray = camera.ray_for_pixel(0, 0);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
@@ -191,7 +190,7 @@ mod ray_for_pixel_tests {
     fn for_transformed_camera() {
         let transform = Matrix4::from_angle_y(Rad(PI / 4.0))
             * Matrix4::from_translation(Vector3::new(0.0, -2.0, 5.0));
-        let camera = Camera::new(201, 101, Rad(PI / 2.0), transform);
+        let camera = Camera1::new(201, 101, Rad(PI / 2.0), transform);
         let ray = camera.ray_for_pixel(100, 50);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 2.0, -5.0),

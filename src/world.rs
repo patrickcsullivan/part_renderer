@@ -1,5 +1,5 @@
 use crate::{
-    camera::Camera,
+    camera1::Camera1,
     color::Rgb,
     interaction::SurfaceInteraction,
     light::{phong_shading, PointLight},
@@ -56,7 +56,7 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
 
     pub fn render(
         &self,
-        camera: &Camera,
+        camera: &Camera1,
         recursions: usize,
     ) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
         ImageBuffer::from_fn(camera.width as u32, camera.height as u32, |x, y| {
