@@ -26,6 +26,15 @@ impl Ray {
     }
 }
 
+impl Into<bvh::ray::Ray> for &Ray {
+    fn into(self) -> bvh::ray::Ray {
+        bvh::ray::Ray::new(
+            bvh::Point3::new(self.origin.x, self.origin.y, self.origin.z),
+            bvh::Vector3::new(self.direction.x, self.direction.y, self.direction.z),
+        )
+    }
+}
+
 impl crate::transform::Transform<Ray> for Matrix4<f32> {
     fn transform(&self, ray: &Ray) -> Ray {
         Ray {

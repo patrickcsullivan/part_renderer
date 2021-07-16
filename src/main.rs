@@ -1,5 +1,3 @@
-mod bounding_box;
-mod bvh;
 mod camera;
 mod color;
 mod interaction;

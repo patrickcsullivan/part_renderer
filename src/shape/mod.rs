@@ -2,11 +2,11 @@ mod plane;
 mod sphere;
 
 use crate::{
-    bounding_box::Bounds3,
     interaction::SurfaceInteraction,
     mesh::{Mesh, Triangle},
     ray::Ray,
 };
+use bvh::aabb::Bounded;
 use cgmath::{Matrix4, Point3};
 use std::fmt::Debug;
 
@@ -60,14 +60,14 @@ impl<'msh, 'mtrx> Shape<'msh, 'mtrx> {
             Self::Triangle(triangle) => triangle.ray_intersection(ray),
         }
     }
+}
 
-    /// Returns an axis-aligned bounding box in the shape's object space.
-    pub fn object_bounds(&self) -> Bounds3<f32> {
-        todo!();
-    }
-
-    /// Returns an axis-aligned bounding box in world space.
-    pub fn world_bounds(&self) -> Bounds3<f32> {
-        todo!();
+impl<'msh, 'mtrx> Bounded for Shape<'msh, 'mtrx> {
+    fn aabb(&self) -> bvh::aabb::AABB {
+        match self {
+            Self::Sphere(_sphere) => todo!(),
+            Self::Plane(_plane) => todo!(),
+            Self::Triangle(triangle) => triangle.aabb(),
+        }
     }
 }

@@ -3,6 +3,7 @@ use crate::math::{axis::Axis3, baycentric, point, vector};
 use crate::mesh::Mesh;
 use crate::number::efloat;
 use crate::ray::Ray;
+use bvh::aabb::{Bounded, AABB};
 use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
 
 /// A reference to an individual triangle in a mesh.
@@ -241,6 +242,23 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
 
     fn surface_area(&self) -> f32 {
         todo!()
+    }
+}
+
+impl<'shape, 'msh, 'mtrx> Bounded for Triangle<'msh, 'mtrx> {
+    fn aabb(&self) -> bvh::aabb::AABB {
+        let (v0, v1, v2) = self.world_space_vertices();
+        let min = bvh::Point3::new(
+            v0.x.min(v1.x).min(v2.x),
+            v0.y.min(v1.y).min(v2.y),
+            v0.z.min(v1.z).min(v2.z),
+        );
+        let max = bvh::Point3::new(
+            v0.x.max(v1.x).max(v2.x),
+            v0.y.max(v1.y).max(v2.y),
+            v0.z.max(v1.z).max(v2.z),
+        );
+        AABB::with_bounds(min, max)
     }
 }
 

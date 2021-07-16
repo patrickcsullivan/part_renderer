@@ -7,25 +7,20 @@ use crate::{
     ray::Ray,
     shape::Shape,
 };
+use bvh::bvh::BVH;
+use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 
 // A data structure representing a scene that can be rendered by casting rays
 // into it.
 pub enum Renderable<'msh, 'mtrx, 'mtrl> {
     Primitive(Primitive<'msh, 'mtrx, 'mtrl>),
     Vector(Vec<Renderable<'msh, 'mtrx, 'mtrl>>),
-}
-
-/// Combines a reference to a shape and a reference to a material. This is the
-/// basic primitive used in the construction of any renderable.
-#[derive(Debug, Clone, Copy)]
-pub struct Primitive<'msh, 'mtrx, 'mtrl> {
-    pub shape: Shape<'msh, 'mtrx>,
-    pub material: &'mtrl Material,
+    BVH(Vec<Primitive<'msh, 'mtrx, 'mtrl>>, BVH),
 }
 
 impl<'msh, 'mtrx, 'mtrl> Renderable<'msh, 'mtrx, 'mtrl> {
     pub fn primitive(shape: Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
-        Self::Primitive(Primitive { shape, material })
+        Self::Primitive(Primitive::new(shape, material))
     }
 
     // Find the first primitive the ray intersects. Return the parametric value
@@ -39,7 +34,7 @@ impl<'msh, 'mtrx, 'mtrl> Renderable<'msh, 'mtrx, 'mtrl> {
             Renderable::Primitive(p) => p
                 .shape
                 .ray_intersection(ray)
-                .map(|(t, interaction)| (t, p.clone(), interaction)),
+                .map(|(t, interaction)| (t, *p, interaction)),
             Renderable::Vector(ps) => ps
                 .iter()
                 .filter_map(|r| {
@@ -47,23 +42,70 @@ impl<'msh, 'mtrx, 'mtrl> Renderable<'msh, 'mtrx, 'mtrl> {
                         .map(|(t, p, interaction)| (t, p, interaction))
                 })
                 .min_by(|(t1, _, _), (t2, _, _)| cmp_ignore_nan(t1, t2)),
+            Renderable::BVH(ps, bvh) => {
+                let hit_primitives = bvh.traverse(&ray.into(), ps);
+                hit_primitives
+                    .iter()
+                    .filter_map(|&&p| {
+                        p.shape
+                            .ray_intersection(ray)
+                            .map(|(t, interaction)| (t, p, interaction))
+                    })
+                    .min_by(|(t1, _, _), (t2, _, _)| cmp_ignore_nan(t1, t2))
+            }
         }
     }
 
     pub fn from_mesh(mesh: &'msh Mesh<'mtrx>, material: &'mtrl Material) -> Self {
-        let renderables = mesh
+        let mut primitives: Vec<Primitive> = mesh
             .triangles()
             .into_iter()
-            .map(|t| Self::from_triangle(t, material))
+            .map(|t| Primitive::new(Shape::Triangle(t), material))
             .collect();
-        Self::Vector(renderables)
+        let bvh = BVH::build(&mut primitives);
+        Self::BVH(primitives, bvh)
     }
 
-    pub fn from_triangle(triangle: Triangle<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
-        Self::Primitive(Primitive {
-            shape: Shape::Triangle(triangle),
+    // pub fn from_triangle(triangle: Triangle<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
+    //     Self::Primitive(Primitive {
+    //         shape: Shape::Triangle(triangle),
+    //         material,
+    //     })
+    // }
+}
+
+/// Combines a reference to a shape and a reference to a material. This is the
+/// basic primitive used in the construction of any renderable.
+#[derive(Debug, Clone, Copy)]
+pub struct Primitive<'msh, 'mtrx, 'mtrl> {
+    pub shape: Shape<'msh, 'mtrx>,
+    pub material: &'mtrl Material,
+    bvh_node_index: usize,
+}
+
+impl<'msh, 'mtrx, 'mtrl> Primitive<'msh, 'mtrx, 'mtrl> {
+    pub fn new(shape: Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
+        Self {
+            shape,
             material,
-        })
+            bvh_node_index: 0,
+        }
+    }
+}
+
+impl<'msh, 'mtrx, 'mtrl> Bounded for Primitive<'msh, 'mtrx, 'mtrl> {
+    fn aabb(&self) -> bvh::aabb::AABB {
+        self.shape.aabb()
+    }
+}
+
+impl<'msh, 'mtrx, 'mtrl> BHShape for Primitive<'msh, 'mtrx, 'mtrl> {
+    fn set_bh_node_index(&mut self, index: usize) {
+        self.bvh_node_index = index;
+    }
+
+    fn bh_node_index(&self) -> usize {
+        self.bvh_node_index
     }
 }
 

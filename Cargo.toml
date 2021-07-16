@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bvh = "0.5.0"
 cgmath = "0.18"
 image = "0.23.14"
 nom_stl = "0.2.2"
