@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use crate::math::axis;
 use crate::ray;
 use crate::transform;
@@ -13,7 +15,7 @@ pub struct Bounds2<S> {
 }
 
 /// A 3D axis-aligned bounding box.
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Bounds3<S> {
     min: cgmath::Point3<S>,
     max: cgmath::Point3<S>,
@@ -183,13 +185,67 @@ impl<S: cgmath::BaseNum + std::cmp::PartialOrd + std::fmt::Display> Bounds3<S> {
         cgmath::Point3::new(lerp.x, lerp.y, lerp.z)
     }
 
-    // TODO: offset, p. 81
     // TODO: bounding_sphere, p. 81
+}
+
+pub trait Union<Rhs = Self> {
+    type Output;
+
+    fn union(self, other: Rhs) -> Self::Output;
+}
+
+impl<S: cgmath::BaseNum + std::cmp::PartialOrd + std::fmt::Display> Union<&Bounds3<S>>
+    for &Bounds3<S>
+{
+    type Output = Bounds3<S>;
+
+    fn union(self, other: &Bounds3<S>) -> Self::Output {
+        let min = cgmath::Point3::new(
+            min_partial_ord(self.min.x, other.min.x),
+            min_partial_ord(self.min.y, other.min.y),
+            min_partial_ord(self.min.z, other.min.z),
+        );
+        let max = cgmath::Point3::new(
+            max_partial_ord(self.max.x, other.max.x),
+            max_partial_ord(self.max.y, other.max.y),
+            max_partial_ord(self.max.z, other.max.z),
+        );
+        Self::Output { min, max }
+    }
+}
+
+impl<S: cgmath::BaseNum + std::cmp::PartialOrd + std::fmt::Display> Union<&Option<Bounds3<S>>>
+    for &Option<Bounds3<S>>
+{
+    type Output = Option<Bounds3<S>>;
+
+    fn union(self, other: &Option<Bounds3<S>>) -> Self::Output {
+        match (self, other) {
+            (None, None) => None,
+            (None, Some(b)) => Some(*b),
+            (Some(b), None) => Some(*b),
+            (Some(b1), Some(b2)) => Some(b1.union(b2)),
+        }
+    }
 }
 
 impl Bounds3<f32> {
     pub fn cetroid(&self) -> Point3<f32> {
         self.min + self.diagonal() * 0.5
+    }
+
+    /// Returns the offset factor of the given point relative to the corners of
+    /// the bounding box. If `p` is at the minimum corner this returns `(0.0,
+    /// 0.0, 0.0)`. If `p` is at the maximum corner this returns `(1.0, 1.0,
+    /// 1.0)`.
+    pub fn offset(&self, p: &Point3<f32>) -> Point3<f32> {
+        let min_to_p = p - self.min;
+        let min_to_max = self.max - self.min;
+        Point3::new(
+            min_to_p.x / min_to_max.x,
+            min_to_p.y / min_to_max.y,
+            min_to_p.z / min_to_max.z,
+        )
     }
 
     /// Returns the range of parametric values for which the given ray passes
