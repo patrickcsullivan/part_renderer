@@ -1,5 +1,5 @@
+mod camera;
 mod camera1;
-mod camera2;
 mod color;
 mod interaction;
 mod light;
