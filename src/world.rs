@@ -4,6 +4,7 @@ use crate::{
     interaction::SurfaceInteraction,
     light::{phong_shading, PointLight},
     material::Material,
+    medium::Medium,
     ray::Ray,
     renderable::Renderable,
 };
@@ -73,7 +74,7 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
         let to_light = light.position - p;
         let distance = to_light.magnitude();
 
-        let ray = Ray::new(p, to_light.normalize());
+        let ray = Ray::new(p, to_light.normalize(), Medium::new());
         if let Some((t, _, _)) = self.renderable.ray_intersection(&ray) {
             t < distance
         } else {
@@ -90,7 +91,11 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
         if remaining < 1 || material.reflective == 0.0 {
             Rgb::black()
         } else {
-            let reflect_ray = Ray::new(interaction.over_point(), interaction.reflect());
+            let reflect_ray = Ray::new(
+                interaction.over_point(),
+                interaction.reflect(),
+                Medium::new(),
+            );
             let color = self.color_at(&reflect_ray, remaining - 1);
             color * material.reflective
         }
@@ -100,8 +105,9 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod color_at_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, ray::Ray,
-        renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
+        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material,
+        medium::Medium, ray::Ray, renderable::Renderable, shape::Shape, test::ApproxEq,
+        world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -122,17 +128,29 @@ mod color_at_tests {
         );
 
         // When ray misses.
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Medium::new(),
+        );
         let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::black()));
 
         // When ray hits.
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Medium::new(),
+        );
         let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
 
         // When ray starts outer sphere and hits inner sphere.
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Medium::new(),
+        );
         let color = world.color_at(&ray, 0);
         assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
     }
@@ -141,7 +159,7 @@ mod color_at_tests {
 #[cfg(test)]
 mod is_occluded_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4,
+        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material,
         renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};

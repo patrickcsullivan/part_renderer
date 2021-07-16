@@ -70,15 +70,19 @@ impl<'mtrx> Sphere<'mtrx> {
 
 #[cfg(test)]
 mod ray_intersects_tests {
-    use crate::math::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::sphere::Sphere;
     use crate::test::ApproxEq;
+    use crate::{geometry::matrix::identity4, medium::Medium};
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
     #[test]
     fn interactions_includes_surface_calculation() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let identity = identity4();
         let reverse_orientation = false;
         let sphere = Sphere {
@@ -116,7 +120,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_at_two_points() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let identity = identity4();
         let reverse_orientation = false;
         let sphere = Sphere {
@@ -136,7 +144,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_at_tangent_of_untransformed_sphere() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let identity = identity4();
         let reverse_orientation = false;
         let sphere = Sphere {
@@ -155,7 +167,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_at_tangent_of_transformed_sphere() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let obj_to_world = Matrix4::from_translation(Vector3::new(0.0, -1.0, 0.0));
         let world_to_obj = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0));
         let reverse_orientation = false;
@@ -175,7 +191,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn misses() {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let identity = identity4();
         let reverse_orientation = false;
         let sphere = Sphere {
@@ -192,7 +212,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn ray_originates_inside_sphere() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let identity = identity4();
         let reverse_orientation = false;
         let sphere = Sphere {
@@ -211,7 +235,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn sphere_is_behind_ray() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let identity = identity4();
         let reverse_orientation = false;
         let sphere = Sphere {
@@ -230,7 +258,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn intersects_scaled_sphere() -> Result<(), String> {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let obj_to_world = Matrix4::from_scale(2.0);
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let reverse_orientation = false;
@@ -250,7 +282,11 @@ mod ray_intersects_tests {
 
     #[test]
     fn misses_translated_sphere() {
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         let obj_to_world = Matrix4::from_translation(Vector3::new(5.0, 0.0, 0.0));
         let world_to_obj = obj_to_world.inverse_transform().unwrap();
         let reverse_orientation = false;
@@ -269,7 +305,7 @@ mod ray_intersects_tests {
 
 #[cfg(test)]
 mod normal_tests {
-    use crate::math::matrix::identity4;
+    use crate::geometry::matrix::identity4;
     use crate::shape::sphere::Sphere;
     use crate::test::ApproxEq;
     use cgmath::{Matrix4, Point3, Rad, Transform, Vector3};

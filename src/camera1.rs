@@ -1,4 +1,4 @@
-use crate::ray::Ray;
+use crate::{medium::Medium, ray::Ray};
 use cgmath::{
     Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Transform, Vector3, Vector4,
 };
@@ -75,7 +75,7 @@ impl Camera1 {
         let ray_origin_ws = camera_to_world.transform_point(Point3::new(0.0, 0.0, 0.0));
         let ray_direction_ws = (pixel_ws - ray_origin_ws).normalize();
 
-        Ray::new(ray_origin_ws, ray_direction_ws)
+        Ray::new(ray_origin_ws, ray_direction_ws, Medium::new())
     }
 }
 
@@ -95,7 +95,7 @@ pub fn view_transform(from: Point3<f32>, to: Point3<f32>, up: Vector3<f32>) -> M
 
 #[cfg(test)]
 mod view_transform_tests {
-    use crate::{camera1::view_transform, math::matrix::identity4, test::ApproxEq};
+    use crate::{camera1::view_transform, geometry::matrix::identity4, test::ApproxEq};
     use cgmath::{Matrix4, Point3, Vector3, Vector4};
 
     #[test]
@@ -143,7 +143,7 @@ mod view_transform_tests {
 
 #[cfg(test)]
 mod pixel_size_tests {
-    use crate::{camera1::Camera1, math::matrix::identity4, test::ApproxEq};
+    use crate::{camera1::Camera1, geometry::matrix::identity4, test::ApproxEq};
     use cgmath::{Angle, Deg, Rad};
     use std::f32::consts::PI;
 
@@ -162,7 +162,9 @@ mod pixel_size_tests {
 
 #[cfg(test)]
 mod ray_for_pixel_tests {
-    use crate::{camera1::Camera1, math::matrix::identity4, ray::Ray, test::ApproxEq};
+    use crate::{
+        camera1::Camera1, geometry::matrix::identity4, medium::Medium, ray::Ray, test::ApproxEq,
+    };
     use cgmath::{Matrix4, Point3, Rad, Vector3};
     use std::f32::consts::{PI, SQRT_2};
 
@@ -172,7 +174,8 @@ mod ray_for_pixel_tests {
         let ray = camera.ray_for_pixel(100, 50);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, -1.0)
+            Vector3::new(0.0, 0.0, -1.0),
+            Medium::new()
         )));
     }
 
@@ -183,6 +186,7 @@ mod ray_for_pixel_tests {
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.66519, 0.33259, -0.66851),
+            Medium::new()
         )));
     }
 
@@ -195,6 +199,7 @@ mod ray_for_pixel_tests {
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 2.0, -5.0),
             Vector3::new(SQRT_2 / 2.0, 0.0, SQRT_2 / -2.0),
+            Medium::new()
         )));
     }
 }

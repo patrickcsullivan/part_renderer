@@ -1,6 +1,6 @@
 use cgmath::{InnerSpace, Point3, Vector3};
 
-use crate::{color::Rgb, interaction::SurfaceInteraction, material::Material, math::vector};
+use crate::{color::Rgb, geometry::vector, material::Material};
 
 pub struct PointLight {
     pub intensity: Rgb,

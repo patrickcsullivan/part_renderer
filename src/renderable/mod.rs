@@ -118,8 +118,8 @@ fn cmp_ignore_nan(x: &f32, y: &f32) -> std::cmp::Ordering {
 #[cfg(test)]
 mod ray_intersections_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, ray::Ray,
-        renderable::Renderable, shape::Shape, test::ApproxEq,
+        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material,
+        medium::Medium, ray::Ray, renderable::Renderable, shape::Shape, test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -134,7 +134,11 @@ mod ray_intersections_tests {
         let primitive1 = Renderable::primitive(sphere1, &material);
         let primitive2 = Renderable::primitive(sphere2, &material);
         let renderable = Renderable::Vector(vec![primitive1, primitive2]);
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.0, -5.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Medium::new(),
+        );
         if let Some((t, _, _)) = renderable.ray_intersection(&ray) {
             assert!(t.approx_eq(&4.0));
             // Other intersections would be at 4.5, 5.5, 6.0.

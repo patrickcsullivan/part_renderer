@@ -1,62 +1,33 @@
+mod film;
+mod projective;
+mod sample;
+
+pub use film::Film;
+
 use crate::{
-    math::axis::Axis2,
+    geometry::axis::Axis2,
+    medium::Medium,
     ray::{Ray, RayDifferential},
 };
 use cgmath::{
     Angle, InnerSpace, Matrix4, PerspectiveFov, Point2, Point3, Rad, Transform, Vector2, Vector3,
     Vector4,
 };
+use sample::CameraSample;
 
-pub struct Camera {
-    /// The time at which the camera shutter opens.
-    pub shutter_open: f32,
+// pub struct Camera {
+//     /// The time at which the camera shutter opens.
+//     pub shutter_open: f32,
 
-    /// The time at which the camera shutter closes.
-    pub shutter_close: f32,
+//     /// The time at which the camera shutter closes.
+//     pub shutter_close: f32,
 
-    /// The final image.
-    pub film: Film,
+//     /// The final image.
+//     pub film: Film,
 
-    /// The scattering medium in which the camera is positioned.
-    pub medium: Medium,
-}
-
-/// A 2D plane of pixels onto which a final image is rendered.
-pub struct Film {}
-
-pub struct Medium {}
-
-/// Container for all the information needed to generate a ray from a cameraa.
-#[derive(Debug, Clone, Copy)]
-pub struct CameraSample {
-    /// The point on the film to which a generated ray will carry radiance.
-    pub p_film: Point2<f32>,
-
-    /// The point on the lense that a generated ray will pass through. This is
-    /// only relevent for cameras models that include lenses.
-    pub p_lens: Point2<f32>,
-
-    /// The time at which a ray should sample the scene.
-    pub time: f32,
-}
-
-impl CameraSample {
-    pub fn new(p_film: Point2<f32>, p_lens: Point2<f32>, time: f32) -> Self {
-        Self {
-            p_film,
-            p_lens,
-            time,
-        }
-    }
-
-    pub fn from_film_shift(&self, film_shift: Vector2<f32>) -> Self {
-        Self {
-            p_film: self.p_film + film_shift,
-            p_lens: self.p_lens,
-            time: self.time,
-        }
-    }
-}
+//     /// The scattering medium in which the camera is positioned.
+//     pub medium: Medium,
+// }
 
 pub trait GenerateRay {
     /// Generate a ray for the given sample.

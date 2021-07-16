@@ -1,5 +1,7 @@
 use cgmath::{Matrix4, Point3, Transform, Vector3};
 
+use crate::medium::Medium;
+
 #[derive(Debug)]
 pub struct Ray {
     pub origin: Point3<f32>,
@@ -9,6 +11,8 @@ pub struct Ray {
     /// r(t) = o + t*d, 0 < t < time_max
     /// Limits the ray to a finite segment.
     pub t_max: f32,
+
+    pub medium: Medium,
 }
 
 /// Contains the origin and direction of two auxilary rays for some primary ray.
@@ -50,11 +54,12 @@ impl RayDifferential {
 }
 
 impl Ray {
-    pub fn new(origin: Point3<f32>, direction: Vector3<f32>) -> Self {
+    pub fn new(origin: Point3<f32>, direction: Vector3<f32>, medium: Medium) -> Self {
         Self {
             origin,
             direction,
             t_max: f32::MAX,
+            medium,
         }
     }
 
@@ -82,6 +87,7 @@ impl crate::transform::Transform<Ray> for Matrix4<f32> {
             // to scale an object.
             direction: self.transform_vector(ray.direction),
             t_max: ray.t_max,
+            medium: ray.medium,
         }
     }
 }
@@ -89,16 +95,16 @@ impl crate::transform::Transform<Ray> for Matrix4<f32> {
 #[cfg(test)]
 mod tests {
     use super::Ray;
-    use crate::{test::ApproxEq, transform::Transform};
+    use crate::{medium::Medium, test::ApproxEq, transform::Transform};
     use cgmath::{Matrix4, Point3, Vector3};
 
     #[test]
     fn at_t() {
-        let ray = Ray {
-            origin: Point3::new(2.0, 3.0, 4.0),
-            direction: Vector3::new(1.0, 0.0, 0.0),
-            t_max: f32::MAX,
-        };
+        let ray = Ray::new(
+            Point3::new(2.0, 3.0, 4.0),
+            Vector3::new(1.0, 0.0, 0.0),
+            Medium::new(),
+        );
         assert!(ray.at_t(0.0).approx_eq(&Point3::new(2.0, 3.0, 4.0)));
         assert!(ray.at_t(1.0).approx_eq(&Point3::new(3.0, 3.0, 4.0)));
         assert!(ray.at_t(-1.0).approx_eq(&Point3::new(1.0, 3.0, 4.0)));
@@ -107,11 +113,11 @@ mod tests {
 
     #[test]
     fn translating() {
-        let ray = Ray {
-            origin: Point3::new(1.0, 2.0, 3.0),
-            direction: Vector3::new(0.0, 1.0, 0.0),
-            t_max: f32::MAX,
-        };
+        let ray = Ray::new(
+            Point3::new(1.0, 2.0, 3.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Medium::new(),
+        );
         let t: Matrix4<f32> = Matrix4::from_translation(Vector3::new(3.0, 4.0, 5.0));
         let ray = t.transform(&ray);
         assert!(ray.origin.approx_eq(&Point3::new(4.0, 6.0, 8.0)));
@@ -120,11 +126,11 @@ mod tests {
 
     #[test]
     fn scaling() {
-        let ray = Ray {
-            origin: Point3::new(1.0, 2.0, 3.0),
-            direction: Vector3::new(0.0, 1.0, 0.0),
-            t_max: f32::MAX,
-        };
+        let ray = Ray::new(
+            Point3::new(1.0, 2.0, 3.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Medium::new(),
+        );
         let t: Matrix4<f32> = Matrix4::from_nonuniform_scale(2.0, 3.0, 4.0);
         let ray = t.transform(&ray);
         assert!(ray.origin.approx_eq(&Point3::new(2.0, 6.0, 12.0)));
