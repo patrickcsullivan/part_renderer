@@ -296,10 +296,8 @@ impl<'arena, 'msh, 'mtrx, 'mtrl> BuilderNode<'arena> {
     /// `relative_partition_position` inside that bounding box along the given
     /// axis. Any primitive whose centroid relative position is less than or
     /// equal to `relative_partition_position` is moved into the first
-    /// partition, and all other primitives are moved into the second 
-    fn partition_around_position(
-
-    )
+    /// partition, and all other primitives are moved into the second
+    fn partition_around_position() {}
 
     /// Returns a bounding box for the primitives in the
     /// specified range.
