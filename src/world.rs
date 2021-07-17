@@ -59,13 +59,17 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
         camera: &Camera,
         recursions: usize,
     ) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
-        ImageBuffer::from_fn(camera.width as u32, camera.height as u32, |x, y| {
-            println!("At ({}, {})", x, y);
-            let ray = camera.ray_for_pixel(x, y);
-            let color = self.color_at(&ray, recursions);
-            let pixel: image::Rgb<u8> = color.into();
-            pixel
-        })
+        ImageBuffer::from_fn(
+            camera.film.resolution.x as u32,
+            camera.film.resolution.y as u32,
+            |x, y| {
+                println!("At ({}, {})", x, y);
+                let ray = camera.ray_for_pixel(x, y);
+                let color = self.color_at(&ray, recursions);
+                let pixel: image::Rgb<u8> = color.into();
+                pixel
+            },
+        )
     }
 
     /// Returns true if the specified point is occluded from the light.

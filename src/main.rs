@@ -16,7 +16,7 @@ mod world;
 mod test;
 
 use crate::{
-    camera::{view_transform, Camera},
+    camera::{view_transform, Camera, Film},
     light::{phong_shading, PointLight},
     material::Material,
     mesh::Mesh,
@@ -53,7 +53,8 @@ fn demo_simple() {
         Point3::new(0.0, 0.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
     );
-    let camera = Camera::new(400, 400, Rad(PI / 2.0), camera_transf);
+    let film = Film::new(400, 400);
+    let camera = Camera::new(film, Rad(PI / 2.0), camera_transf);
 
     let world = World::new(
         Renderable::Vector(vec![
@@ -115,7 +116,8 @@ fn demo() {
         Vector3::new(0.0, 1.0, 0.0),
     );
     // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
-    let camera = Camera::new(1200, 600, Rad(PI / 3.0), camera_transf);
+    let film = Film::new(600, 300);
+    let camera = Camera::new(film, Rad(PI / 3.0), camera_transf);
 
     let world = World::new(
         Renderable::Vector(vec![

@@ -1,19 +1,29 @@
 use cgmath::{
-    Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Transform, Vector3, Vector4,
+    Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Transform, Vector2, Vector3, Vector4,
 };
 
 use crate::ray::Ray;
+
+/// A 2D plane of pixels onto which a final image is rendered.
+pub struct Film {
+    // The images
+    pub resolution: Vector2<f32>,
+}
+
+impl Film {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self {
+            resolution: Vector2::new(x as f32, y as f32),
+        }
+    }
+}
 
 /// A camera that is used to view a scene.
 ///
 /// The camera sits at the origin of camera space and renders images onto a
 /// canvas one unit away.
 pub struct Camera {
-    /// Canvas's width in pixels.
-    pub width: u32,
-
-    /// Canvas's height in pixels.
-    pub height: u32,
+    pub film: Film,
 
     /// The field of view for the largest dimension.
     pub fov: Rad<f32>,
@@ -32,9 +42,9 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(width: u32, height: u32, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
+    pub fn new(film: Film, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
         let half_view = (fov / 2.0).tan();
-        let aspect = width as f32 / height as f32;
+        let aspect = film.resolution.x / film.resolution.y;
         let (half_width, half_height) = if aspect >= 1.0 {
             // horizontal
             (half_view, half_view / aspect)
@@ -42,11 +52,10 @@ impl Camera {
             // vertical
             (half_view * aspect, half_view)
         };
-        let pixel_size = half_width * 2.0 / width as f32;
+        let pixel_size = half_width * 2.0 / film.resolution.x as f32;
 
         Self {
-            width,
-            height,
+            film,
             fov,
             world_to_camera,
             half_width,
@@ -144,32 +153,44 @@ mod view_transform_tests {
 
 #[cfg(test)]
 mod pixel_size_tests {
-    use crate::{camera::Camera, math::matrix::identity4, test::ApproxEq};
+    use crate::{
+        camera::{Camera, Film},
+        math::matrix::identity4,
+        test::ApproxEq,
+    };
     use cgmath::{Angle, Deg, Rad};
     use std::f32::consts::PI;
 
     #[test]
     fn for_horizontal_canvas() {
-        let camera = Camera::new(200, 125, Rad(PI / 2.0), identity4());
+        let film = Film::new(200, 125);
+        let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
     }
 
     #[test]
     fn for_vertical_canvas() {
-        let camera = Camera::new(125, 200, Rad(PI / 2.0), identity4());
+        let film = Film::new(125, 200);
+        let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
     }
 }
 
 #[cfg(test)]
 mod ray_for_pixel_tests {
-    use crate::{camera::Camera, math::matrix::identity4, ray::Ray, test::ApproxEq};
+    use crate::{
+        camera::{Camera, Film},
+        math::matrix::identity4,
+        ray::Ray,
+        test::ApproxEq,
+    };
     use cgmath::{Matrix4, Point3, Rad, Vector3};
     use std::f32::consts::{PI, SQRT_2};
 
     #[test]
     fn through_center_of_canvas() {
-        let camera = Camera::new(201, 101, Rad(PI / 2.0), identity4());
+        let film = Film::new(201, 101);
+        let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         let ray = camera.ray_for_pixel(100, 50);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
@@ -179,7 +200,8 @@ mod ray_for_pixel_tests {
 
     #[test]
     fn through_corner_of_canvas() {
-        let camera = Camera::new(201, 101, Rad(PI / 2.0), identity4());
+        let film = Film::new(201, 101);
+        let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         let ray = camera.ray_for_pixel(0, 0);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
@@ -191,7 +213,8 @@ mod ray_for_pixel_tests {
     fn for_transformed_camera() {
         let transform = Matrix4::from_angle_y(Rad(PI / 4.0))
             * Matrix4::from_translation(Vector3::new(0.0, -2.0, 5.0));
-        let camera = Camera::new(201, 101, Rad(PI / 2.0), transform);
+        let film = Film::new(201, 101);
+        let camera = Camera::new(film, Rad(PI / 2.0), transform);
         let ray = camera.ray_for_pixel(100, 50);
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 2.0, -5.0),
