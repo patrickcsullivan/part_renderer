@@ -1,5 +1,6 @@
 mod camera;
 mod color;
+mod film;
 mod interaction;
 mod light;
 mod material;
@@ -17,7 +18,8 @@ mod world;
 mod test;
 
 use crate::{
-    camera::{view_transform, Camera, Film},
+    camera::{view_transform, Camera},
+    film::Film,
     light::{phong_shading, PointLight},
     material::Material,
     mesh::Mesh,
