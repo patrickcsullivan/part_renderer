@@ -1,5 +1,5 @@
 use crate::{
-    camera::Camera,
+    camera::{Camera, CameraSample},
     color::Rgb,
     interaction::SurfaceInteraction,
     light::{phong_shading, PointLight},
@@ -7,7 +7,7 @@ use crate::{
     ray::Ray,
     renderable::Renderable,
 };
-use cgmath::{InnerSpace, Point3};
+use cgmath::{InnerSpace, Point2, Point3};
 use image::ImageBuffer;
 
 pub struct World<'msh, 'mtrx, 'mtrl> {
@@ -64,7 +64,8 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
             camera.film.resolution.y as u32,
             |x, y| {
                 println!("At ({}, {})", x, y);
-                let ray = camera.ray_for_pixel(x, y);
+                let sample = CameraSample::at_pixel_center(Point2::new(x as usize, y as usize));
+                let (ray, _) = camera.generate_ray(&sample);
                 let color = self.color_at(&ray, recursions);
                 let pixel: image::Rgb<u8> = color.into();
                 pixel

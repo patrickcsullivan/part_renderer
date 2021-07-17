@@ -1,5 +1,6 @@
 use cgmath::{
-    Angle, InnerSpace, Matrix4, PerspectiveFov, Point3, Rad, Transform, Vector2, Vector3, Vector4,
+    Angle, InnerSpace, Matrix4, PerspectiveFov, Point2, Point3, Rad, Transform, Vector2, Vector3,
+    Vector4,
 };
 
 use crate::ray::Ray;
@@ -14,6 +15,26 @@ impl Film {
     pub fn new(x: usize, y: usize) -> Self {
         Self {
             resolution: Vector2::new(x as f32, y as f32),
+        }
+    }
+}
+
+/// Container for all the information needed to generate a ray from a cameraa.
+#[derive(Debug, Clone, Copy)]
+pub struct CameraSample {
+    /// The point on the film in raster space to which a generated ray will
+    /// carry radiance.
+    pub film_point: Point2<f32>,
+}
+
+impl CameraSample {
+    pub fn new(film_point: Point2<f32>) -> Self {
+        Self { film_point }
+    }
+
+    pub fn at_pixel_center(pixel: Point2<usize>) -> Self {
+        Self {
+            film_point: Point2::new(pixel.x as f32 + 0.5, pixel.y as f32 + 0.5),
         }
     }
 }
@@ -64,14 +85,19 @@ impl Camera {
         }
     }
 
-    /// Returns a ray that starts at the camera and passes through the specified
-    /// pixel on the canvas.
-    pub fn ray_for_pixel(&self, px: u32, py: u32) -> Ray {
-        // Offset from canvase edge to center of pixel.
-        let x_offset = (px as f32 + 0.5) * self.pixel_size;
-        let y_offset = (py as f32 + 0.5) * self.pixel_size;
+    /// Generate a ray for the given sample.
+    ///
+    /// This method also returns a radiance contribution value that indicates
+    /// how much the radiance carried by the ray contributes to the final image
+    /// on the film plane. This value can be 1.0 for simple camera models, or it
+    /// may vary for cameras that simulate physical lenses.
+    pub fn generate_ray(&self, sample: &CameraSample) -> (Ray, f32) {
+        // Offset, measured in camera space, from canvase edge to center of
+        // pixel.
+        let x_offset = sample.film_point.x * self.pixel_size;
+        let y_offset = sample.film_point.y * self.pixel_size;
 
-        // Compute the pixel'ss position in camera space. By default camera looks
+        // Compute the pixel's position in camera space. By default camera looks
         // towards -z in LH coordinate system, so +x points left and +y points
         // up. The canvas is at z = -1.
         let pixel_cs = Point3::new(
@@ -85,7 +111,8 @@ impl Camera {
         let ray_origin_ws = camera_to_world.transform_point(Point3::new(0.0, 0.0, 0.0));
         let ray_direction_ws = (pixel_ws - ray_origin_ws).normalize();
 
-        Ray::new(ray_origin_ws, ray_direction_ws)
+        let ray = Ray::new(ray_origin_ws, ray_direction_ws);
+        (ray, 1.0)
     }
 }
 
@@ -179,19 +206,19 @@ mod pixel_size_tests {
 #[cfg(test)]
 mod ray_for_pixel_tests {
     use crate::{
-        camera::{Camera, Film},
+        camera::{Camera, CameraSample, Film},
         math::matrix::identity4,
         ray::Ray,
         test::ApproxEq,
     };
-    use cgmath::{Matrix4, Point3, Rad, Vector3};
+    use cgmath::{Matrix4, Point2, Point3, Rad, Vector3};
     use std::f32::consts::{PI, SQRT_2};
 
     #[test]
     fn through_center_of_canvas() {
         let film = Film::new(201, 101);
         let camera = Camera::new(film, Rad(PI / 2.0), identity4());
-        let ray = camera.ray_for_pixel(100, 50);
+        let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(100, 50)));
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, -1.0)
@@ -202,7 +229,7 @@ mod ray_for_pixel_tests {
     fn through_corner_of_canvas() {
         let film = Film::new(201, 101);
         let camera = Camera::new(film, Rad(PI / 2.0), identity4());
-        let ray = camera.ray_for_pixel(0, 0);
+        let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(0, 0)));
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.66519, 0.33259, -0.66851),
@@ -215,7 +242,7 @@ mod ray_for_pixel_tests {
             * Matrix4::from_translation(Vector3::new(0.0, -2.0, 5.0));
         let film = Film::new(201, 101);
         let camera = Camera::new(film, Rad(PI / 2.0), transform);
-        let ray = camera.ray_for_pixel(100, 50);
+        let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(100, 50)));
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 2.0, -5.0),
             Vector3::new(SQRT_2 / 2.0, 0.0, SQRT_2 / -2.0),
