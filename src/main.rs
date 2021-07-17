@@ -48,13 +48,14 @@ fn demo_simple() {
     let sphere3 = Shape::sphere(&left_transf, &right_transf, false);
     let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
 
-    let camera_transf = view_transform(
+    let world_to_camera = view_transform(
         Point3::new(0.0, 0.0, -4.0),
         Point3::new(0.0, 0.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
     );
+    let camera_to_world = world_to_camera.inverse_transform().unwrap();
     let film = Film::new(400, 400);
-    let camera = Camera::new(film, Rad(PI / 2.0), camera_transf);
+    let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
     let world = World::new(
         Renderable::Vector(vec![
@@ -110,14 +111,15 @@ fn demo() {
     let light1 = PointLight::new(Rgb::new(1.0, 1.0, 1.0), Point3::new(-10.0, 10.0, -10.0));
     let light2 = PointLight::new(Rgb::new(0.2, 0.0, 0.4), Point3::new(10.0, 10.0, -10.0));
 
-    let camera_transf = view_transform(
+    let world_to_camera = view_transform(
         Point3::new(0.0, 1.5, -5.0),
         Point3::new(0.0, 1.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
     );
+    let camera_to_world = world_to_camera.inverse_transform().unwrap();
     // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
     let film = Film::new(600, 300);
-    let camera = Camera::new(film, Rad(PI / 3.0), camera_transf);
+    let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
 
     let world = World::new(
         Renderable::Vector(vec![

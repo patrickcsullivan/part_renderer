@@ -49,8 +49,8 @@ pub struct Camera {
     /// The field of view for the largest dimension.
     pub fov: Rad<f32>,
 
-    /// Transformation matrix from world space to camera space.
-    pub world_to_camera: Matrix4<f32>,
+    /// Transformation matrix from camera space to world space.
+    pub camera_to_world: Matrix4<f32>,
 
     /// Half the width of the camera in world space.
     half_width: f32,
@@ -63,7 +63,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(film: Film, fov: Rad<f32>, world_to_camera: Matrix4<f32>) -> Self {
+    pub fn new(film: Film, fov: Rad<f32>, camera_to_world: Matrix4<f32>) -> Self {
         let half_view = (fov / 2.0).tan();
         let aspect = film.resolution.x / film.resolution.y;
         let (half_width, half_height) = if aspect >= 1.0 {
@@ -78,7 +78,7 @@ impl Camera {
         Self {
             film,
             fov,
-            world_to_camera,
+            camera_to_world,
             half_width,
             half_height,
             pixel_size,
@@ -106,9 +106,10 @@ impl Camera {
             -1.0,
         );
 
-        let camera_to_world = self.world_to_camera.inverse_transform().unwrap();
-        let pixel_ws = camera_to_world.transform_point(pixel_cs);
-        let ray_origin_ws = camera_to_world.transform_point(Point3::new(0.0, 0.0, 0.0));
+        let pixel_ws = self.camera_to_world.transform_point(pixel_cs);
+        let ray_origin_ws = self
+            .camera_to_world
+            .transform_point(Point3::new(0.0, 0.0, 0.0));
         let ray_direction_ws = (pixel_ws - ray_origin_ws).normalize();
 
         let ray = Ray::new(ray_origin_ws, ray_direction_ws);
@@ -210,8 +211,9 @@ mod ray_for_pixel_tests {
         math::matrix::identity4,
         ray::Ray,
         test::ApproxEq,
+        world,
     };
-    use cgmath::{Matrix4, Point2, Point3, Rad, Vector3};
+    use cgmath::{Matrix4, Point2, Point3, Rad, Transform, Vector3};
     use std::f32::consts::{PI, SQRT_2};
 
     #[test]
@@ -238,10 +240,11 @@ mod ray_for_pixel_tests {
 
     #[test]
     fn for_transformed_camera() {
-        let transform = Matrix4::from_angle_y(Rad(PI / 4.0))
+        let world_to_camera = Matrix4::from_angle_y(Rad(PI / 4.0))
             * Matrix4::from_translation(Vector3::new(0.0, -2.0, 5.0));
+        let camera_to_world = world_to_camera.inverse_transform().unwrap();
         let film = Film::new(201, 101);
-        let camera = Camera::new(film, Rad(PI / 2.0), transform);
+        let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
         let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(100, 50)));
         assert!(ray.approx_eq(&Ray::new(
             Point3::new(0.0, 2.0, -5.0),
