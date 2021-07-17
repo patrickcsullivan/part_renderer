@@ -19,7 +19,7 @@ pub struct InnerSamplerState {
     /// sample.
     vecs_1d: Vec<Vec<Vec<f32>>>,
 
-    /// Pre-computed 2D values for each sample in the pixel and for each 1D
+    /// Pre-computed 2D values for each sample in the pixel and for each 2D
     /// dimension request.
     ///
     /// The outer vector contains an element for each vector request. Each of
@@ -41,7 +41,7 @@ pub struct InnerSamplerState {
 }
 
 impl InnerSamplerState {
-    fn new(samples_per_pixel: usize) -> Self {
+    pub fn new(samples_per_pixel: usize) -> Self {
         Self {
             samples_per_pixel,
             current_pixel: Point2::new(0, 0),
@@ -54,36 +54,31 @@ impl InnerSamplerState {
         }
     }
 
-    fn samples_per_pixel(&self) -> usize {
+    pub fn samples_per_pixel(&self) -> usize {
         self.samples_per_pixel
     }
 
-    fn current_pixel(&self) -> Point2<usize> {
+    pub fn current_pixel(&self) -> Point2<usize> {
         self.current_pixel
     }
 
-    fn current_pixel_sample_index(&self) -> usize {
+    pub fn current_pixel_sample_index(&self) -> usize {
         self.current_pixel_sample_index
     }
 
-    fn reset_current_sample_vecs_indices(&mut self) {
-        self.vecs_1d_current_index = 0;
-        self.vecs_2d_current_index = 0;
-    }
-
-    fn start_pixel(&mut self, pixel: Point2<usize>) {
+    pub fn start_pixel(&mut self, pixel: Point2<usize>) {
         self.current_pixel = pixel;
         self.current_pixel_sample_index = 0;
         self.reset_current_sample_vecs_indices();
     }
 
-    fn prepare_1d_array(&mut self, count: usize) {
+    pub fn prepare_1d_array(&mut self, count: usize) {
         // Initialize a `count`-length vec for each sample in the pixel.
         self.vecs_1d
             .push(vec![vec![0.0; count]; self.samples_per_pixel]);
     }
 
-    fn prepare_2d_array(&mut self, count: usize) {
+    pub fn prepare_2d_array(&mut self, count: usize) {
         // Initialize a `count`-length vec for each sample in the pixel.
         self.vecs_2d.push(vec![
             vec![Point2::new(0.0, 0.0); count];
@@ -91,27 +86,32 @@ impl InnerSamplerState {
         ]);
     }
 
-    fn get_1d_vec(&mut self) -> Option<&Vec<f32>> {
+    pub fn get_1d_vec(&mut self) -> Option<&Vec<f32>> {
         self.vecs_1d
             .get(self.vecs_1d_current_index)
             .and_then(|vec_per_sample| vec_per_sample.get(self.current_pixel_sample_index))
     }
 
-    fn get_2d_vec(&mut self) -> Option<&Vec<Point2<f32>>> {
+    pub fn get_2d_vec(&mut self) -> Option<&Vec<Point2<f32>>> {
         self.vecs_2d
             .get(self.vecs_2d_current_index)
             .and_then(|vec_per_sample| vec_per_sample.get(self.current_pixel_sample_index))
     }
 
-    fn start_next_sample(&mut self) -> bool {
+    pub fn start_next_sample(&mut self) -> bool {
         self.reset_current_sample_vecs_indices();
         self.current_pixel_sample_index += 1;
         self.current_pixel_sample_index < self.samples_per_pixel
     }
 
-    fn start_nth_sample(&mut self, sample_index: usize) -> bool {
+    pub fn start_nth_sample(&mut self, sample_index: usize) -> bool {
         self.reset_current_sample_vecs_indices();
         self.current_pixel_sample_index = sample_index;
         self.current_pixel_sample_index < self.samples_per_pixel
+    }
+
+    fn reset_current_sample_vecs_indices(&mut self) {
+        self.vecs_1d_current_index = 0;
+        self.vecs_2d_current_index = 0;
     }
 }
