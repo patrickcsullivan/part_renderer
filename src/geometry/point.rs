@@ -1,4 +1,4 @@
-use crate::math::axis::Axis3;
+use crate::geometry::axis::Axis3;
 use cgmath::{BaseNum, InnerSpace, Point2, Point3};
 
 /// Returns the point's component on the given axis.

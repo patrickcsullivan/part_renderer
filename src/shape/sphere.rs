@@ -70,7 +70,7 @@ impl<'mtrx> Sphere<'mtrx> {
 
 #[cfg(test)]
 mod ray_intersects_tests {
-    use crate::math::matrix::identity4;
+    use crate::geometry::matrix::identity4;
     use crate::ray::Ray;
     use crate::shape::sphere::Sphere;
     use crate::test::ApproxEq;
@@ -269,7 +269,7 @@ mod ray_intersects_tests {
 
 #[cfg(test)]
 mod normal_tests {
-    use crate::math::matrix::identity4;
+    use crate::geometry::matrix::identity4;
     use crate::shape::sphere::Sphere;
     use crate::test::ApproxEq;
     use cgmath::{Matrix4, Point3, Rad, Transform, Vector3};

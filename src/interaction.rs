@@ -1,4 +1,4 @@
-use crate::math::vector;
+use crate::geometry::vector;
 use cgmath::{Point3, Vector3};
 
 #[derive(Debug, Clone, Copy)]

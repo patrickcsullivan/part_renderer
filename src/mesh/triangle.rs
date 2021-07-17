@@ -1,5 +1,5 @@
+use crate::geometry::{axis::Axis3, baycentric, point, vector};
 use crate::interaction::SurfaceInteraction;
-use crate::math::{axis::Axis3, baycentric, point, vector};
 use crate::mesh::Mesh;
 use crate::number::efloat;
 use crate::ray::Ray;
@@ -308,7 +308,7 @@ fn triangle_partial_derivatives(
 
 #[cfg(test)]
 mod ray_intersection_tests {
-    use crate::math::matrix::identity4;
+    use crate::geometry::matrix::identity4;
     use crate::mesh::{triangle::Triangle, Mesh, MeshBuilder};
     use crate::ray::Ray;
     use crate::test::ApproxEq;

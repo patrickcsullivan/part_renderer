@@ -1,10 +1,10 @@
 mod camera;
 mod color;
 mod film;
+mod geometry;
 mod interaction;
 mod light;
 mod material;
-mod math;
 mod mesh;
 mod number;
 mod ray;
@@ -36,7 +36,7 @@ fn main() {
 
 fn demo_simple() {
     use crate::color::Rgb;
-    use crate::math::matrix::identity4;
+    use crate::geometry::matrix::identity4;
     use crate::shape::Shape;
     use cgmath::{Point3, Rad, Vector3};
     use std::f32::consts::PI;
@@ -74,7 +74,7 @@ fn demo_simple() {
 
 fn demo() {
     use crate::color::Rgb;
-    use crate::math::matrix::identity4;
+    use crate::geometry::matrix::identity4;
     use crate::shape::Shape;
     use cgmath::{Point3, Rad, Vector3};
     use std::f32::consts::PI;

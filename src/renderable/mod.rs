@@ -118,7 +118,7 @@ fn cmp_ignore_nan(x: &f32, y: &f32) -> std::cmp::Ordering {
 #[cfg(test)]
 mod ray_intersections_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, ray::Ray,
+        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material, ray::Ray,
         renderable::Renderable, shape::Shape, test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};

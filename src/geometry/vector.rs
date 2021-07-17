@@ -1,4 +1,4 @@
-use crate::math::axis::Axis3;
+use crate::geometry::axis::Axis3;
 use cgmath::{BaseNum, InnerSpace, Vector3};
 
 /// Returns the outgoing vector when the incoming vector is reflected across the
@@ -64,7 +64,7 @@ pub fn arbitrary_coordinate_system(v: Vector3<f32>) -> (Vector3<f32>, Vector3<f3
 
 #[cfg(test)]
 mod reflect_tests {
-    use crate::math::vector;
+    use crate::geometry::vector;
     use crate::test::ApproxEq;
     use cgmath::Vector3;
 

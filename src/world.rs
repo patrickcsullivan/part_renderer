@@ -105,7 +105,7 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod color_at_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4, ray::Ray,
+        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material, ray::Ray,
         renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
@@ -146,7 +146,7 @@ mod color_at_tests {
 #[cfg(test)]
 mod is_occluded_tests {
     use crate::{
-        color::Rgb, light::PointLight, material::Material, math::matrix::identity4,
+        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material,
         renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};

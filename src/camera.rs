@@ -129,7 +129,7 @@ pub fn view_transform(from: Point3<f32>, to: Point3<f32>, up: Vector3<f32>) -> M
 
 #[cfg(test)]
 mod view_transform_tests {
-    use crate::{camera::view_transform, math::matrix::identity4, test::ApproxEq};
+    use crate::{camera::view_transform, geometry::matrix::identity4, test::ApproxEq};
     use cgmath::{Matrix4, Point3, Vector3, Vector4};
 
     #[test]
@@ -179,7 +179,7 @@ mod view_transform_tests {
 mod pixel_size_tests {
     use crate::{
         camera::{Camera, Film},
-        math::matrix::identity4,
+        geometry::matrix::identity4,
         test::ApproxEq,
     };
     use cgmath::{Angle, Deg, Rad};
@@ -204,7 +204,7 @@ mod pixel_size_tests {
 mod ray_for_pixel_tests {
     use crate::{
         camera::{Camera, CameraSample, Film},
-        math::matrix::identity4,
+        geometry::matrix::identity4,
         ray::Ray,
         test::ApproxEq,
         world,
