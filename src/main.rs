@@ -8,6 +8,7 @@ mod mesh;
 mod number;
 mod ray;
 mod renderable;
+mod sampler;
 mod shape;
 mod transform;
 mod world;

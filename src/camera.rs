@@ -25,16 +25,26 @@ pub struct CameraSample {
     /// The point on the film in raster space to which a generated ray will
     /// carry radiance.
     pub film_point: Point2<f32>,
+
+    pub time: f32,
+
+    pub lens_point: Point2<f32>,
 }
 
 impl CameraSample {
     pub fn new(film_point: Point2<f32>) -> Self {
-        Self { film_point }
+        Self {
+            film_point,
+            lens_point: Point2::new(0.0, 0.0), // TODO
+            time: 0.0,                         // TODO
+        }
     }
 
     pub fn at_pixel_center(pixel: Point2<usize>) -> Self {
         Self {
             film_point: Point2::new(pixel.x as f32 + 0.5, pixel.y as f32 + 0.5),
+            lens_point: Point2::new(0.0, 0.0), // TODO
+            time: 0.0,                         // TODO
         }
     }
 }
