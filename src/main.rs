@@ -11,7 +11,6 @@ mod ray;
 mod sampler;
 mod scene;
 mod shape;
-mod transform;
 
 #[cfg(test)]
 mod test;

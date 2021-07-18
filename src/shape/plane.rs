@@ -29,7 +29,7 @@ impl<'mtrx> Plane<'mtrx> {
     pub fn ray_intersection(&self, ray: &Ray) -> Option<(f32, SurfaceInteraction)> {
         // Transforming the ray from world to object space is analagous to
         // transforming the sphere from object to world space.
-        use crate::transform::Transform;
+        use crate::geometry::Transform;
         let obj_ray = self.world_to_object.transform(ray);
 
         if obj_ray.direction.y.abs() < 0.0001 {

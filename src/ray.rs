@@ -35,7 +35,7 @@ impl Into<bvh::ray::Ray> for &Ray {
     }
 }
 
-impl crate::transform::Transform<Ray> for Matrix4<f32> {
+impl crate::geometry::Transform<Ray> for Matrix4<f32> {
     fn transform(&self, ray: &Ray) -> Ray {
         Ray {
             origin: self.transform_point(ray.origin),
@@ -51,7 +51,7 @@ impl crate::transform::Transform<Ray> for Matrix4<f32> {
 #[cfg(test)]
 mod tests {
     use super::Ray;
-    use crate::{test::ApproxEq, transform::Transform};
+    use crate::{geometry::Transform, test::ApproxEq};
     use cgmath::{Matrix4, Point3, Vector3};
 
     #[test]
