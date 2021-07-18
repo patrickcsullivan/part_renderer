@@ -21,6 +21,8 @@ use integrator::SampleIntegrator;
 use sampler::Sampler;
 use scene::Scene;
 
+use crate::integrator::Integrator;
+
 fn main() {
     println!("Hello, world!");
     crate::demo::simple();
@@ -32,6 +34,7 @@ pub fn main_todo() {
     let sampler = MockSampler;
     let camera = todo!();
     let integrator = SampleIntegrator::new(sampler, camera);
+    integrator.render(&scene);
     ()
 }
 
