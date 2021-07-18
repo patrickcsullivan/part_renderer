@@ -46,7 +46,7 @@ impl RgbSpectrum {
     /// This method sorts the given samples by wavelength as a side effect.
     pub fn from_sampled(samples: &mut [(f32, f32)]) -> Self {
         samples.sort_by(|(wavelength1, _), (wavelength2, _)| {
-            number::f32::total_cmp(*wavelength1, *wavelength2)
+            number::f32::total_cmp(wavelength1, wavelength2)
         });
 
         todo!() // TODO: Finish implementing. See p. 333.

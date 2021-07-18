@@ -4,19 +4,22 @@ use crate::{
     interaction::SurfaceInteraction,
     light::{phong_shading, PointLight},
     material::Material,
+    primitive::PrimitiveAggregate,
     ray::Ray,
-    renderable::Renderable,
 };
 use cgmath::{InnerSpace, Point2, Point3};
 use image::ImageBuffer;
 
 pub struct World<'msh, 'mtrx, 'mtrl> {
-    pub renderable: Renderable<'msh, 'mtrx, 'mtrl>,
+    pub renderable: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
     pub lights: Vec<PointLight>,
 }
 
 impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
-    pub fn new(renderable: Renderable<'msh, 'mtrx, 'mtrl>, lights: Vec<PointLight>) -> Self {
+    pub fn new(
+        renderable: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
+        lights: Vec<PointLight>,
+    ) -> Self {
         Self { renderable, lights }
     }
 
@@ -108,7 +111,7 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
 mod color_at_tests {
     use crate::{
         color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
-        ray::Ray, renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
+        primitive::PrimitiveAggregate, ray::Ray, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -127,11 +130,11 @@ mod color_at_tests {
         );
         let sphere1 = Shape::sphere(&identity, &identity, false);
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
-        let primitive1 = Renderable::primitive(sphere1, &material);
-        let primitive2 = Renderable::primitive(sphere2, &material);
+        let primitive1 = PrimitiveAggregate::primitive(sphere1, &material);
+        let primitive2 = PrimitiveAggregate::primitive(sphere2, &material);
         let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
         let world = World::new(
-            Renderable::Vector(vec![primitive1, primitive2]),
+            PrimitiveAggregate::Vector(vec![primitive1, primitive2]),
             vec![light],
         );
 
@@ -156,7 +159,7 @@ mod color_at_tests {
 mod is_occluded_tests {
     use crate::{
         color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
-        renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
+        primitive::PrimitiveAggregate, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -172,7 +175,7 @@ mod is_occluded_tests {
             0.0,
         );
         let sphere = Shape::sphere(&identity, &identity, false);
-        let primitive = Renderable::primitive(sphere, &material);
+        let primitive = PrimitiveAggregate::primitive(sphere, &material);
         let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
         let world = World::new(primitive, vec![light]);
 

@@ -7,8 +7,8 @@ mod light;
 mod material;
 mod mesh;
 mod number;
+mod primitive;
 mod ray;
-mod renderable;
 mod sampler;
 mod shape;
 mod transform;
@@ -23,7 +23,7 @@ use crate::{
     light::{phong_shading, PointLight},
     material::Material,
     mesh::Mesh,
-    renderable::{Primitive, Renderable},
+    primitive::{Primitive, PrimitiveAggregate},
     world::World,
 };
 use cgmath::{Matrix, Matrix4, Transform};
@@ -68,10 +68,10 @@ fn demo_simple() {
     let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
     let world = World::new(
-        Renderable::Vector(vec![
-            Renderable::primitive(sphere1, &material),
-            Renderable::primitive(sphere2, &material),
-            Renderable::primitive(sphere3, &material),
+        PrimitiveAggregate::Vector(vec![
+            PrimitiveAggregate::primitive(sphere1, &material),
+            PrimitiveAggregate::primitive(sphere2, &material),
+            PrimitiveAggregate::primitive(sphere3, &material),
         ]),
         vec![light],
     );
@@ -151,7 +151,7 @@ fn demo() {
     let inv_teapot_transf = teapot_transf.inverse_transform().unwrap();
     let teapot_mesh =
         Mesh::from_stl(&teapot_transf, &inv_teapot_transf, false, &mut reader).unwrap();
-    let teapot = Renderable::from_mesh(&teapot_mesh, &triangle_material);
+    let teapot = PrimitiveAggregate::from_mesh(&teapot_mesh, &triangle_material);
 
     let light1 = PointLight::new(
         RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
@@ -173,11 +173,11 @@ fn demo() {
     let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
 
     let world = World::new(
-        Renderable::Vector(vec![
-            Renderable::primitive(floor, &floor_material),
-            Renderable::primitive(right, &right_material),
-            Renderable::primitive(left, &left_material),
-            Renderable::primitive(back, &back_material),
+        PrimitiveAggregate::Vector(vec![
+            PrimitiveAggregate::primitive(floor, &floor_material),
+            PrimitiveAggregate::primitive(right, &right_material),
+            PrimitiveAggregate::primitive(left, &left_material),
+            PrimitiveAggregate::primitive(back, &back_material),
             teapot,
         ]),
         vec![light1, light2],

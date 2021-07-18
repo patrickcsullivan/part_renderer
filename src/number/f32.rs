@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-pub fn total_cmp(x: f32, y: f32) -> Ordering {
+pub fn total_cmp(x: &f32, y: &f32) -> Ordering {
     if x.is_nan() && y.is_nan() {
         Ordering::Equal
     } else if (x.is_nan() && !y.is_nan()) || x > y {
