@@ -6,19 +6,18 @@ use cgmath::Zero;
 /// describes the amount of light at each wavelength.
 pub struct Spectrum {}
 
-// TODO: Does spectrum length need to be hard-coded at compile time?
-// If so, the what spectrum lengths do we need to support?
+const SAMPLE_COUNT: usize = 60;
 
-/// Represents a spectrum as 32 discrete samples.
+/// Represents a spectrum as 60 discrete samples.
 #[derive(Debug, PartialEq)]
-pub struct CoefficientSpectrum32 {
-    samples: [f32; 32],
+pub struct CoefficientSpectrum60 {
+    samples: [f32; SAMPLE_COUNT],
 }
 
-impl CoefficientSpectrum32 {
+impl CoefficientSpectrum60 {
     pub fn new(value: f32) -> Self {
         Self {
-            samples: [value; 32],
+            samples: [value; SAMPLE_COUNT],
         }
     }
 
@@ -27,7 +26,7 @@ impl CoefficientSpectrum32 {
     }
 
     pub fn sqrt(&self) -> Self {
-        let mut samples = [0.0; 32];
+        let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, input) in samples.iter_mut().zip(&self.samples) {
             *sample = input.sqrt()
         }
@@ -35,7 +34,7 @@ impl CoefficientSpectrum32 {
     }
 
     pub fn powf(&self, n: f32) -> Self {
-        let mut samples = [0.0; 32];
+        let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, input) in samples.iter_mut().zip(&self.samples) {
             *sample = input.powf(n)
         }
@@ -59,11 +58,11 @@ impl CoefficientSpectrum32 {
 
 // Spectrum addition
 
-impl Add<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Add<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn add(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn add(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
         }
@@ -71,11 +70,11 @@ impl Add<CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Add<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Add<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn add(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn add(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
         }
@@ -83,11 +82,11 @@ impl Add<&CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Add<CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Add<CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn add(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn add(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
         }
@@ -95,11 +94,11 @@ impl Add<CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl Add<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Add<&CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn add(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn add(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
         }
@@ -107,16 +106,16 @@ impl Add<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl AddAssign<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn add_assign(&mut self, rhs: CoefficientSpectrum32) {
+impl AddAssign<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn add_assign(&mut self, rhs: CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left += right
         }
     }
 }
 
-impl AddAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn add_assign(&mut self, rhs: &CoefficientSpectrum32) {
+impl AddAssign<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn add_assign(&mut self, rhs: &CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left += right
         }
@@ -125,11 +124,11 @@ impl AddAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
 
 // Spectrum subtraction
 
-impl Sub<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Sub<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn sub(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn sub(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
         }
@@ -137,11 +136,11 @@ impl Sub<CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Sub<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Sub<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn sub(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn sub(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
         }
@@ -149,11 +148,11 @@ impl Sub<&CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Sub<CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Sub<CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn sub(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn sub(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
         }
@@ -161,11 +160,11 @@ impl Sub<CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl Sub<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Sub<&CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn sub(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn sub(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
         }
@@ -173,16 +172,16 @@ impl Sub<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl SubAssign<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn sub_assign(&mut self, rhs: CoefficientSpectrum32) {
+impl SubAssign<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn sub_assign(&mut self, rhs: CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left -= right
         }
     }
 }
 
-impl SubAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn sub_assign(&mut self, rhs: &CoefficientSpectrum32) {
+impl SubAssign<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn sub_assign(&mut self, rhs: &CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left -= right
         }
@@ -191,11 +190,11 @@ impl SubAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
 
 // Spectrum multiplication
 
-impl Mul<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn mul(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn mul(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
         }
@@ -203,11 +202,11 @@ impl Mul<CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Mul<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn mul(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn mul(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
         }
@@ -215,11 +214,11 @@ impl Mul<&CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Mul<CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn mul(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn mul(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
         }
@@ -227,11 +226,11 @@ impl Mul<CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl Mul<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<&CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn mul(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn mul(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
         }
@@ -239,16 +238,16 @@ impl Mul<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl MulAssign<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn mul_assign(&mut self, rhs: CoefficientSpectrum32) {
+impl MulAssign<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn mul_assign(&mut self, rhs: CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left *= right
         }
     }
 }
 
-impl MulAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn mul_assign(&mut self, rhs: &CoefficientSpectrum32) {
+impl MulAssign<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn mul_assign(&mut self, rhs: &CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left *= right
         }
@@ -257,11 +256,11 @@ impl MulAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
 
 // Spectrum division
 
-impl Div<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Div<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn div(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn div(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
         }
@@ -269,11 +268,11 @@ impl Div<CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Div<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Div<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn div(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn div(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
         }
@@ -281,11 +280,11 @@ impl Div<&CoefficientSpectrum32> for CoefficientSpectrum32 {
     }
 }
 
-impl Div<CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Div<CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn div(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn div(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
         }
@@ -293,11 +292,11 @@ impl Div<CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl Div<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Div<&CoefficientSpectrum60> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
-    fn div(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn div(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
         }
@@ -305,16 +304,16 @@ impl Div<&CoefficientSpectrum32> for &CoefficientSpectrum32 {
     }
 }
 
-impl DivAssign<CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn div_assign(&mut self, rhs: CoefficientSpectrum32) {
+impl DivAssign<CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn div_assign(&mut self, rhs: CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left /= right
         }
     }
 }
 
-impl DivAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
-    fn div_assign(&mut self, rhs: &CoefficientSpectrum32) {
+impl DivAssign<&CoefficientSpectrum60> for CoefficientSpectrum60 {
+    fn div_assign(&mut self, rhs: &CoefficientSpectrum60) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left /= right
         }
@@ -323,11 +322,11 @@ impl DivAssign<&CoefficientSpectrum32> for CoefficientSpectrum32 {
 
 // Scalar multiplication
 
-impl Mul<CoefficientSpectrum32> for f32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<CoefficientSpectrum60> for f32 {
+    type Output = CoefficientSpectrum60;
 
-    fn mul(self, rhs: CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn mul(self, rhs: CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, right) in samples.iter_mut().zip(&rhs.samples) {
             *sample = self * right
         }
@@ -335,11 +334,11 @@ impl Mul<CoefficientSpectrum32> for f32 {
     }
 }
 
-impl Mul<&CoefficientSpectrum32> for f32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<&CoefficientSpectrum60> for f32 {
+    type Output = CoefficientSpectrum60;
 
-    fn mul(self, rhs: &CoefficientSpectrum32) -> Self::Output {
-        let mut samples = [0.0; 32];
+    fn mul(self, rhs: &CoefficientSpectrum60) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, right) in samples.iter_mut().zip(&rhs.samples) {
             *sample = self * right
         }
@@ -347,11 +346,11 @@ impl Mul<&CoefficientSpectrum32> for f32 {
     }
 }
 
-impl Mul<f32> for CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<f32> for CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
     fn mul(self, rhs: f32) -> Self::Output {
-        let mut samples = [0.0; 32];
+        let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, left) in samples.iter_mut().zip(&self.samples) {
             *sample = left * rhs
         }
@@ -359,11 +358,11 @@ impl Mul<f32> for CoefficientSpectrum32 {
     }
 }
 
-impl Mul<f32> for &CoefficientSpectrum32 {
-    type Output = CoefficientSpectrum32;
+impl Mul<f32> for &CoefficientSpectrum60 {
+    type Output = CoefficientSpectrum60;
 
     fn mul(self, rhs: f32) -> Self::Output {
-        let mut samples = [0.0; 32];
+        let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, left) in samples.iter_mut().zip(&self.samples) {
             *sample = left * rhs
         }
@@ -371,7 +370,7 @@ impl Mul<f32> for &CoefficientSpectrum32 {
     }
 }
 
-impl MulAssign<f32> for CoefficientSpectrum32 {
+impl MulAssign<f32> for CoefficientSpectrum60 {
     fn mul_assign(&mut self, rhs: f32) {
         for left in self.samples.iter_mut() {
             *left *= rhs
