@@ -187,14 +187,14 @@ mod pixel_size_tests {
 
     #[test]
     fn for_horizontal_canvas() {
-        let film = Film::new(200, 125);
+        let film = Film::tmp_new(200, 125);
         let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
     }
 
     #[test]
     fn for_vertical_canvas() {
-        let film = Film::new(125, 200);
+        let film = Film::tmp_new(125, 200);
         let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         assert!(camera.pixel_size.approx_eq(&0.01));
     }
@@ -214,7 +214,7 @@ mod ray_for_pixel_tests {
 
     #[test]
     fn through_center_of_canvas() {
-        let film = Film::new(201, 101);
+        let film = Film::tmp_new(201, 101);
         let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(100, 50)));
         assert!(ray.approx_eq(&Ray::new(
@@ -225,7 +225,7 @@ mod ray_for_pixel_tests {
 
     #[test]
     fn through_corner_of_canvas() {
-        let film = Film::new(201, 101);
+        let film = Film::tmp_new(201, 101);
         let camera = Camera::new(film, Rad(PI / 2.0), identity4());
         let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(0, 0)));
         assert!(ray.approx_eq(&Ray::new(
@@ -239,7 +239,7 @@ mod ray_for_pixel_tests {
         let world_to_camera = Matrix4::from_angle_y(Rad(PI / 4.0))
             * Matrix4::from_translation(Vector3::new(0.0, -2.0, 5.0));
         let camera_to_world = world_to_camera.inverse_transform().unwrap();
-        let film = Film::new(201, 101);
+        let film = Film::tmp_new(201, 101);
         let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
         let (ray, _) = camera.generate_ray(&CameraSample::at_pixel_center(Point2::new(100, 50)));
         assert!(ray.approx_eq(&Ray::new(

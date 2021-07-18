@@ -1,6 +1,7 @@
 mod camera;
 mod color;
 mod film;
+mod filter;
 mod geometry;
 mod interaction;
 mod light;
@@ -57,7 +58,7 @@ fn demo_simple() {
         Vector3::new(0.0, 1.0, 0.0),
     );
     let camera_to_world = world_to_camera.inverse_transform().unwrap();
-    let film = Film::new(400, 400);
+    let film = Film::tmp_new(400, 400);
     let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
     let world = World::new(
@@ -121,7 +122,7 @@ fn demo() {
     );
     let camera_to_world = world_to_camera.inverse_transform().unwrap();
     // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
-    let film = Film::new(600, 300);
+    let film = Film::tmp_new(600, 300);
     let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
 
     let world = World::new(
