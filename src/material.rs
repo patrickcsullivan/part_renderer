@@ -1,8 +1,8 @@
-use crate::color::Rgb;
+use crate::color::RgbSpectrum;
 
 #[derive(Debug)]
 pub struct Material {
-    pub color: Rgb,
+    pub color: RgbSpectrum,
     pub ambient: f32,
     pub diffuse: f32,
     pub specular: f32,
@@ -15,7 +15,7 @@ pub struct Material {
 
 impl Material {
     pub fn new(
-        color: Rgb,
+        color: RgbSpectrum,
         ambient: f32,
         diffuse: f32,
         specular: f32,

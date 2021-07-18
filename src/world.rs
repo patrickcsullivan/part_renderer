@@ -1,6 +1,6 @@
 use crate::{
     camera::{Camera, CameraSample},
-    color::Rgb,
+    color::RgbSpectrum,
     interaction::SurfaceInteraction,
     light::{phong_shading, PointLight},
     material::Material,
@@ -25,32 +25,34 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
         interaction: &SurfaceInteraction,
         material: &Material,
         remaining: usize,
-    ) -> Rgb {
-        self.lights.iter().fold(Rgb::black(), |color, light| {
-            // Shift the interaction point away from the surface slightly, so that
-            // the occlusion check doesn't accidentally intersect the surface.
-            let in_shadow = self.is_occluded(interaction.over_point(), light);
+    ) -> RgbSpectrum {
+        self.lights
+            .iter()
+            .fold(RgbSpectrum::constant(0.0), |color, light| {
+                // Shift the interaction point away from the surface slightly, so that
+                // the occlusion check doesn't accidentally intersect the surface.
+                let in_shadow = self.is_occluded(interaction.over_point(), light);
 
-            let surface = phong_shading(
-                material,
-                light,
-                &interaction.point,
-                &interaction.neg_ray_direction,
-                &interaction.normal,
-                in_shadow,
-            );
+                let surface = phong_shading(
+                    material,
+                    light,
+                    &interaction.point,
+                    &interaction.neg_ray_direction,
+                    &interaction.normal,
+                    in_shadow,
+                );
 
-            let reflected = self.reflected_color(material, interaction, remaining);
+                let reflected = self.reflected_color(material, interaction, remaining);
 
-            color + surface + reflected
-        })
+                color + surface + reflected
+            })
     }
 
-    pub fn color_at(&self, ray: &Ray, remaining: usize) -> Rgb {
+    pub fn color_at(&self, ray: &Ray, remaining: usize) -> RgbSpectrum {
         if let Some((_t, primitive, interaction)) = self.renderable.ray_intersection(&ray) {
             self.shade_surface_interaction(&interaction, primitive.material, remaining)
         } else {
-            Rgb::black()
+            RgbSpectrum::constant(0.0)
         }
     }
 
@@ -91,9 +93,9 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
         material: &Material,
         interaction: &SurfaceInteraction,
         remaining: usize,
-    ) -> Rgb {
+    ) -> RgbSpectrum {
         if remaining < 1 || material.reflective == 0.0 {
-            Rgb::black()
+            RgbSpectrum::constant(0.0)
         } else {
             let reflect_ray = Ray::new(interaction.over_point(), interaction.reflect());
             let color = self.color_at(&reflect_ray, remaining - 1);
@@ -105,8 +107,8 @@ impl<'msh, 'mtrx, 'mtrl> World<'msh, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod color_at_tests {
     use crate::{
-        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material, ray::Ray,
-        renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
+        color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
+        ray::Ray, renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -115,12 +117,19 @@ mod color_at_tests {
         let identity = identity4();
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
+        let material = Material::new(
+            RgbSpectrum::from_rgb(0.8, 1.0, 0.6),
+            0.1,
+            0.7,
+            0.2,
+            200.0,
+            0.0,
+        );
         let sphere1 = Shape::sphere(&identity, &identity, false);
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
         let primitive1 = Renderable::primitive(sphere1, &material);
         let primitive2 = Renderable::primitive(sphere2, &material);
-        let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
+        let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
         let world = World::new(
             Renderable::Vector(vec![primitive1, primitive2]),
             vec![light],
@@ -129,24 +138,24 @@ mod color_at_tests {
         // When ray misses.
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
         let color = world.color_at(&ray, 0);
-        assert!(color.approx_eq(&Rgb::black()));
+        assert!(color.approx_eq(&RgbSpectrum::constant(0.0)));
 
         // When ray hits.
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
         let color = world.color_at(&ray, 0);
-        assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
+        assert!(color.approx_eq(&RgbSpectrum::from_rgb(0.38066, 0.47583, 0.2855)));
 
         // When ray starts outer sphere and hits inner sphere.
         let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 1.0, 0.0));
         let color = world.color_at(&ray, 0);
-        assert!(color.approx_eq(&Rgb::new(0.38066, 0.47583, 0.2855)));
+        assert!(color.approx_eq(&RgbSpectrum::from_rgb(0.38066, 0.47583, 0.2855)));
     }
 }
 
 #[cfg(test)]
 mod is_occluded_tests {
     use crate::{
-        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material,
+        color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
         renderable::Renderable, shape::Shape, test::ApproxEq, world::World,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
@@ -154,10 +163,17 @@ mod is_occluded_tests {
     #[test]
     fn is_occluded() {
         let identity = identity4();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.1, 0.7, 0.2, 200.0, 0.0);
+        let material = Material::new(
+            RgbSpectrum::from_rgb(0.8, 1.0, 0.6),
+            0.1,
+            0.7,
+            0.2,
+            200.0,
+            0.0,
+        );
         let sphere = Shape::sphere(&identity, &identity, false);
         let primitive = Renderable::primitive(sphere, &material);
-        let light = PointLight::new(Rgb::white(), Point3::new(-10.0, 10.0, -10.0));
+        let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
         let world = World::new(primitive, vec![light]);
 
         // The point is above the sphere and collinear with the light, so

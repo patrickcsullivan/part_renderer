@@ -118,8 +118,8 @@ fn cmp_ignore_nan(x: &f32, y: &f32) -> std::cmp::Ordering {
 #[cfg(test)]
 mod ray_intersections_tests {
     use crate::{
-        color::Rgb, geometry::matrix::identity4, light::PointLight, material::Material, ray::Ray,
-        renderable::Renderable, shape::Shape, test::ApproxEq,
+        color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
+        ray::Ray, renderable::Renderable, shape::Shape, test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -128,7 +128,14 @@ mod ray_intersections_tests {
         let identity = identity4();
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
-        let material = Material::new(Rgb::new(0.8, 1.0, 0.6), 0.0, 0.7, 0.2, 0.0, 0.0);
+        let material = Material::new(
+            RgbSpectrum::from_rgb(0.8, 1.0, 0.6),
+            0.0,
+            0.7,
+            0.2,
+            0.0,
+            0.0,
+        );
         let sphere1 = Shape::sphere(&identity, &identity, false);
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
         let primitive1 = Renderable::primitive(sphere1, &material);
