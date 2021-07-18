@@ -1,10 +1,10 @@
-use crate::geometry::{axis::Axis3, baycentric, point, vector};
+use super::Mesh;
+use crate::geometry::{axis::Axis3, point, vector};
 use crate::interaction::SurfaceInteraction;
-use crate::mesh::Mesh;
 use crate::number::efloat;
 use crate::ray::Ray;
 use bvh::aabb::{Bounded, AABB};
-use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3, Vector4};
+use cgmath::{InnerSpace, Matrix4, Point2, Point3, Transform, Vector3};
 
 /// A reference to an individual triangle in a mesh.
 #[derive(Debug, Clone, Copy)]
@@ -308,8 +308,8 @@ fn triangle_partial_derivatives(
 
 #[cfg(test)]
 mod ray_intersection_tests {
+    use super::super::MeshBuilder;
     use crate::geometry::matrix::identity4;
-    use crate::mesh::{triangle::Triangle, Mesh, MeshBuilder};
     use crate::ray::Ray;
     use crate::test::ApproxEq;
     use cgmath::{Point3, Vector3};

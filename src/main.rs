@@ -5,14 +5,13 @@ mod geometry;
 mod interaction;
 mod light;
 mod material;
-mod mesh;
 mod number;
 mod primitive;
 mod ray;
 mod sampler;
+mod scene;
 mod shape;
 mod transform;
-mod world;
 
 #[cfg(test)]
 mod test;
@@ -20,13 +19,13 @@ mod test;
 use crate::{
     camera::{view_transform, Camera},
     film::Film,
-    light::{phong_shading, PointLight},
+    light::PointLight,
     material::Material,
-    mesh::Mesh,
-    primitive::{Primitive, PrimitiveAggregate},
-    world::World,
+    primitive::PrimitiveAggregate,
+    scene::Scene,
+    shape::Mesh,
 };
-use cgmath::{Matrix, Matrix4, Transform};
+use cgmath::{Matrix4, Transform};
 
 fn main() {
     println!("Hello, world!");
@@ -67,7 +66,7 @@ fn demo_simple() {
     let film = Film::new(400, 400);
     let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
-    let world = World::new(
+    let world = Scene::new(
         PrimitiveAggregate::Vector(vec![
             PrimitiveAggregate::primitive(sphere1, &material),
             PrimitiveAggregate::primitive(sphere2, &material),
@@ -172,7 +171,7 @@ fn demo() {
     let film = Film::new(600, 300);
     let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
 
-    let world = World::new(
+    let world = Scene::new(
         PrimitiveAggregate::Vector(vec![
             PrimitiveAggregate::primitive(floor, &floor_material),
             PrimitiveAggregate::primitive(right, &right_material),

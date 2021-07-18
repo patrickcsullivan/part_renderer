@@ -1,16 +1,15 @@
+mod mesh;
 mod plane;
 mod sphere;
 
-use crate::{
-    interaction::SurfaceInteraction,
-    mesh::{Mesh, Triangle},
-    ray::Ray,
-};
-use bvh::aabb::Bounded;
-use cgmath::{Matrix4, Point3};
-use std::fmt::Debug;
+pub use mesh::{Mesh, MeshBuilder, Triangle};
+pub use plane::Plane;
+pub use sphere::Sphere;
 
-use self::{plane::Plane, sphere::Sphere};
+use crate::{interaction::SurfaceInteraction, ray::Ray};
+use bvh::aabb::Bounded;
+use cgmath::Matrix4;
+use std::fmt::Debug;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Shape<'msh, 'mtrx> {

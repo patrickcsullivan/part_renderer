@@ -1,7 +1,10 @@
 use super::Primitive;
 use crate::number;
 use crate::{
-    interaction::SurfaceInteraction, material::Material, mesh::Mesh, ray::Ray, shape::Shape,
+    interaction::SurfaceInteraction,
+    material::Material,
+    ray::Ray,
+    shape::{Mesh, Shape},
 };
 use bvh::bvh::BVH;
 

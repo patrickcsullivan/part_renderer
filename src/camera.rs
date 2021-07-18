@@ -206,8 +206,8 @@ mod ray_for_pixel_tests {
         camera::{Camera, CameraSample, Film},
         geometry::matrix::identity4,
         ray::Ray,
+        scene,
         test::ApproxEq,
-        world,
     };
     use cgmath::{Matrix4, Point2, Point3, Rad, Transform, Vector3};
     use std::f32::consts::{PI, SQRT_2};
