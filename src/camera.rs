@@ -1,39 +1,8 @@
+use crate::{film::Film, ray::Ray};
 use cgmath::{
     Angle, InnerSpace, Matrix4, PerspectiveFov, Point2, Point3, Rad, Transform, Vector2, Vector3,
     Vector4,
 };
-
-use crate::{film::Film, ray::Ray};
-
-/// Container for all the information needed to generate a ray from a cameraa.
-#[derive(Debug, Clone, Copy)]
-pub struct CameraSample {
-    /// The point on the film in raster space to which a generated ray will
-    /// carry radiance.
-    pub film_point: Point2<f32>,
-
-    pub time: f32,
-
-    pub lens_point: Point2<f32>,
-}
-
-impl CameraSample {
-    pub fn new(film_point: Point2<f32>) -> Self {
-        Self {
-            film_point,
-            lens_point: Point2::new(0.0, 0.0), // TODO
-            time: 0.0,                         // TODO
-        }
-    }
-
-    pub fn at_pixel_center(pixel: Point2<usize>) -> Self {
-        Self {
-            film_point: Point2::new(pixel.x as f32 + 0.5, pixel.y as f32 + 0.5),
-            lens_point: Point2::new(0.0, 0.0), // TODO
-            time: 0.0,                         // TODO
-        }
-    }
-}
 
 /// A camera that is used to view a scene.
 ///
@@ -110,6 +79,36 @@ impl Camera {
 
         let ray = Ray::new(ray_origin_ws, ray_direction_ws);
         (ray, 1.0)
+    }
+}
+
+/// Container for all the information needed to generate a ray from a cameraa.
+#[derive(Debug, Clone, Copy)]
+pub struct CameraSample {
+    /// The point on the film in raster space to which a generated ray will
+    /// carry radiance.
+    pub film_point: Point2<f32>,
+
+    pub time: f32,
+
+    pub lens_point: Point2<f32>,
+}
+
+impl CameraSample {
+    pub fn new(film_point: Point2<f32>) -> Self {
+        Self {
+            film_point,
+            lens_point: Point2::new(0.0, 0.0), // TODO
+            time: 0.0,                         // TODO
+        }
+    }
+
+    pub fn at_pixel_center(pixel: Point2<usize>) -> Self {
+        Self {
+            film_point: Point2::new(pixel.x as f32 + 0.5, pixel.y as f32 + 0.5),
+            lens_point: Point2::new(0.0, 0.0), // TODO
+            time: 0.0,                         // TODO
+        }
     }
 }
 
