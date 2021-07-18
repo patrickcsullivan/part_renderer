@@ -1,28 +1,55 @@
 use cgmath::Zero;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-/// Represents a spectral power distribution (SPD), a distribution function that
-/// describes the amount of light at each wavelength.
-///
-/// Currently, the only implementation of `Spectrum` is `RgbSpectrum`. However,
-/// PBR ed. 2 describes a `SampleSpectrum` that is structured very similarly to
-/// `RgbSpectrum` but is backed by a 60-element array of samples. If we were to
-/// implement `SampleSpectrum`, we could easily swap out the type alias.
-pub type Spectrum = RgbSpectrum;
+use crate::number;
+
+use super::Xyz;
 
 const SAMPLE_COUNT: usize = 3;
 
-/// Represents a spectrum as 60 discrete samples.
+/// Represents a spectral power distribution (SPD), a distribution function that
+/// describes the amount of light at each wavelength.
+///
+/// This particular representation of an SPD contains only three samples, one
+/// each for red, green, and blue.
 #[derive(Debug, PartialEq)]
 pub struct RgbSpectrum {
     samples: [f32; SAMPLE_COUNT],
 }
 
 impl RgbSpectrum {
-    pub fn new(value: f32) -> Self {
+    pub fn constant(value: f32) -> Self {
         Self {
             samples: [value; SAMPLE_COUNT],
         }
+    }
+
+    pub fn from_rgb(r: f32, g: f32, b: f32) -> Self {
+        Self { samples: [r, g, b] }
+    }
+
+    pub fn r(&self) -> f32 {
+        self.samples[0]
+    }
+
+    pub fn g(&self) -> f32 {
+        self.samples[1]
+    }
+
+    pub fn b(&self) -> f32 {
+        self.samples[2]
+    }
+
+    /// Creates an RGB spectrum from the given set of arbirary samples. Each
+    /// sample contains a wavelength in nanometers and a sample value.
+    ///
+    /// This method sorts the given samples by wavelength as a side effect.
+    pub fn from_sampled(samples: &mut [(f32, f32)]) -> Self {
+        samples.sort_by(|(wavelength1, _), (wavelength2, _)| {
+            number::f32::total_cmp(*wavelength1, *wavelength2)
+        });
+
+        todo!() // TODO: Finish implementing. See p. 333.
     }
 
     pub fn is_black(&self) -> bool {
@@ -57,6 +84,15 @@ impl RgbSpectrum {
 
     pub fn has_nan(&self) -> bool {
         self.samples.iter().any(|s| s.is_nan())
+    }
+}
+
+impl From<Xyz> for RgbSpectrum {
+    fn from(xyz: Xyz) -> Self {
+        let r = 3.240479 * xyz.x - 1.53715 * xyz.y - 0.498535 * xyz.z;
+        let g = -0.969256 * xyz.x + 1.875991 * xyz.y + 0.041556 * xyz.z;
+        let b = 0.055648 * xyz.x - 0.204043 * xyz.y + 1.057311 * xyz.z;
+        Self::from_rgb(r, g, b)
     }
 }
 

@@ -1,5 +1,7 @@
 mod rgb;
-mod spectrum;
+mod rgb2;
+mod xyz;
 
 pub use rgb::Rgb;
-pub use spectrum::Spectrum;
+pub use rgb2::RgbSpectrum;
+pub use xyz::Xyz;
