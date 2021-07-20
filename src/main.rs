@@ -26,14 +26,14 @@ fn main() {
     crate::demo::complex();
 }
 
-pub fn main_todo() {
-    let scene: Scene = todo!();
-    let sampler = MockSampler;
-    let camera = todo!();
-    let integrator = WhittedIntegrator::new(camera, sampler);
-    integrator.render(&scene);
-    ()
-}
+// pub fn main_todo() {
+//     let scene: Scene = todo!();
+//     let sampler = MockSampler;
+//     let camera = todo!();
+//     let integrator = WhittedIntegrator::new(camera, sampler);
+//     integrator.render(&scene);
+//     ()
+// }
 
 struct MockSampler;
 

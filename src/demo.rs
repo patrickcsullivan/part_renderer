@@ -1,12 +1,12 @@
 use crate::{
-    camera::{view_transform, Camera, Film},
+    camera::{view_transform, Camera, Film, OrthographicCamera},
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
     scene::Scene,
     shape::Mesh,
 };
-use cgmath::{Matrix4, Transform};
+use cgmath::{Matrix4, Transform, Vector2};
 
 pub fn simple() {
     use crate::color::RgbSpectrum;
@@ -40,7 +40,8 @@ pub fn simple() {
     );
     let camera_to_world = world_to_camera.inverse_transform().unwrap();
     let film = Film::new(400, 400);
-    let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
+    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 4.0));
+    // let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
     let world = Scene::new(
         PrimitiveAggregate::Vector(vec![
@@ -50,7 +51,7 @@ pub fn simple() {
         ]),
         vec![light],
     );
-    let img = world.render(&camera, 5);
+    let img = world.render(Box::new(camera), 5);
     let _ = img.save("demo_simple.png");
 }
 
@@ -145,7 +146,8 @@ pub fn complex() {
     let camera_to_world = world_to_camera.inverse_transform().unwrap();
     // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
     let film = Film::new(600, 300);
-    let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
+    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 4.0));
+    // let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
 
     let world = Scene::new(
         PrimitiveAggregate::Vector(vec![
@@ -157,6 +159,6 @@ pub fn complex() {
         ]),
         vec![light1, light2],
     );
-    let img = world.render(&camera, 5);
+    let img = world.render(Box::new(camera), 5);
     let _ = img.save("demo.png");
 }

@@ -1,5 +1,5 @@
 use crate::{
-    camera::{Camera, CameraSample},
+    camera::{Camera, CameraSample, GenerateRay},
     color::RgbSpectrum,
     interaction::SurfaceInteraction,
     light::{LightSource, PointLightSource},
@@ -74,12 +74,12 @@ impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
 
     pub fn render(
         &self,
-        camera: &Camera,
+        camera: Box<dyn Camera>,
         recursions: usize,
     ) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
         ImageBuffer::from_fn(
-            camera.film.resolution.x as u32,
-            camera.film.resolution.y as u32,
+            camera.film().resolution.x as u32,
+            camera.film().resolution.y as u32,
             |x, y| {
                 println!("At ({}, {})", x, y);
                 let sample = CameraSample::at_pixel_center(Point2::new(x as usize, y as usize));

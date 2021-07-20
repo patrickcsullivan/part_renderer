@@ -18,11 +18,11 @@ pub struct WhittedIntegrator<S: Sampler> {
 
     /// Controls how the scene is viewed and contains the `Film` onto which the
     /// scene is rendered.
-    camera: Camera,
+    camera: Box<dyn Camera>,
 }
 
 impl<S: Sampler> WhittedIntegrator<S> {
-    pub fn new(camera: Camera, sampler: S) -> Self {
+    pub fn new(camera: Box<dyn Camera>, sampler: S) -> Self {
         Self {
             max_depth: 5,
             camera,
