@@ -48,6 +48,55 @@ impl crate::geometry::Transform<Ray> for Matrix4<f32> {
     }
 }
 
+/// Contains the origin and direction of two auxilary rays for some primary ray.
+/// The auxilary rays are offset from the primary in the x and y directions,
+/// respectively, on the film plane.
+#[derive(Debug)]
+pub struct RayDifferential {
+    /// Origin of a ray that is offset from some primary ray in the x direction
+    /// on the film plane.
+    pub dx_origin: cgmath::Point3<f32>,
+
+    /// Direction of a ray that is offset from some primary ray in the x
+    /// direction on the film plane.
+    pub dx_direction: cgmath::Vector3<f32>,
+
+    /// Origin of a ray that is offset from some primary ray in the y direction
+    /// on the film plane.
+    pub dy_origin: cgmath::Point3<f32>,
+
+    /// Direction of a ray that is offset from some primary ray in the x
+    /// direction on the film plane.
+    pub dy_direction: cgmath::Vector3<f32>,
+}
+
+impl RayDifferential {
+    pub fn new(
+        dx_origin: Point3<f32>,
+        dx_direction: Vector3<f32>,
+        dy_origin: Point3<f32>,
+        dy_direction: Vector3<f32>,
+    ) -> Self {
+        Self {
+            dx_origin,
+            dx_direction,
+            dy_origin,
+            dy_direction,
+        }
+    }
+}
+
+impl crate::geometry::transform::Transform<RayDifferential> for Matrix4<f32> {
+    fn transform(&self, rd: &RayDifferential) -> RayDifferential {
+        RayDifferential {
+            dx_origin: self.transform_point(rd.dx_origin),
+            dx_direction: self.transform_vector(rd.dx_direction),
+            dy_origin: self.transform_point(rd.dy_origin),
+            dy_direction: self.transform_vector(rd.dy_direction),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Ray;

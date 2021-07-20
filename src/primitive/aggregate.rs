@@ -67,7 +67,7 @@ impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod ray_intersections_tests {
     use crate::{
-        color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
+        color::RgbSpectrum, geometry::matrix::identity4, material::Material,
         primitive::PrimitiveAggregate, ray::Ray, shape::Shape, test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};

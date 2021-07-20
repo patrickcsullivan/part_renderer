@@ -43,11 +43,7 @@ impl<'mtrx> Plane<'mtrx> {
 
         let obj_p = obj_ray.at_t(t);
         let world_p = self.object_to_world.transform_point(obj_p);
-        let interaction = SurfaceInteraction {
-            point: world_p,
-            neg_ray_direction: -1.0 * ray.direction,
-            normal: self.normal(),
-        };
+        let interaction = SurfaceInteraction::new(world_p, -1.0 * ray.direction, self.normal());
         Some((t, interaction))
     }
 }

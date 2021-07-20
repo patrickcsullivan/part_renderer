@@ -2,7 +2,7 @@ use crate::{
     camera::{Camera, CameraSample},
     color::RgbSpectrum,
     interaction::SurfaceInteraction,
-    light::{phong_shading, PointLight},
+    light::{LightSource, PointLightSource},
     material::Material,
     primitive::{Primitive, PrimitiveAggregate},
     ray::Ray,
@@ -12,13 +12,13 @@ use image::ImageBuffer;
 
 pub struct Scene<'msh, 'mtrx, 'mtrl> {
     pub primitives: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
-    pub lights: Vec<PointLight>,
+    pub lights: Vec<LightSource>,
 }
 
 impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
     pub fn new(
         renderable: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
-        lights: Vec<PointLight>,
+        lights: Vec<LightSource>,
     ) -> Self {
         Self {
             primitives: renderable,
@@ -49,12 +49,12 @@ impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
                 // the occlusion check doesn't accidentally intersect the surface.
                 let in_shadow = self.is_occluded(interaction.over_point(), light);
 
-                let surface = phong_shading(
+                let surface = crate::light::phong_shading(
                     material,
                     light,
                     &interaction.point,
                     &interaction.neg_ray_direction,
-                    &interaction.normal,
+                    &interaction.original_geometry.normal,
                     in_shadow,
                 );
 
@@ -92,15 +92,19 @@ impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
     }
 
     /// Returns true if the specified point is occluded from the light.
-    pub fn is_occluded(&self, p: Point3<f32>, light: &PointLight) -> bool {
-        let to_light = light.position - p;
-        let distance = to_light.magnitude();
+    pub fn is_occluded(&self, p: Point3<f32>, light: &LightSource) -> bool {
+        match light {
+            LightSource::PointLight(point_light) => {
+                let to_light = point_light.position - p;
+                let distance = to_light.magnitude();
 
-        let ray = Ray::new(p, to_light.normalize());
-        if let Some((t, _, _)) = self.primitives.ray_intersection(&ray) {
-            t < distance
-        } else {
-            false
+                let ray = Ray::new(p, to_light.normalize());
+                if let Some((t, _, _)) = self.primitives.ray_intersection(&ray) {
+                    t < distance
+                } else {
+                    false
+                }
+            }
         }
     }
 
@@ -123,8 +127,15 @@ impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod color_at_tests {
     use crate::{
-        color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
-        primitive::PrimitiveAggregate, ray::Ray, scene::Scene, shape::Shape, test::ApproxEq,
+        color::RgbSpectrum,
+        geometry::matrix::identity4,
+        light::{LightSource, PointLightSource},
+        material::Material,
+        primitive::PrimitiveAggregate,
+        ray::Ray,
+        scene::Scene,
+        shape::Shape,
+        test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -145,7 +156,8 @@ mod color_at_tests {
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
         let primitive1 = PrimitiveAggregate::primitive(sphere1, &material);
         let primitive2 = PrimitiveAggregate::primitive(sphere2, &material);
-        let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
+        let light =
+            LightSource::point_light(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
         let world = Scene::new(
             PrimitiveAggregate::Vector(vec![primitive1, primitive2]),
             vec![light],
@@ -171,8 +183,14 @@ mod color_at_tests {
 #[cfg(test)]
 mod is_occluded_tests {
     use crate::{
-        color::RgbSpectrum, geometry::matrix::identity4, light::PointLight, material::Material,
-        primitive::PrimitiveAggregate, scene::Scene, shape::Shape, test::ApproxEq,
+        color::RgbSpectrum,
+        geometry::matrix::identity4,
+        light::{LightSource, PointLightSource},
+        material::Material,
+        primitive::PrimitiveAggregate,
+        scene::Scene,
+        shape::Shape,
+        test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -189,7 +207,8 @@ mod is_occluded_tests {
         );
         let sphere = Shape::sphere(&identity, &identity, false);
         let primitive = PrimitiveAggregate::primitive(sphere, &material);
-        let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
+        let light =
+            LightSource::point_light(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
         let world = Scene::new(primitive, vec![light]);
 
         // The point is above the sphere and collinear with the light, so

@@ -1,7 +1,6 @@
 mod camera;
 mod color;
 mod demo;
-mod film;
 mod geometry;
 mod integrator;
 mod interaction;
@@ -17,11 +16,9 @@ mod shape;
 #[cfg(test)]
 mod test;
 
-use integrator::SampleIntegrator;
+use integrator::WhittedIntegrator;
 use sampler::Sampler;
 use scene::Scene;
-
-use crate::integrator::Integrator;
 
 fn main() {
     println!("Hello, world!");
@@ -33,7 +30,7 @@ pub fn main_todo() {
     let scene: Scene = todo!();
     let sampler = MockSampler;
     let camera = todo!();
-    let integrator = SampleIntegrator::new(sampler, camera);
+    let integrator = WhittedIntegrator::new(camera, sampler);
     integrator.render(&scene);
     ()
 }

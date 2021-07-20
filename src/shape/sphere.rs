@@ -59,11 +59,8 @@ impl<'mtrx> Sphere<'mtrx> {
         let obj_p = obj_ray.at_t(t);
         let world_p = self.object_to_world.transform_point(obj_p);
         let world_neg_ray_direction = ray.direction * -1.0;
-        let interaction = SurfaceInteraction {
-            point: world_p,
-            neg_ray_direction: world_neg_ray_direction,
-            normal: self.normal_at(world_p),
-        };
+        let interaction =
+            SurfaceInteraction::new(world_p, world_neg_ray_direction, self.normal_at(world_p));
         Some((t, interaction))
     }
 }
@@ -90,7 +87,10 @@ mod ray_intersects_tests {
         if let Some((t, interaction)) = sphere.ray_intersection(&ray) {
             assert!(t.approx_eq(&4.0));
             assert!(interaction.point.approx_eq(&Point3::new(0.0, 0.0, -1.0)));
-            assert!(interaction.normal.approx_eq(&Vector3::new(0.0, 0.0, -1.0)));
+            assert!(interaction
+                .original_geometry
+                .normal
+                .approx_eq(&Vector3::new(0.0, 0.0, -1.0)));
             assert!(interaction
                 .neg_ray_direction
                 .approx_eq(&Vector3::new(0.0, 0.0, -1.0)));

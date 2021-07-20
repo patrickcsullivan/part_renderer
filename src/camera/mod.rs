@@ -1,4 +1,12 @@
-use crate::{film::Film, ray::Ray};
+mod film;
+mod sample;
+
+pub use {film::Film, sample::CameraSample};
+
+use crate::{
+    geometry::axis::Axis2,
+    ray::{Ray, RayDifferential},
+};
 use cgmath::{
     Angle, InnerSpace, Matrix4, PerspectiveFov, Point2, Point3, Rad, Transform, Vector2, Vector3,
     Vector4,
@@ -80,34 +88,63 @@ impl Camera {
         let ray = Ray::new(ray_origin_ws, ray_direction_ws);
         (ray, 1.0)
     }
-}
 
-/// Container for all the information needed to generate a ray from a cameraa.
-#[derive(Debug, Clone, Copy)]
-pub struct CameraSample {
-    /// The point on the film in raster space to which a generated ray will
-    /// carry radiance.
-    pub film_point: Point2<f32>,
+    /// Generate a ray for the given sample along with a ray differential.
+    ///
+    /// This method tries to generate ray differentials from samples offset in
+    /// the positive x direction and the positive y direction, respectively.
+    /// However, a sample in the negative direction may be used if a sample in
+    /// the positive direction generates a ray with zero radiance contribution.
+    ///
+    /// No ray differential is returned if the primary ray has no radiance
+    /// contribution, if an x differential ray with a positive radiance
+    /// contribution cannot be found, or if a y differential ray with a positive
+    /// radiance contribution cannot be found.
+    fn generate_ray_differential(
+        &self,
+        sample: &CameraSample,
+    ) -> (Ray, Option<RayDifferential>, f32) {
+        let (primary, radiance_contrib) = self.generate_ray(sample);
+        if radiance_contrib == 0.0 {
+            return (primary, None, 0.0);
+        }
 
-    pub time: f32,
+        let dx = self
+            .differential_from_ray_along_axis(&sample, &primary, 0.05, Axis2::X)
+            .or_else(|| self.differential_from_ray_along_axis(&sample, &primary, -0.05, Axis2::X));
+        let dy = self
+            .differential_from_ray_along_axis(&sample, &primary, 0.05, Axis2::Y)
+            .or_else(|| self.differential_from_ray_along_axis(&sample, &primary, -0.05, Axis2::Y));
 
-    pub lens_point: Point2<f32>,
-}
-
-impl CameraSample {
-    pub fn new(film_point: Point2<f32>) -> Self {
-        Self {
-            film_point,
-            lens_point: Point2::new(0.0, 0.0), // TODO
-            time: 0.0,                         // TODO
+        if let (Some((dx_origin, dx_dir)), Some((dy_origin, dy_dir))) = (dx, dy) {
+            let rd = RayDifferential::new(dx_origin, dx_dir, dy_origin, dy_dir);
+            (primary, Some(rd), radiance_contrib)
+        } else {
+            (primary, None, radiance_contrib)
         }
     }
 
-    pub fn at_pixel_center(pixel: Point2<usize>) -> Self {
-        Self {
-            film_point: Point2::new(pixel.x as f32 + 0.5, pixel.y as f32 + 0.5),
-            lens_point: Point2::new(0.0, 0.0), // TODO
-            time: 0.0,                         // TODO
+    // TODO: Test me.
+    fn differential_from_ray_along_axis(
+        &self,
+        sample: &CameraSample,
+        primary_ray: &Ray,
+        epsilon: f32,
+        axis: Axis2,
+    ) -> Option<(Point3<f32>, Vector3<f32>)> {
+        let shift = match axis {
+            Axis2::X => Vector2::new(epsilon, 0.0),
+            Axis2::Y => Vector2::new(0.0, epsilon),
+        };
+        Vector2::new(0.0, epsilon);
+        let (diff_ray, radiance_contrib) = self.generate_ray(&sample.from_film_shift(shift));
+        if radiance_contrib != 0.0 {
+            Some((
+                primary_ray.origin + ((diff_ray.origin - primary_ray.origin) / epsilon),
+                primary_ray.direction + ((diff_ray.direction - primary_ray.direction) / epsilon),
+            ))
+        } else {
+            None
         }
     }
 }

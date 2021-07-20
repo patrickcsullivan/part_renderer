@@ -1,7 +1,6 @@
 use crate::{
-    camera::{view_transform, Camera},
-    film::Film,
-    light::PointLight,
+    camera::{view_transform, Camera, Film},
+    light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
     scene::Scene,
@@ -31,7 +30,8 @@ pub fn simple() {
     let sphere1 = Shape::sphere(&identity, &identity, false);
     let sphere2 = Shape::sphere(&right_transf, &left_transf, false);
     let sphere3 = Shape::sphere(&left_transf, &right_transf, false);
-    let light = PointLight::new(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
+    let light =
+        LightSource::point_light(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
 
     let world_to_camera = view_transform(
         Point3::new(0.0, 0.0, -4.0),
@@ -128,11 +128,11 @@ pub fn complex() {
         Mesh::from_stl(&teapot_transf, &inv_teapot_transf, false, &mut reader).unwrap();
     let teapot = PrimitiveAggregate::from_mesh(&teapot_mesh, &triangle_material);
 
-    let light1 = PointLight::new(
+    let light1 = LightSource::point_light(
         RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
         Point3::new(-10.0, 10.0, -10.0),
     );
-    let light2 = PointLight::new(
+    let light2 = LightSource::point_light(
         RgbSpectrum::from_rgb(0.2, 0.0, 0.4),
         Point3::new(10.0, 10.0, -10.0),
     );
