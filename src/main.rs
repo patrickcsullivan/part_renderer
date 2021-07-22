@@ -22,8 +22,8 @@ use scene::Scene;
 
 fn main() {
     println!("Hello, world!");
-    crate::demo::simple();
-    crate::demo::complex();
+    crate::demo::simple_ortho();
+    crate::demo::complex_ortho();
 }
 
 // pub fn main_todo() {

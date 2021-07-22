@@ -144,3 +144,82 @@ impl HasFilm for OrthographicCamera {
         &self.film
     }
 }
+
+#[cfg(test)]
+mod generate_ray_tests {
+    use crate::{
+        camera::{CameraSample, Film, GenerateRay, OrthographicCamera},
+        geometry::matrix::identity4,
+        ray::Ray,
+        scene,
+        test::ApproxEq,
+    };
+    use cgmath::{Matrix4, Point2, Point3, Rad, Transform, Vector2, Vector3};
+    use std::f32::consts::{PI, SQRT_2};
+
+    #[test]
+    fn untransformed_camera() {
+        let camera_to_world = identity4();
+        let film = Film::new(400, 200);
+        let camera =
+            OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 2.0));
+
+        let sample = CameraSample::at_pixel_center(Point2::new(0, 0));
+        let (ray, _) = camera.generate_ray(&sample);
+        ray.assert_approx_eq(&Ray::new(
+            Point3::new(-1.995, 0.995, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+        ));
+
+        let sample = CameraSample::at_pixel_center(Point2::new(399, 199));
+        let (ray, _) = camera.generate_ray(&sample);
+        ray.assert_approx_eq(&Ray::new(
+            Point3::new(1.995, -0.995, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+        ));
+    }
+
+    #[test]
+    fn translated_camera() {
+        let camera_to_world = Matrix4::from_translation(Vector3::new(3.0, 3.0, 3.0));
+        let film = Film::new(400, 200);
+        let camera =
+            OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 2.0));
+
+        let sample = CameraSample::at_pixel_center(Point2::new(0, 0));
+        let (ray, _) = camera.generate_ray(&sample);
+        ray.assert_approx_eq(&Ray::new(
+            Point3::new(1.005, 3.995, 3.0),
+            Vector3::new(0.0, 0.0, 1.0),
+        ));
+
+        let sample = CameraSample::at_pixel_center(Point2::new(399, 199));
+        let (ray, _) = camera.generate_ray(&sample);
+        ray.assert_approx_eq(&Ray::new(
+            Point3::new(4.995, 2.005, 3.0),
+            Vector3::new(0.0, 0.0, 1.0),
+        ));
+    }
+
+    #[test]
+    fn rotated_camera() {
+        let camera_to_world = Matrix4::from_angle_y(Rad(PI / 2.0));
+        let film = Film::new(400, 200);
+        let camera =
+            OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 2.0));
+
+        let sample = CameraSample::at_pixel_center(Point2::new(0, 0));
+        let (ray, _) = camera.generate_ray(&sample);
+        ray.assert_approx_eq(&Ray::new(
+            Point3::new(0.0, 0.995, 1.995),
+            Vector3::new(1.0, 0.0, 0.0),
+        ));
+
+        let sample = CameraSample::at_pixel_center(Point2::new(399, 199));
+        let (ray, _) = camera.generate_ray(&sample);
+        ray.assert_approx_eq(&Ray::new(
+            Point3::new(0.0, -0.995, -1.995),
+            Vector3::new(1.0, 0.0, 0.0),
+        ));
+    }
+}

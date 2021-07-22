@@ -1,5 +1,5 @@
 use crate::{
-    camera::{view_transform, Camera, Film, OrthographicCamera},
+    camera::{Camera, Film, OrthographicCamera},
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
@@ -8,15 +8,15 @@ use crate::{
 };
 use cgmath::{Matrix4, Transform, Vector2};
 
-pub fn simple() {
+pub fn simple_ortho() {
     use crate::color::RgbSpectrum;
     use crate::geometry::matrix::identity4;
     use crate::shape::Shape;
     use cgmath::{Point3, Rad, Vector3};
     use std::f32::consts::PI;
 
-    let right_transf = Matrix4::from_translation(Vector3::new(2.5, 0.0, 0.0));
-    let left_transf = Matrix4::from_translation(Vector3::new(-2.5, 0.0, 0.0));
+    let right_transf = Matrix4::from_translation(Vector3::new(2.0, 0.0, 0.0));
+    let left_transf = Matrix4::from_translation(Vector3::new(-2.0, 0.0, 0.0));
 
     let identity = identity4();
     let material = Material::new(
@@ -33,14 +33,10 @@ pub fn simple() {
     let light =
         LightSource::point_light(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
 
-    let world_to_camera = view_transform(
-        Point3::new(0.0, 0.0, -4.0),
-        Point3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 1.0, 0.0),
-    );
-    let camera_to_world = world_to_camera.inverse_transform().unwrap();
-    let film = Film::new(400, 400);
-    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 4.0));
+    let camera_to_world = Matrix4::from_angle_x(Rad(3.0 * PI / 4.0))
+        * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
+    let film = Film::new(600, 400);
+    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(6.0, 4.0));
     // let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
     let world = Scene::new(
@@ -52,10 +48,10 @@ pub fn simple() {
         vec![light],
     );
     let img = world.render(Box::new(camera), 5);
-    let _ = img.save("demo_simple.png");
+    let _ = img.save("simple_ortho.png");
 }
 
-pub fn complex() {
+pub fn complex_ortho() {
     use crate::color::RgbSpectrum;
     use crate::geometry::matrix::identity4;
     use crate::shape::Shape;
@@ -138,16 +134,11 @@ pub fn complex() {
         Point3::new(10.0, 10.0, -10.0),
     );
 
-    let world_to_camera = view_transform(
-        Point3::new(0.0, 1.5, -5.0),
-        Point3::new(0.0, 1.0, 0.0),
-        Vector3::new(0.0, 1.0, 0.0),
-    );
-    let camera_to_world = world_to_camera.inverse_transform().unwrap();
-    // let camera = Camera::new(400, 200, Rad(PI / 3.0), camera_transf);
-    let film = Film::new(600, 300);
-    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 4.0));
-    // let camera = Camera::new(film, Rad(PI / 3.0), camera_to_world);
+    let camera_to_world = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0))
+        * Matrix4::from_angle_x(Rad(PI / 8.0))
+        * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
+    let film = Film::new(600, 400);
+    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(6.0, 4.0));
 
     let world = Scene::new(
         PrimitiveAggregate::Vector(vec![
@@ -160,5 +151,5 @@ pub fn complex() {
         vec![light1, light2],
     );
     let img = world.render(Box::new(camera), 5);
-    let _ = img.save("demo.png");
+    let _ = img.save("complex_ortho.png");
 }
