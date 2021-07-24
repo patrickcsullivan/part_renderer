@@ -1,6 +1,6 @@
 use crate::{
-    camera::Camera, color::RgbSpectrum, geometry::bounds::Bounds2, interaction::SurfaceInteraction,
-    ray::Ray, sampler::Sampler, scene::Scene,
+    camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
+    interaction::SurfaceInteraction, ray::Ray, sampler::Sampler, scene::Scene,
 };
 use cgmath::{point2, InnerSpace, Point2};
 use typed_arena::Arena;
@@ -15,6 +15,8 @@ pub struct WhittedIntegrator<S> {
     /// scene is rendered.
     camera: Box<dyn Camera>,
 
+    filter: Box<dyn Filter>,
+
     /// A sampler that is responsible for (1) choosing points on the image from
     /// which rays are traced and (2) supplying sample positions used by the ray
     /// tracer to estimate the value of the light transport integral.
@@ -24,21 +26,25 @@ pub struct WhittedIntegrator<S> {
 }
 
 impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
-    pub fn new(camera: Box<dyn Camera>) -> Self {
+    pub fn new(camera: Box<dyn Camera>, filter: Box<dyn Filter>) -> Self {
         Self {
             max_depth: 5,
             camera,
+            filter,
             _marker: std::marker::PhantomData,
         }
     }
 
     pub fn render(&mut self, scene: &Scene<'msh, 'mtrx, 'mtrl>) {
-        let image_sample_bounds = self.camera.film().image_sample_bounds();
+        let image_sample_bounds = self
+            .camera
+            .film()
+            .image_sample_bounds(self.filter.half_width(), self.filter.half_height());
         let (tile_count_x, tile_count_y) = Self::tile_count(&image_sample_bounds);
         for ty in 0..tile_count_y {
             for tx in 0..tile_count_x {
                 Self::render_tile(
-                    self.camera,
+                    &self.camera,
                     scene,
                     &image_sample_bounds,
                     tx,
@@ -52,7 +58,7 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
     }
 
     fn render_tile(
-        camera: Box<dyn Camera>,
+        camera: &Box<dyn Camera>,
         scene: &Scene<'msh, 'mtrx, 'mtrl>,
         image_sample_bounds: &Bounds2<usize>,
         tile_x_index: usize,
@@ -64,7 +70,7 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
         // numbers, we don't want samplers in different tiles generating
         // duplicate sequences of random numbers.
         let seed = tile_y_index * tile_count_x + tile_x_index;
-        let sampler = S::new(seed);
+        let mut sampler = S::new(seed);
 
         let tile_sample_bounds =
             Self::tile_sample_bounds(image_sample_bounds, tile_x_index, tile_y_index);
@@ -85,7 +91,7 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
                         // Rather than repeatedly allocating memory as needed,
                         // it's more efficient to pre-allocate in an arena.
                         // TODO: Confirm that this is more efficient.
-                        let spectrum_arena = Arena::new();
+                        let mut spectrum_arena = Arena::new();
                         Self::incoming_radiance(
                             &ray,
                             scene,

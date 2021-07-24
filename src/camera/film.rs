@@ -20,12 +20,10 @@ pub struct Film {
     pub raster_bounds: Bounds2<usize>,
 
     pub pixels: Vec<Pixel>,
-
-    pub filter: Box<dyn Filter>,
 }
 
 impl Film {
-    pub fn new(x: usize, y: usize, filter: Box<dyn Filter>) -> Self {
+    pub fn new(x: usize, y: usize) -> Self {
         // TODO: If I'm not supporting cropped areas, maybe I don't even need
         // `raster_bounds`.
         let raster_bounds = Bounds2::new(Point2::new(0, 0), Point2::new(x, y));
@@ -36,7 +34,6 @@ impl Film {
             resolution: Vector2::new(x, y),
             raster_bounds,
             pixels,
-            filter,
         }
     }
 
@@ -51,7 +48,11 @@ impl Film {
     ///
     /// Note that the returned bounds are points in raster space; they are not
     /// pixel indices.
-    pub fn image_sample_bounds(&self) -> Bounds2<usize> {
+    pub fn image_sample_bounds(
+        &self,
+        filter_half_width: f32,
+        filter_half_height: f32,
+    ) -> Bounds2<usize> {
         let top_left_pixel_center = Point2::new(
             self.raster_bounds.min.x as f32 + 0.5,
             self.raster_bounds.min.y as f32 + 0.5,
@@ -62,12 +63,12 @@ impl Film {
         );
 
         let min = Point2::new(
-            (top_left_pixel_center.x - self.filter.half_width()).floor() as usize,
-            (top_left_pixel_center.y - self.filter.half_width()).floor() as usize,
+            (top_left_pixel_center.x - filter_half_width).floor() as usize,
+            (top_left_pixel_center.y - filter_half_height).floor() as usize,
         );
         let max = Point2::new(
-            (bottom_right_pixel_center.x + self.filter.half_width()).ceil() as usize,
-            (bottom_right_pixel_center.y + self.filter.half_width()).ceil() as usize,
+            (bottom_right_pixel_center.x + filter_half_width).ceil() as usize,
+            (bottom_right_pixel_center.y + filter_half_height).ceil() as usize,
         );
 
         Bounds2::new(min, max)
