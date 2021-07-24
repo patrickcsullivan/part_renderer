@@ -1,6 +1,7 @@
 mod camera;
 mod color;
 mod demo;
+mod film;
 mod filter;
 mod geometry;
 mod integrator;

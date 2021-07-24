@@ -39,7 +39,7 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
         let image_sample_bounds = self
             .camera
             .film()
-            .image_sample_bounds(self.filter.half_width(), self.filter.half_height());
+            .sample_bounds(self.filter.half_width(), self.filter.half_height());
         let (tile_count_x, tile_count_y) = Self::tile_count(&image_sample_bounds);
         for ty in 0..tile_count_y {
             for tx in 0..tile_count_x {
