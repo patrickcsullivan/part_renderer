@@ -5,6 +5,8 @@ pub use tile::FilmTile;
 use crate::{color::Xyz, geometry::bounds::Bounds2};
 use cgmath::{Point2, Vector2};
 
+use self::tile::FilmTilePixel;
+
 /// Models the sensing device in a simulated camera. Acts as a 2D plane of
 /// pixels onto which a final image is rendered.
 pub struct Film {
@@ -22,13 +24,13 @@ pub struct Film {
     /// NOT the index of the bottom-right pixel, as one might mistakenly expect.
     pub pixel_bounds: Bounds2<i32>,
 
-    pixels: Vec<FilterPixel>,
+    pixels: Vec<FilmPixel>,
 }
 
 impl Film {
     pub fn new(x: usize, y: usize) -> Self {
         let pixel_bounds = Bounds2::new(Point2::new(0, 0), Point2::new(x as i32, y as i32));
-        let pixels = vec![FilterPixel::default(); x * y];
+        let pixels = vec![FilmPixel::default(); x * y];
 
         Self {
             resolution: Vector2::new(x, y),
@@ -84,6 +86,15 @@ impl Film {
             .map(FilmTile::new)
     }
 
+    /// Merge the tile into the film.
+    pub fn merge_tile(&mut self, tile: &FilmTile) {
+        for pixel_min_corner in tile.pixel_bounds.range() {
+            if let Some(pixel) = tile.pixel_at(pixel_min_corner) {
+                self.merge_pixel(pixel, &pixel_min_corner);
+            }
+        }
+    }
+
     /// Return a bounding box around the pixels (in raster space) that samples
     /// taken from `sample_bounds` will contribute to.
     ///
@@ -118,18 +129,36 @@ impl Film {
         // actually on the film.
         possible_pixel_bounds.intersect(&self.pixel_bounds)
     }
+
+    /// Merge the pixel from the tile into the film.
+    fn merge_pixel(&mut self, pixel: &FilmTilePixel, pixel_min_corner: &Point2<i32>) {
+        let index = self.pixel_index(pixel_min_corner);
+        self.pixels[index].xyz += Xyz::from(pixel.weighted_spectrum_sum);
+        self.pixels[index].filter_weight_sum += pixel.filter_weight_sum;
+    }
+
+    /// Get the index into `pixels` of the pixel with the given top-left corner
+    /// in raster space.
+    fn pixel_index(&self, pixel_min_corner: &Point2<i32>) -> usize {
+        let relative = Point2::new(
+            pixel_min_corner.x - self.pixel_bounds.min.x,
+            pixel_min_corner.y - self.pixel_bounds.min.y,
+        );
+        // FIXME: Be careful. Passing in an out-of-bounds point could panic.
+        (relative.y * self.pixel_bounds.diagonal().x + relative.x) as usize
+    }
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-struct FilterPixel {
+struct FilmPixel {
     /// The color at the pixel in the XYZ color space.
     xyz: Xyz,
 
     filter_weight_sum: f32,
 }
 
-impl Default for FilterPixel {
+impl Default for FilmPixel {
     fn default() -> Self {
         Self {
             xyz: Xyz::black(),

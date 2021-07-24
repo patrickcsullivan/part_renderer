@@ -46,11 +46,11 @@ impl Bounds2<i32> {
     }
 }
 
-impl Into<Bounds2<f32>> for Bounds2<i32> {
-    fn into(self) -> Bounds2<f32> {
+impl From<Bounds2<i32>> for Bounds2<f32> {
+    fn from(bounds: Bounds2<i32>) -> Self {
         Bounds2::new(
-            Point2::new(self.min.x as f32, self.min.y as f32),
-            Point2::new(self.max.x as f32, self.max.y as f32),
+            Point2::new(bounds.min.x as f32, bounds.min.y as f32),
+            Point2::new(bounds.max.x as f32, bounds.max.y as f32),
         )
     }
 }
@@ -68,8 +68,8 @@ mod range_tests {
             points,
             vec![
                 Point2::new(-1, -1),
-                Point2::new(-1, 0),
                 Point2::new(0, -1),
+                Point2::new(-1, 0),
                 Point2::new(0, 0)
             ]
         );

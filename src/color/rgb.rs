@@ -1,9 +1,7 @@
+use super::Xyz;
+use crate::number;
 use cgmath::Zero;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
-
-use crate::number;
-
-use super::Xyz;
 
 const SAMPLE_COUNT: usize = 3;
 
@@ -12,7 +10,7 @@ const SAMPLE_COUNT: usize = 3;
 ///
 /// This particular representation of an SPD contains only three samples, one
 /// each for red, green, and blue.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct RgbSpectrum {
     samples: [f32; SAMPLE_COUNT],
 }
@@ -93,9 +91,9 @@ impl RgbSpectrum {
 
 impl From<Xyz> for RgbSpectrum {
     fn from(xyz: Xyz) -> Self {
-        let r = 3.240479 * xyz.x - 1.53715 * xyz.y - 0.498535 * xyz.z;
-        let g = -0.969256 * xyz.x + 1.875991 * xyz.y + 0.041556 * xyz.z;
-        let b = 0.055648 * xyz.x - 0.204043 * xyz.y + 1.057311 * xyz.z;
+        let r = 3.240479 * xyz.x() - 1.53715 * xyz.y() - 0.498535 * xyz.z();
+        let g = -0.969256 * xyz.x() + 1.875991 * xyz.y() + 0.041556 * xyz.z();
+        let b = 0.055648 * xyz.x() - 0.204043 * xyz.y() + 1.057311 * xyz.z();
         Self::from_rgb(r, g, b)
     }
 }
