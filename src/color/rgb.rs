@@ -24,6 +24,10 @@ impl RgbSpectrum {
         }
     }
 
+    pub fn black() -> Self {
+        Self::constant(0.0)
+    }
+
     pub fn from_rgb(r: f32, g: f32, b: f32) -> Self {
         Self { samples: [r, g, b] }
     }

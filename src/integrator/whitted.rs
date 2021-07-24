@@ -1,53 +1,149 @@
 use crate::{
-    camera::Camera, color::RgbSpectrum, interaction::SurfaceInteraction, ray::Ray,
-    sampler::Sampler, scene::Scene,
+    camera::Camera, color::RgbSpectrum, geometry::bounds::Bounds2, interaction::SurfaceInteraction,
+    ray::Ray, sampler::Sampler, scene::Scene,
 };
-use cgmath::{InnerSpace, Point2};
+use cgmath::{point2, InnerSpace, Point2};
 use typed_arena::Arena;
 
 /// An ray tracer based on Whitted's ray tracing algorithm. This can accurately
 /// compute reflected and transmitted light from specular surfaces like glass,
 /// mirrors, and water. It does not account for indirect lighting effects.
-pub struct WhittedIntegrator<S: Sampler> {
+pub struct WhittedIntegrator<S> {
     max_depth: usize,
-
-    /// A sampler that is responsible for (1) choosing points on the image from
-    /// which rays are traced and (2) supplying sample positions used by the ray
-    /// tracer to estimate the value of the light transport integral.
-    sampler: S,
 
     /// Controls how the scene is viewed and contains the `Film` onto which the
     /// scene is rendered.
     camera: Box<dyn Camera>,
+
+    /// A sampler that is responsible for (1) choosing points on the image from
+    /// which rays are traced and (2) supplying sample positions used by the ray
+    /// tracer to estimate the value of the light transport integral.
+    // TODO: Maybe just get rid of phantom data and use a concrete Sampler once
+    // one has been implemented.
+    _marker: std::marker::PhantomData<S>,
 }
 
-impl<S: Sampler> WhittedIntegrator<S> {
-    pub fn new(camera: Box<dyn Camera>, sampler: S) -> Self {
+impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
+    pub fn new(camera: Box<dyn Camera>) -> Self {
         Self {
             max_depth: 5,
             camera,
-            sampler,
+            _marker: std::marker::PhantomData,
         }
     }
 
-    pub fn render(&mut self, scene: &Scene) {
-        // Render tiles in paralle.
-        // >>> For each tile...
-        // >>>>>> For each series of positions on the image plane.
-        let raster_point: Point2<usize> = todo!();
-        let sample = self.sampler.get_camera_sample(raster_point);
-        let (ray, contrib) = self.camera.generate_ray(&sample);
+    pub fn render(&mut self, scene: &Scene<'msh, 'mtrx, 'mtrl>) {
+        let image_sample_bounds = self.camera.film().image_sample_bounds();
+        let (tile_count_x, tile_count_y) = Self::tile_count(&image_sample_bounds);
+        for ty in 0..tile_count_y {
+            for tx in 0..tile_count_x {
+                Self::render_tile(
+                    self.camera,
+                    scene,
+                    &image_sample_bounds,
+                    tx,
+                    ty,
+                    tile_count_x,
+                    self.max_depth,
+                );
+            }
+        }
+        // TODO: Merge film tiles returned by loop.
+    }
 
-        let sampler_clone: S = todo!();
-        let spectrum_arena = Arena::new();
-        let light =
-            self.incoming_radiance(&ray, &scene, &mut sampler_clone, &mut spectrum_arena, 0);
-        // TODO: Check for spectrums containing non-numbers.
-        // Add light sample to tile.
-        // >>>>>>
-        // Merge tile.
-        // >>>
-        // Save final image.
+    fn render_tile(
+        camera: Box<dyn Camera>,
+        scene: &Scene<'msh, 'mtrx, 'mtrl>,
+        image_sample_bounds: &Bounds2<usize>,
+        tile_x_index: usize,
+        tile_y_index: usize,
+        tile_count_x: usize,
+        max_depth: usize,
+    ) {
+        // Generate a unique seed for each tile. If the sampler generates random
+        // numbers, we don't want samplers in different tiles generating
+        // duplicate sequences of random numbers.
+        let seed = tile_y_index * tile_count_x + tile_x_index;
+        let sampler = S::new(seed);
+
+        let tile_sample_bounds =
+            Self::tile_sample_bounds(image_sample_bounds, tile_x_index, tile_y_index);
+
+        // TODO: Create a "film tile".
+
+        for y in tile_sample_bounds.min.y..tile_sample_bounds.max.y {
+            for x in tile_sample_bounds.min.x..tile_sample_bounds.max.x {
+                let pixel_min_corner = point2(x, y);
+                sampler.start_pixel(pixel_min_corner);
+                loop {
+                    let sample = sampler.get_camera_sample(pixel_min_corner);
+                    let (ray, _differential, weight) = camera.generate_ray_differential(&sample);
+                    // TODO: Scale differential.
+                    let radiance = if weight > 0.0 {
+                        // Recursive calls to `incoming_radiance` may need to
+                        // allocate space for many different radiance spectrums.
+                        // Rather than repeatedly allocating memory as needed,
+                        // it's more efficient to pre-allocate in an arena.
+                        // TODO: Confirm that this is more efficient.
+                        let spectrum_arena = Arena::new();
+                        Self::incoming_radiance(
+                            &ray,
+                            scene,
+                            &mut sampler,
+                            &mut spectrum_arena,
+                            0,
+                            max_depth,
+                        )
+                    } else {
+                        RgbSpectrum::black()
+                    };
+                    // TODO: Check for NaN or Inf values in spectrum.
+
+                    // TODO: Add camera ray's contribution to image (film tile).
+                    if !sampler.start_next_sample() {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // TODO: Return film tile.
+        todo!()
+    }
+
+    /// Return the number of 16-by-16 tiles into which the image's sample bounds
+    /// can be divided for parallelized rendering.
+    ///
+    /// If a dimension of the sample bounds cannot be evenly divided by 16, then
+    /// the number of tiles in that dimension is rounded up so that the entire
+    /// sample bounds can be contained in the tiles.
+    fn tile_count(image_sample_bounds: &Bounds2<usize>) -> (usize, usize) {
+        let sample_extent = image_sample_bounds.diagonal();
+        const TILE_SIZE: usize = 16;
+        (
+            (sample_extent.x + TILE_SIZE - 1) / TILE_SIZE,
+            (sample_extent.y + TILE_SIZE - 1) / TILE_SIZE,
+        )
+    }
+
+    fn tile_sample_bounds(
+        image_sample_bounds: &Bounds2<usize>,
+        tile_x_index: usize,
+        tile_y_index: usize,
+    ) -> Bounds2<usize> {
+        const TILE_SIZE: usize = 16;
+        let min = Point2::new(
+            image_sample_bounds.min.x + tile_x_index * TILE_SIZE,
+            image_sample_bounds.min.y + tile_y_index * TILE_SIZE,
+        );
+        let max = Point2::new(
+            // Tiles on the bottom and right edges might extend beyond the image
+            // sample bounds, so be sure to limit the tile sample bounds to the
+            // image sample bounds.
+            (min.x + TILE_SIZE).min(image_sample_bounds.max.x),
+            (min.y + TILE_SIZE).min(image_sample_bounds.max.y),
+        );
+        Bounds2::new(min, max)
     }
 
     /// Determine the incoming radiance that arrives along the ray at the ray
@@ -63,13 +159,13 @@ impl<S: Sampler> WhittedIntegrator<S> {
     /// * `depth` - The number of ray bounces from the camera that have occured
     ///   up until the current call to this method.
     fn incoming_radiance(
-        &self,
         // TODO: Change to ray differential.
         ray: &Ray,
         scene: &Scene,
         sampler: &mut S,
         spectrum_arena: &mut Arena<RgbSpectrum>,
         depth: usize,
+        max_depth: usize,
     ) -> RgbSpectrum {
         if let Some((_t, _prim, interaction)) = scene.ray_intersection(ray) {
             // We will calculate the outgoing radiance along the ray at the
@@ -105,7 +201,7 @@ impl<S: Sampler> WhittedIntegrator<S> {
                 }
             }
 
-            if depth + 1 < self.max_depth {
+            if depth + 1 < max_depth {
                 // Trace rays for specular reflection and refraction.
             }
 
@@ -141,5 +237,56 @@ impl<S: Sampler> WhittedIntegrator<S> {
         depth: usize,
     ) -> RgbSpectrum {
         todo!()
+    }
+}
+
+/// A tile in an image's sample bounds that can be rendered in parallel with
+/// other tiles.
+struct Tile {
+    sample_bounds: Bounds2<usize>,
+
+    /// The index of the tile in a vector represeting a row-major grid of tiles.
+    ///
+    /// This index is mostly useful as a unique ID for each tile. We will be
+    /// able to use this as a unique pseudo-random number generator seed for
+    /// each tile.
+    row_major_index: usize,
+}
+
+impl Tile {
+    fn from_image_sample_bounds(image_sample_bounds: &Bounds2<usize>) -> Vec<Tile> {
+        const TILE_SIZE: usize = 16;
+        let image_sample_extent = image_sample_bounds.diagonal();
+        let tile_count_x = (image_sample_extent.x + TILE_SIZE - 1) / TILE_SIZE;
+        let tile_count_y = (image_sample_extent.y + TILE_SIZE - 1) / TILE_SIZE;
+
+        let xs = 0..tile_count_x;
+        let ys = 0..tile_count_y;
+        ys.flat_map(|y| xs.clone().map(move |x| (x, y)))
+            .map(|(x, y)| Tile {
+                sample_bounds: Self::tile_sample_bounds(image_sample_bounds, x, y),
+                row_major_index: y * tile_count_x + x,
+            })
+            .collect()
+    }
+
+    fn tile_sample_bounds(
+        image_sample_bounds: &Bounds2<usize>,
+        tile_x_index: usize,
+        tile_y_index: usize,
+    ) -> Bounds2<usize> {
+        const TILE_SIZE: usize = 16;
+        let min = Point2::new(
+            image_sample_bounds.min.x + tile_x_index * TILE_SIZE,
+            image_sample_bounds.min.y + tile_y_index * TILE_SIZE,
+        );
+        let max = Point2::new(
+            // Tiles on the bottom and right edges might extend beyond the image
+            // sample bounds, so be sure to limit the tile sample bounds to the
+            // image sample bounds.
+            (min.x + TILE_SIZE).min(image_sample_bounds.max.x),
+            (min.y + TILE_SIZE).min(image_sample_bounds.max.y),
+        );
+        Bounds2::new(min, max)
     }
 }

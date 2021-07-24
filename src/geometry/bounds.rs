@@ -1,4 +1,4 @@
-use cgmath::{BaseNum, Point2};
+use cgmath::{BaseNum, Point2, Vector2};
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Bounds2<S> {
@@ -15,5 +15,10 @@ impl<S> Bounds2<S> {
 impl<S: BaseNum> Bounds2<S> {
     pub fn area(&self) -> S {
         (self.max.x - self.min.x) * (self.max.y - self.min.y)
+    }
+
+    /// Return a vector from `min` to `max`.
+    pub fn diagonal(&self) -> Vector2<S> {
+        self.max - self.min
     }
 }

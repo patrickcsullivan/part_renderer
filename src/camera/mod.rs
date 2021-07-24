@@ -1,5 +1,6 @@
 mod film;
 mod orthographic;
+mod pixel;
 mod sample;
 
 pub use {film::Film, orthographic::OrthographicCamera, sample::CameraSample};

@@ -84,8 +84,8 @@ impl OrthographicCamera {
     }
 
     /// Returns the matrix that transforms camera screen space to raster space.
-    fn screen_to_raster(screen_bounds: Bounds2<f32>, resolution: Vector2<f32>) -> Matrix4<f32> {
-        Matrix4::from_nonuniform_scale(resolution.x, resolution.y, 1.0)
+    fn screen_to_raster(screen_bounds: Bounds2<f32>, resolution: Vector2<usize>) -> Matrix4<f32> {
+        Matrix4::from_nonuniform_scale(resolution.x as f32, resolution.y as f32, 1.0)
             * Matrix4::from_nonuniform_scale(
                 1.0 / (screen_bounds.max.x - screen_bounds.min.x),
                 1.0 / (screen_bounds.min.y - screen_bounds.max.y),

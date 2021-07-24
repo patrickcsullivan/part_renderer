@@ -6,6 +6,12 @@ use core::f32;
 
 /// Defines the ability to generate multi-dimensional sample vectors for pixels.
 pub trait Sampler {
+    /// Create a new sampler from the given seed.
+    ///
+    /// Samplers that use a pseudo-random number generator will use the given
+    /// seed to initialize the generator. Other samplers will ignore the seed.
+    fn new(seed: usize) -> Self;
+
     /// The number of samples that will be generated for each pixel in the final
     /// image.
     fn samples_per_pixel(&self) -> usize;
@@ -13,6 +19,11 @@ pub trait Sampler {
     /// Start sampling work on a given pixel. All subseqent requests to the
     /// sampler will generate samples for the given pixel, up until
     /// `start_pixel` is called again with a different pixel.
+    ///
+    /// * pixel - A point identifying the pixel. We can think of this point
+    ///   either as the x and y indices of the pixel or as the raster space
+    ///   coordinates of the top-left corner of the pixel. Both representations
+    ///   are equivalent.
     fn start_pixel(&mut self, pixel: Point2<usize>);
 
     /// Get a 1D value for the next dimension of the current sample vector. This
@@ -26,12 +37,18 @@ pub trait Sampler {
     fn get_2d(&mut self) -> Point2<f32>;
 
     /// Create a camera sample for the given pixel.
-    fn get_camera_sample(&mut self, raster_point: Point2<usize>) -> CameraSample {
-        // TODO: Why doesn't p_film need +0.5? Does `get_2D()` account for that? Does the conversion to Point2<f32> do that?
+    ///
+    ///
+    /// * pixel - A point identifying the pixel. We can think of this point
+    ///   either as the x and y indices of the pixel or as the raster space
+    ///   coordinates of the top-left corner of the pixel. Both representations
+    ///   are equivalent.
+    fn get_camera_sample(&mut self, pixel: Point2<usize>) -> CameraSample {
+        // TODO: Why doesn't film_point need +0.5? Should the conversion to Point2<f32> do that?
         let film_sample = self.get_2d();
         let film_point = Point2::new(
-            raster_point.x as f32 + film_sample.x,
-            raster_point.y as f32 + film_sample.y,
+            pixel.x as f32 + film_sample.x,
+            pixel.y as f32 + film_sample.y,
         );
         let time = self.get_1d();
         let lens_point = self.get_2d();

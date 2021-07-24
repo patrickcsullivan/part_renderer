@@ -1,5 +1,7 @@
 use super::RgbSpectrum;
 
+/// A color in the XYZ color space. XYZ colors are display-independent.
+#[derive(Debug, Clone, Copy)]
 pub struct Xyz {
     pub x: f32,
     pub y: f32,
@@ -9,6 +11,14 @@ pub struct Xyz {
 impl Xyz {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn black() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
     }
 }
 
