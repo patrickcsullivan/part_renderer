@@ -82,7 +82,7 @@ impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
             camera.film().resolution.y as u32,
             |x, y| {
                 println!("At ({}, {})", x, y);
-                let sample = CameraSample::at_pixel_center(Point2::new(x as usize, y as usize));
+                let sample = CameraSample::at_pixel_center(Point2::new(x as i32, y as i32));
                 let (ray, _) = camera.generate_ray(&sample);
                 let color = self.color_at(&ray, recursions);
                 let pixel: image::Rgb<u8> = color.into();

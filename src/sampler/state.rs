@@ -4,7 +4,7 @@ use cgmath::Point2;
 /// implementation of samplers.
 pub struct InnerSamplerState {
     samples_per_pixel: usize,
-    current_pixel: Point2<usize>,
+    current_pixel: Point2<i32>,
     current_pixel_sample_index: usize,
 
     /// Pre-computed 1D values for each sample in the pixel and for each 1D
@@ -58,7 +58,7 @@ impl InnerSamplerState {
         self.samples_per_pixel
     }
 
-    pub fn current_pixel(&self) -> Point2<usize> {
+    pub fn current_pixel(&self) -> Point2<i32> {
         self.current_pixel
     }
 
@@ -66,7 +66,7 @@ impl InnerSamplerState {
         self.current_pixel_sample_index
     }
 
-    pub fn start_pixel(&mut self, pixel: Point2<usize>) {
+    pub fn start_pixel(&mut self, pixel: Point2<i32>) {
         self.current_pixel = pixel;
         self.current_pixel_sample_index = 0;
         self.reset_current_sample_vecs_indices();

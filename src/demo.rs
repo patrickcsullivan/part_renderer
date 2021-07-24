@@ -1,5 +1,6 @@
 use crate::{
-    camera::{Camera, Film, OrthographicCamera},
+    camera::{Camera, OrthographicCamera},
+    film::Film,
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,

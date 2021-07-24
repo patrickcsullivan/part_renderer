@@ -32,7 +32,7 @@ impl CameraSample {
         }
     }
 
-    pub fn at_pixel_center(pixel: Point2<usize>) -> Self {
+    pub fn at_pixel_center(pixel: Point2<i32>) -> Self {
         Self {
             film_point: Point2::new(pixel.x as f32 + 0.5, pixel.y as f32 + 0.5),
             lens_point: Point2::new(0.0, 0.0), // TODO

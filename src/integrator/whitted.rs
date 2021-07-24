@@ -60,7 +60,7 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
     fn render_tile(
         camera: &Box<dyn Camera>,
         scene: &Scene<'msh, 'mtrx, 'mtrl>,
-        image_sample_bounds: &Bounds2<usize>,
+        image_sample_bounds: &Bounds2<i32>,
         tile_x_index: usize,
         tile_y_index: usize,
         tile_count_x: usize,
@@ -123,31 +123,31 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
     /// If a dimension of the sample bounds cannot be evenly divided by 16, then
     /// the number of tiles in that dimension is rounded up so that the entire
     /// sample bounds can be contained in the tiles.
-    fn tile_count(image_sample_bounds: &Bounds2<usize>) -> (usize, usize) {
+    fn tile_count(image_sample_bounds: &Bounds2<i32>) -> (usize, usize) {
         let sample_extent = image_sample_bounds.diagonal();
         const TILE_SIZE: usize = 16;
         (
-            (sample_extent.x + TILE_SIZE - 1) / TILE_SIZE,
-            (sample_extent.y + TILE_SIZE - 1) / TILE_SIZE,
+            (sample_extent.x.min(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
+            (sample_extent.y.min(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
         )
     }
 
     fn tile_sample_bounds(
-        image_sample_bounds: &Bounds2<usize>,
+        image_sample_bounds: &Bounds2<i32>,
         tile_x_index: usize,
         tile_y_index: usize,
-    ) -> Bounds2<usize> {
+    ) -> Bounds2<i32> {
         const TILE_SIZE: usize = 16;
         let min = Point2::new(
-            image_sample_bounds.min.x + tile_x_index * TILE_SIZE,
-            image_sample_bounds.min.y + tile_y_index * TILE_SIZE,
+            image_sample_bounds.min.x + (tile_x_index * TILE_SIZE) as i32,
+            image_sample_bounds.min.y + (tile_y_index * TILE_SIZE) as i32,
         );
         let max = Point2::new(
             // Tiles on the bottom and right edges might extend beyond the image
             // sample bounds, so be sure to limit the tile sample bounds to the
             // image sample bounds.
-            (min.x + TILE_SIZE).min(image_sample_bounds.max.x),
-            (min.y + TILE_SIZE).min(image_sample_bounds.max.y),
+            (min.x + TILE_SIZE as i32).min(image_sample_bounds.max.x),
+            (min.y + TILE_SIZE as i32).min(image_sample_bounds.max.y),
         );
         Bounds2::new(min, max)
     }
@@ -249,7 +249,7 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> WhittedIntegrator<S> {
 /// A tile in an image's sample bounds that can be rendered in parallel with
 /// other tiles.
 struct Tile {
-    sample_bounds: Bounds2<usize>,
+    sample_bounds: Bounds2<i32>,
 
     /// The index of the tile in a vector represeting a row-major grid of tiles.
     ///
@@ -260,11 +260,11 @@ struct Tile {
 }
 
 impl Tile {
-    fn from_image_sample_bounds(image_sample_bounds: &Bounds2<usize>) -> Vec<Tile> {
+    fn from_image_sample_bounds(image_sample_bounds: &Bounds2<i32>) -> Vec<Tile> {
         const TILE_SIZE: usize = 16;
         let image_sample_extent = image_sample_bounds.diagonal();
-        let tile_count_x = (image_sample_extent.x + TILE_SIZE - 1) / TILE_SIZE;
-        let tile_count_y = (image_sample_extent.y + TILE_SIZE - 1) / TILE_SIZE;
+        let tile_count_x = (image_sample_extent.x as usize + TILE_SIZE - 1) / TILE_SIZE;
+        let tile_count_y = (image_sample_extent.y as usize + TILE_SIZE - 1) / TILE_SIZE;
 
         let xs = 0..tile_count_x;
         let ys = 0..tile_count_y;
@@ -277,21 +277,21 @@ impl Tile {
     }
 
     fn tile_sample_bounds(
-        image_sample_bounds: &Bounds2<usize>,
+        image_sample_bounds: &Bounds2<i32>,
         tile_x_index: usize,
         tile_y_index: usize,
-    ) -> Bounds2<usize> {
+    ) -> Bounds2<i32> {
         const TILE_SIZE: usize = 16;
         let min = Point2::new(
-            image_sample_bounds.min.x + tile_x_index * TILE_SIZE,
-            image_sample_bounds.min.y + tile_y_index * TILE_SIZE,
+            image_sample_bounds.min.x + (tile_x_index * TILE_SIZE) as i32,
+            image_sample_bounds.min.y + (tile_y_index * TILE_SIZE) as i32,
         );
         let max = Point2::new(
             // Tiles on the bottom and right edges might extend beyond the image
             // sample bounds, so be sure to limit the tile sample bounds to the
             // image sample bounds.
-            (min.x + TILE_SIZE).min(image_sample_bounds.max.x),
-            (min.y + TILE_SIZE).min(image_sample_bounds.max.y),
+            (min.x + TILE_SIZE as i32).min(image_sample_bounds.max.x),
+            (min.y + TILE_SIZE as i32).min(image_sample_bounds.max.y),
         );
         Bounds2::new(min, max)
     }

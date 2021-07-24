@@ -23,7 +23,7 @@ impl<S: BaseNum> Bounds2<S> {
     }
 }
 
-impl Bounds2<usize> {
+impl Bounds2<i32> {
     /// Return the intersection of the bounding boxes.
     pub fn intersect(&self, other: &Self) -> Option<Self> {
         let min = Point2::new(self.min.x.max(other.min.x), self.min.y.max(other.min.y));
@@ -37,7 +37,7 @@ impl Bounds2<usize> {
 
     /// Return the range of points inside the bounds, where the lower bounds are
     /// inclusive and the upper bounds are exclusive.
-    pub fn range(&self) -> Vec<Point2<usize>> {
+    pub fn range(&self) -> Vec<Point2<i32>> {
         let xs = self.min.x..self.max.x;
         let ys = self.min.y..self.max.y;
         ys.flat_map(|y| xs.clone().map(move |x| (x, y)))
@@ -46,7 +46,7 @@ impl Bounds2<usize> {
     }
 }
 
-impl Into<Bounds2<f32>> for Bounds2<usize> {
+impl Into<Bounds2<f32>> for Bounds2<i32> {
     fn into(self) -> Bounds2<f32> {
         Bounds2::new(
             Point2::new(self.min.x as f32, self.min.y as f32),
@@ -62,7 +62,7 @@ mod range_tests {
 
     #[test]
     fn min_inclusive_max_exclusive() {
-        let bounds: Bounds2<usize> = Bounds2::new(Point2::new(-1, -1), Point2::new(1, 1));
+        let bounds = Bounds2::new(Point2::new(-1, -1), Point2::new(1, 1));
         let points = bounds.range();
         assert_eq!(
             points,

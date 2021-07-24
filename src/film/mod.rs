@@ -20,19 +20,19 @@ pub struct Film {
     /// `(resolution.x - 1, resolution.y - 1)`. The potentially confusing part
     /// here is that `raster_bounds.max` is a point in raster space, and it is
     /// NOT the index of the bottom-right pixel, as one might mistakenly expect.
-    pub pixel_bounds: Bounds2<usize>,
+    pub pixel_bounds: Bounds2<i32>,
 
-    pub pixels: Vec<FilterPixel>,
+    pixels: Vec<FilterPixel>,
 }
 
 impl Film {
     pub fn new(x: usize, y: usize) -> Self {
-        let raster_bounds = Bounds2::new(Point2::new(0, 0), Point2::new(x, y));
+        let pixel_bounds = Bounds2::new(Point2::new(0, 0), Point2::new(x as i32, y as i32));
         let pixels = vec![FilterPixel::default(); x * y];
 
         Self {
             resolution: Vector2::new(x, y),
-            pixel_bounds: raster_bounds,
+            pixel_bounds,
             pixels,
         }
     }
@@ -45,7 +45,7 @@ impl Film {
     /// outside of the image's bounds. If we don't, then when pixels at the
     /// image edge are reconstructed by a `Filter`, they will be biased towards
     /// the inner pixels.
-    pub fn sample_bounds(&self, filter_half_width: f32, filter_half_height: f32) -> Bounds2<usize> {
+    pub fn sample_bounds(&self, filter_half_width: f32, filter_half_height: f32) -> Bounds2<i32> {
         let top_left_pixel_center = Point2::new(
             self.pixel_bounds.min.x as f32 + 0.5,
             self.pixel_bounds.min.y as f32 + 0.5,
@@ -56,12 +56,12 @@ impl Film {
         );
 
         let min = Point2::new(
-            (top_left_pixel_center.x - filter_half_width).floor() as usize,
-            (top_left_pixel_center.y - filter_half_height).floor() as usize,
+            (top_left_pixel_center.x - filter_half_width).floor() as i32,
+            (top_left_pixel_center.y - filter_half_height).floor() as i32,
         );
         let max = Point2::new(
-            (bottom_right_pixel_center.x + filter_half_width).ceil() as usize,
-            (bottom_right_pixel_center.y + filter_half_height).ceil() as usize,
+            (bottom_right_pixel_center.x + filter_half_width).ceil() as i32,
+            (bottom_right_pixel_center.y + filter_half_height).ceil() as i32,
         );
 
         Bounds2::new(min, max)
@@ -76,7 +76,7 @@ impl Film {
     /// * filter_half_height
     pub fn tile(
         &self,
-        sample_bounds: Bounds2<usize>,
+        sample_bounds: Bounds2<i32>,
         filter_half_width: f32,
         filter_half_height: f32,
     ) -> Option<FilmTile> {
@@ -100,17 +100,17 @@ impl Film {
     /// * filter_half_height
     fn pixel_bounds_for_sample_bounds(
         &self,
-        sample_bounds: Bounds2<usize>,
+        sample_bounds: Bounds2<i32>,
         filter_half_width: f32,
         filter_half_height: f32,
-    ) -> Option<Bounds2<usize>> {
+    ) -> Option<Bounds2<i32>> {
         let min = Point2::new(
-            (sample_bounds.min.x as f32 - 0.5 - filter_half_width).ceil() as usize,
-            (sample_bounds.min.y as f32 - 0.5 - filter_half_height).ceil() as usize,
+            (sample_bounds.min.x as f32 - 0.5 - filter_half_width).ceil() as i32,
+            (sample_bounds.min.y as f32 - 0.5 - filter_half_height).ceil() as i32,
         );
         let max = Point2::new(
-            (sample_bounds.max.x as f32 - 0.5 + filter_half_width).floor() as usize + 1,
-            (sample_bounds.max.y as f32 - 0.5 + filter_half_height).floor() as usize + 1,
+            (sample_bounds.max.x as f32 - 0.5 + filter_half_width).floor() as i32 + 1,
+            (sample_bounds.max.y as f32 - 0.5 + filter_half_height).floor() as i32 + 1,
         );
         let possible_pixel_bounds = Bounds2::new(min, max);
 

@@ -24,7 +24,7 @@ pub trait Sampler {
     ///   either as the x and y indices of the pixel or as the raster space
     ///   coordinates of the top-left corner of the pixel. Both representations
     ///   are equivalent.
-    fn start_pixel(&mut self, pixel: Point2<usize>);
+    fn start_pixel(&mut self, pixel: Point2<i32>);
 
     /// Get a 1D value for the next dimension of the current sample vector. This
     /// method mutates the sampler by incrementing the current sample dimension
@@ -43,7 +43,7 @@ pub trait Sampler {
     ///   either as the x and y indices of the pixel or as the raster space
     ///   coordinates of the top-left corner of the pixel. Both representations
     ///   are equivalent.
-    fn get_camera_sample(&mut self, pixel: Point2<usize>) -> CameraSample {
+    fn get_camera_sample(&mut self, pixel: Point2<i32>) -> CameraSample {
         // TODO: Why doesn't film_point need +0.5? Should the conversion to Point2<f32> do that?
         let film_sample = self.get_2d();
         let film_point = Point2::new(

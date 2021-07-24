@@ -7,13 +7,13 @@ use crate::{color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2};
 pub struct FilmTile {
     /// A bounding box around the pixels (in raster space) that the tile
     /// contains.
-    pub pixel_bounds: Bounds2<usize>,
+    pub pixel_bounds: Bounds2<i32>,
 
     pub pixels: Vec<FilterTilePixel>,
 }
 
 impl FilmTile {
-    pub fn new(pixel_bounds: Bounds2<usize>) -> Self {
+    pub fn new(pixel_bounds: Bounds2<i32>) -> Self {
         todo!()
     }
 
@@ -38,15 +38,15 @@ impl FilmTile {
         sample_point: &Point2<f32>,
         filter_half_width: f32,
         filter_half_height: f32,
-    ) -> Option<Bounds2<usize>> {
+    ) -> Option<Bounds2<i32>> {
         let shifted = sample_point - Vector2::new(0.5, 0.5);
         let min = Point2::new(
-            (shifted.x - filter_half_width).ceil() as usize,
-            (shifted.y - filter_half_height).ceil() as usize,
+            (shifted.x - filter_half_width).ceil() as i32,
+            (shifted.y - filter_half_height).ceil() as i32,
         );
         let max = Point2::new(
-            (shifted.x + filter_half_width).floor() as usize + 1,
-            (shifted.y + filter_half_height).floor() as usize + 1,
+            (shifted.x + filter_half_width).floor() as i32 + 1,
+            (shifted.y + filter_half_height).floor() as i32 + 1,
         );
         let possible_pixel_bounds = Bounds2::new(min, max);
         possible_pixel_bounds.intersect(&self.pixel_bounds)
