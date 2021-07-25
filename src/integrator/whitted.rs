@@ -61,14 +61,15 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> RayTracer<'msh, 'mtrx, 'mtrl, S> for Whitte
             let normal = interaction.shading_geometry.normal;
             let point_to_ray_origin_direction = interaction.neg_ray_direction;
 
-            // Compute scattering functions for surface interaction.
-            interaction.compute_scattering_functions(ray, spectrum_arena);
+            // // Compute scattering functions for surface interaction.
+            // interaction.compute_scattering_functions(ray, spectrum_arena);
 
-            // Compute emitted light if ray hit an area light source.
-            outgoing_radiance += interaction.emitted_radiance(&point_to_ray_origin_direction);
+            // // Compute emitted light if ray hit an area light source.
+            // outgoing_radiance += interaction.emitted_radiance(&point_to_ray_origin_direction);
 
             // Add the contribution of each light source.
             for light in &scene.lights {
+                // CONTINUE HERE. <<<------
                 let sample = sampler.get_2d();
                 let (radiance_from_light, point_to_light_direction, pdf, visibility) =
                     light.sample_incoming_radiance_at_surface(&interaction, sample);
@@ -89,11 +90,13 @@ impl<'msh, 'mtrx, 'mtrl, S: Sampler> RayTracer<'msh, 'mtrx, 'mtrl, S> for Whitte
 
             outgoing_radiance
         } else {
-            let mut ray_origin_incoming_radiance = RgbSpectrum::constant(0.0);
-            for light in &scene.lights {
-                ray_origin_incoming_radiance += light.outgoing_radiance_onto_ray(ray);
-            }
-            ray_origin_incoming_radiance
+            // TODO: Add back in after rest of Whitted is working.
+            // let mut ray_origin_incoming_radiance = RgbSpectrum::constant(0.0);
+            // for light in &scene.lights {
+            //     ray_origin_incoming_radiance += light.outgoing_radiance_onto_ray(ray);
+            // }
+            // ray_origin_incoming_radiance
+            RgbSpectrum::black()
         }
     }
 }
