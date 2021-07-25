@@ -36,7 +36,7 @@ impl FilmTile {
         sample_film_point: &Point2<f32>,
         radiance: &RgbSpectrum,
         sample_weight: f32,
-        filter: &Box<dyn Filter>,
+        filter: &dyn Filter,
     ) {
         if let Some(bounds) = self.pixel_bounds_for_sample_point(
             sample_film_point,

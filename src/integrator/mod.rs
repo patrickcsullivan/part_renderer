@@ -14,6 +14,7 @@ use crate::{
     scene::Scene,
 };
 use cgmath::{point2, Point2};
+use rayon::prelude::*;
 use typed_arena::Arena;
 
 pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
@@ -50,10 +51,10 @@ pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
 /// * filter -
 pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
-    camera: Box<dyn Camera>,
+    camera: &dyn Camera,
     film: &mut Film,
-    filter: Box<dyn Filter>,
-    ray_tracer: Box<dyn RayTracer<'msh, 'mtrx, 'mtrl, S>>,
+    filter: &dyn Filter,
+    ray_tracer: &dyn RayTracer<'msh, 'mtrx, 'mtrl, S>,
     max_depth: usize,
 ) {
     let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
@@ -61,7 +62,7 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     let film_tiles: Vec<FilmTile> = Tile::span_image_sample_bounds(&image_sample_bounds)
         .iter()
         .filter_map(|tile| {
-            render_tile::<S>(&camera, film, scene, tile, &filter, &ray_tracer, max_depth)
+            render_tile::<S>(camera, film, scene, tile, filter, ray_tracer, max_depth)
         })
         .collect();
 
@@ -71,12 +72,12 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
 }
 
 fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
-    camera: &Box<dyn Camera>,
+    camera: &dyn Camera,
     film: &Film,
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     tile: &Tile,
-    filter: &Box<dyn Filter>,
-    ray_tracer: &Box<dyn RayTracer<'msh, 'mtrx, 'mtrl, S>>,
+    filter: &dyn Filter,
+    ray_tracer: &dyn RayTracer<'msh, 'mtrx, 'mtrl, S>,
     max_depth: usize,
 ) -> Option<FilmTile> {
     // If the sampler generates random numbers, we don't want samplers in
@@ -118,7 +119,7 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
                 };
                 // TODO: Check for NaN or Inf values in spectrum.
 
-                film_tile.add_sample(&sample.film_point, &radiance, weight, &filter);
+                film_tile.add_sample(&sample.film_point, &radiance, weight, filter);
 
                 if !sampler.start_next_sample() {
                     break;

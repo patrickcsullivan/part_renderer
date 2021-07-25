@@ -532,6 +532,7 @@ dependencies = [
  "cgmath",
  "image",
  "nom_stl",
+ "rayon",
  "typed-arena",
 ]
 

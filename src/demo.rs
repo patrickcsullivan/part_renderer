@@ -36,10 +36,10 @@ pub fn simple_ortho() {
     let filter = BoxFilter::new(1.5, 1.5);
     render::<ConstantSampler>(
         &scene,
-        Box::new(camera),
+        &camera,
         &mut film,
-        Box::new(filter),
-        Box::new(OriginalRayTracer {}),
+        &filter,
+        &OriginalRayTracer {},
         5,
     );
     let img = film.write_image();
@@ -69,10 +69,10 @@ pub fn complex_ortho() {
     let filter = BoxFilter::new(1.5, 1.5);
     render::<ConstantSampler>(
         &scene,
-        Box::new(camera),
+        &camera,
         &mut film,
-        Box::new(filter),
-        Box::new(OriginalRayTracer {}),
+        &filter,
+        &OriginalRayTracer {},
         5,
     );
     let img = film.write_image();
