@@ -1,4 +1,4 @@
-# Granular to-do:
+# To-do:
 
 [X] Implement a `Sampler`.
 [X] Write `Film` to image.
@@ -8,13 +8,11 @@
 [ ] Finish fleshing out `Whitted`.
 [ ] Move on to new reflection, material, and lighting chapters.
 
-# Old to-do list:
+# Backlog:
 
-[X] Replace camera with orthographic. Re-run demos.
-[X] Compute ray differentials.
-[ ] Film, Sampler, Filter
-[ ] Replace ray-tracing logic in Scene with Witting Integrator. Re-run demos. 
-[ ] Add perspective camera. Re-run demos.
+[ ] Implement a good `Filter`.
+[ ] Implement a good `Sampler`.
+[ ] Add perspective camera.
 
 # Refactoring
 

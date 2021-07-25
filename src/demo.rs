@@ -56,7 +56,7 @@ pub fn complex_ortho() {
     let camera_to_world = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0))
         * Matrix4::from_angle_x(Rad(PI / 8.0))
         * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
-    let resolution = Vector2::new(600, 400);
+    let resolution = Vector2::new(1200, 800);
     let mut film = Film::new(resolution);
     let camera = OrthographicCamera::new(
         camera_to_world,
@@ -66,7 +66,7 @@ pub fn complex_ortho() {
         resolution,
     );
 
-    let filter = BoxFilter::new(1.5, 1.5);
+    let filter = BoxFilter::new(0.5, 0.5);
     render::<ConstantSampler>(
         &scene,
         &camera,

@@ -20,6 +20,6 @@ mod test;
 
 fn main() {
     println!("Hello, world!");
-    crate::demo::simple_ortho();
+    // crate::demo::simple_ortho();
     crate::demo::complex_ortho();
 }
