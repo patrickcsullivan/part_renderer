@@ -19,8 +19,8 @@
 
 [ ] Create a `Tile` struct and a method for generating a `Vec<Tile>`.
 [ ] Maybe create separate newtypes for `PixelBounds` and `SampleBounds`. To make the conversions clearer.
-[ ] Refactor `Integrator`.
-    [ ] No `Integrator` struct. Just a `render` function.
-    [ ] Create an `RayTrace` type alias for the `incoming_radiance` function type.
-    [ ] `render` function should take a `Scene`, `Camera`, `Filter`, and `RayTrace` as an arg.
+[X] Refactor `Integrator`.
+    [X] No `Integrator` struct. Just a `render` function.
+    [X] Create an `RayTrace` type alias for the `incoming_radiance` function type.
+    [X] `render` function should take a `Scene`, `Camera`, `Filter`, and `RayTrace` as an arg.
 [ ] Pull `Film` out of `Camera`.
