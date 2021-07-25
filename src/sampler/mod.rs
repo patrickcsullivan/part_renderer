@@ -1,10 +1,14 @@
+mod constant;
 mod state;
+
+pub use constant::ConstantSampler;
 
 use crate::camera::CameraSample;
 use cgmath::Point2;
 use core::f32;
 
-/// Defines the ability to generate multi-dimensional sample vectors for pixels.
+/// A sampler is responsible for generating sequences of n-dimensional samples,
+/// where each value in a sample is in the range [0, 1).
 pub trait Sampler {
     /// Create a new sampler from the given seed.
     ///
@@ -92,7 +96,7 @@ pub trait Sampler {
     /// This must be called after `prepare_1d_array`. The returned vector will
     /// contain the number of values that is specified in the call to
     /// `prepare_1d_array`.
-    fn get_1d_vec(&mut self) -> Option<&Vec<f32>>;
+    fn get_1d_vec(&mut self) -> Option<Vec<f32>>;
 
     /// Get a vector of 2D values for the next two dimensions of the current
     /// sample vector. This method mutates the sampler by incrementing the
@@ -101,7 +105,7 @@ pub trait Sampler {
     /// This must be called after `prepare_2d_array`. The returned vector will
     /// contain the number of values that is specified in the call to
     /// `prepare_2d_array`.
-    fn get_2d_vec(&mut self) -> Option<&Vec<Point2<f32>>>;
+    fn get_2d_vec(&mut self) -> Option<Vec<Point2<f32>>>;
 
     /// Tell the sampler to start working on the next sample for the current
     /// pixel. This method mutates the sampler by updating the current sample

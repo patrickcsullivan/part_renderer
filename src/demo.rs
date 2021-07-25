@@ -7,7 +7,7 @@ use crate::{
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
-    sampler::Sampler,
+    sampler::{ConstantSampler, Sampler},
     scene::{self, Scene},
     shape::{Mesh, Shape},
 };
@@ -32,7 +32,7 @@ pub fn simple_ortho() {
         resolution,
     );
 
-    let img = scene::render::<DemoSampler>(
+    let img = scene::render::<ConstantSampler>(
         &scene,
         Box::new(camera),
         &mut film,
@@ -61,7 +61,7 @@ pub fn complex_ortho() {
         resolution,
     );
 
-    let img = scene::render::<DemoSampler>(
+    let img = scene::render::<ConstantSampler>(
         &scene,
         Box::new(camera),
         &mut film,
@@ -195,52 +195,4 @@ fn teapot_scene<'msh, 'mtrx, 'mtrl>(
         ]),
         vec![light1, light2],
     )
-}
-
-pub struct DemoSampler {}
-
-impl Sampler for DemoSampler {
-    fn new(_seed: usize) -> Self {
-        Self {}
-    }
-
-    fn samples_per_pixel(&self) -> usize {
-        todo!()
-    }
-
-    fn start_pixel(&mut self, pixel: cgmath::Point2<i32>) {
-        todo!()
-    }
-
-    fn get_1d(&mut self) -> f32 {
-        todo!()
-    }
-
-    fn get_2d(&mut self) -> cgmath::Point2<f32> {
-        todo!()
-    }
-
-    fn prepare_1d_array(&mut self, count: usize) {
-        todo!()
-    }
-
-    fn prepare_2d_array(&mut self, count: usize) {
-        todo!()
-    }
-
-    fn get_1d_vec(&mut self) -> Option<&Vec<f32>> {
-        todo!()
-    }
-
-    fn get_2d_vec(&mut self) -> Option<&Vec<cgmath::Point2<f32>>> {
-        todo!()
-    }
-
-    fn start_next_sample(&mut self) -> bool {
-        todo!()
-    }
-
-    fn start_nth_sample(&mut self, sample_index: usize) -> bool {
-        todo!()
-    }
 }
