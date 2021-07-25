@@ -1,5 +1,6 @@
 use crate::{
     camera::{Camera, CameraSample},
+    film::Film,
     integrator::RayTracer,
     interaction::SurfaceInteraction,
     light::LightSource,
@@ -19,12 +20,13 @@ pub struct Scene<'msh, 'mtrx, 'mtrl> {
 pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     camera: Box<dyn Camera>,
+    film: &mut Film,
     ray_tracer: Box<dyn RayTracer<'msh, 'mtrx, 'mtrl, S>>,
     max_depth: usize,
 ) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
     ImageBuffer::from_fn(
-        camera.film().resolution.x as u32,
-        camera.film().resolution.y as u32,
+        film.resolution.x as u32,
+        film.resolution.y as u32,
         |x, y| {
             println!("At ({}, {})", x, y);
             let sample = CameraSample::at_pixel_center(Point2::new(x as i32, y as i32));

@@ -1,20 +1,15 @@
-use super::{Camera, CameraSample, Film, GenerateRay, HasFilm};
+use super::{Camera, CameraSample};
 use crate::{
-    geometry::{axis::Axis2, bounds::Bounds2},
+    geometry::bounds::Bounds2,
     ray::{Ray, RayDifferential},
 };
-use cgmath::{
-    Angle, InnerSpace, Matrix4, PerspectiveFov, Point2, Point3, Rad, Transform, Vector2, Vector3,
-    Vector4,
-};
+use cgmath::{Matrix4, Point2, Point3, Transform, Vector2, Vector3};
 
 /// A camera that is used to view a scene.
 ///
 /// The camera sits at the origin of camera space and renders images onto a
 /// canvas one unit away.
 pub struct OrthographicCamera {
-    pub film: Film,
-
     /// The bounds of the screen in screen space. This should be centered at the
     /// origin (around the camera), and its width and height should be
     /// equivalent to the width and height of the screen (at the near clipping
@@ -40,12 +35,14 @@ pub struct OrthographicCamera {
 impl OrthographicCamera {
     /// * `screen_size` - Width and height of the screen in world space. In
     ///   general, this should have the same aspect ratio as `resolution`.
+    /// * `resolution` - Width and height of the screen in raster space. In
+    ///   general, this should have the same aspect ratio as `screen_size`.
     pub fn new(
-        film: Film,
         camera_to_world: Matrix4<f32>,
         z_near: f32,
         z_far: f32,
         screen_size: Vector2<f32>,
+        resolution: Vector2<usize>,
     ) -> Self {
         let screen_bounds = Bounds2::new(
             Point2::new(0.0, 0.0) - 0.5 * screen_size,
@@ -53,7 +50,7 @@ impl OrthographicCamera {
         );
         let camera_to_screen = Self::camera_to_screen(z_near, z_far);
         let screen_to_camera = camera_to_screen.inverse_transform().unwrap();
-        let screen_to_raster = Self::screen_to_raster(screen_bounds, film.resolution);
+        let screen_to_raster = Self::screen_to_raster(screen_bounds, resolution);
         let raster_to_screen = screen_to_raster.inverse_transform().unwrap();
         let raster_to_camera = screen_to_camera * raster_to_screen;
 
@@ -61,7 +58,6 @@ impl OrthographicCamera {
         let ray_dy_camera = raster_to_camera.transform_vector(Vector3::new(0.0, 1.0, 0.0));
 
         Self {
-            film,
             screen_bounds,
             camera_to_world,
             camera_to_screen,
@@ -109,9 +105,7 @@ impl OrthographicCamera {
     }
 }
 
-impl Camera for OrthographicCamera {}
-
-impl GenerateRay for OrthographicCamera {
+impl Camera for OrthographicCamera {
     fn generate_ray(&self, sample: &CameraSample) -> (Ray, f32) {
         let camera_ray = self.generate_camera_space_ray(sample);
         use crate::geometry::Transform;
@@ -139,30 +133,27 @@ impl GenerateRay for OrthographicCamera {
     }
 }
 
-impl HasFilm for OrthographicCamera {
-    fn film(&self) -> &Film {
-        &self.film
-    }
-}
-
 #[cfg(test)]
 mod generate_ray_tests {
     use crate::{
-        camera::{CameraSample, Film, GenerateRay, OrthographicCamera},
+        camera::{Camera, CameraSample, OrthographicCamera},
         geometry::matrix::identity4,
         ray::Ray,
-        scene,
         test::ApproxEq,
     };
-    use cgmath::{Matrix4, Point2, Point3, Rad, Transform, Vector2, Vector3};
-    use std::f32::consts::{PI, SQRT_2};
+    use cgmath::{Matrix4, Point2, Point3, Rad, Vector2, Vector3};
+    use std::f32::consts::PI;
 
     #[test]
     fn untransformed_camera() {
         let camera_to_world = identity4();
-        let film = Film::new(400, 200);
-        let camera =
-            OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 2.0));
+        let camera = OrthographicCamera::new(
+            camera_to_world,
+            0.0,
+            100.0,
+            Vector2::new(4.0, 2.0),
+            Vector2::new(400, 200),
+        );
 
         let sample = CameraSample::at_pixel_center(Point2::new(0, 0));
         let (ray, _) = camera.generate_ray(&sample);
@@ -182,9 +173,13 @@ mod generate_ray_tests {
     #[test]
     fn translated_camera() {
         let camera_to_world = Matrix4::from_translation(Vector3::new(3.0, 3.0, 3.0));
-        let film = Film::new(400, 200);
-        let camera =
-            OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 2.0));
+        let camera = OrthographicCamera::new(
+            camera_to_world,
+            0.0,
+            100.0,
+            Vector2::new(4.0, 2.0),
+            Vector2::new(400, 200),
+        );
 
         let sample = CameraSample::at_pixel_center(Point2::new(0, 0));
         let (ray, _) = camera.generate_ray(&sample);
@@ -204,9 +199,13 @@ mod generate_ray_tests {
     #[test]
     fn rotated_camera() {
         let camera_to_world = Matrix4::from_angle_y(Rad(PI / 2.0));
-        let film = Film::new(400, 200);
-        let camera =
-            OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(4.0, 2.0));
+        let camera = OrthographicCamera::new(
+            camera_to_world,
+            0.0,
+            100.0,
+            Vector2::new(4.0, 2.0),
+            Vector2::new(400, 200),
+        );
 
         let sample = CameraSample::at_pixel_center(Point2::new(0, 0));
         let (ray, _) = camera.generate_ray(&sample);

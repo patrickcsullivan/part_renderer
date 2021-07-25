@@ -4,8 +4,14 @@ mod whitted;
 pub use {original::OriginalRayTracer, whitted::WhittedRayTracer};
 
 use crate::{
-    camera::Camera, color::RgbSpectrum, film::FilmTile, filter::Filter, geometry::bounds::Bounds2,
-    ray::Ray, sampler::Sampler, scene::Scene,
+    camera::Camera,
+    color::RgbSpectrum,
+    film::{Film, FilmTile},
+    filter::Filter,
+    geometry::bounds::Bounds2,
+    ray::Ray,
+    sampler::Sampler,
+    scene::Scene,
 };
 use cgmath::{point2, Point2};
 use typed_arena::Arena;
@@ -45,18 +51,18 @@ pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
 pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     camera: Box<dyn Camera>,
+    film: &mut Film,
     filter: Box<dyn Filter>,
     ray_tracer: Box<dyn RayTracer<'msh, 'mtrx, 'mtrl, S>>,
     max_depth: usize,
 ) {
-    let image_sample_bounds = camera
-        .film()
-        .sample_bounds(filter.half_width(), filter.half_height());
+    let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
     let (tile_count_x, tile_count_y) = tile_count(&image_sample_bounds);
     for ty in 0..tile_count_y {
         for tx in 0..tile_count_x {
             render_tile::<S>(
                 &camera,
+                film,
                 scene,
                 &image_sample_bounds,
                 tx,
@@ -73,6 +79,7 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
 
 fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
     camera: &Box<dyn Camera>,
+    film: &Film,
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     image_sample_bounds: &Bounds2<i32>,
     tile_x_index: usize,
@@ -90,11 +97,7 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
 
     let sample_bounds = tile_sample_bounds(image_sample_bounds, tile_x_index, tile_y_index);
 
-    if let Some(mut tile) =
-        camera
-            .film()
-            .tile(&sample_bounds, filter.half_width(), filter.half_height())
-    {
+    if let Some(mut tile) = film.tile(&sample_bounds, filter.half_width(), filter.half_height()) {
         for pixel_min_corner in sample_bounds.range() {
             sampler.start_pixel(pixel_min_corner);
             loop {

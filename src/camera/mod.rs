@@ -3,14 +3,9 @@ mod sample;
 
 pub use {orthographic::OrthographicCamera, sample::CameraSample};
 
-use crate::{
-    film::Film,
-    ray::{Ray, RayDifferential},
-};
+use crate::ray::{Ray, RayDifferential};
 
-pub trait Camera: GenerateRay + HasFilm {}
-
-pub trait GenerateRay {
+pub trait Camera {
     /// Generate a ray for the given sample.
     ///
     /// This method also returns a weight that indicates how much the radiance
@@ -34,9 +29,4 @@ pub trait GenerateRay {
         &self,
         sample: &CameraSample,
     ) -> (Ray, Option<RayDifferential>, f32);
-}
-
-pub trait HasFilm {
-    /// Return the film for the camera.
-    fn film(&self) -> &Film;
 }

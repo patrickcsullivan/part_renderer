@@ -28,12 +28,15 @@ pub struct Film {
 }
 
 impl Film {
-    pub fn new(x: usize, y: usize) -> Self {
-        let pixel_bounds = Bounds2::new(Point2::new(0, 0), Point2::new(x as i32, y as i32));
-        let pixels = vec![FilmPixel::default(); x * y];
+    pub fn new(resolution: Vector2<usize>) -> Self {
+        let pixel_bounds = Bounds2::new(
+            Point2::new(0, 0),
+            Point2::new(resolution.x as i32, resolution.y as i32),
+        );
+        let pixels = vec![FilmPixel::default(); resolution.x * resolution.y];
 
         Self {
-            resolution: Vector2::new(x, y),
+            resolution,
             pixel_bounds,
             pixels,
         }

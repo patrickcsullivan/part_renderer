@@ -22,11 +22,23 @@ pub fn simple_ortho() {
 
     let camera_to_world = Matrix4::from_angle_x(Rad(3.0 * PI / 4.0))
         * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
-    let film = Film::new(600, 400);
-    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(6.0, 4.0));
+    let resolution = Vector2::new(600, 400);
+    let mut film = Film::new(resolution);
+    let camera = OrthographicCamera::new(
+        camera_to_world,
+        0.0,
+        100.0,
+        Vector2::new(6.0, 4.0),
+        resolution,
+    );
 
-    let img =
-        scene::render::<DemoSampler>(&scene, Box::new(camera), Box::new(OriginalRayTracer {}), 5);
+    let img = scene::render::<DemoSampler>(
+        &scene,
+        Box::new(camera),
+        &mut film,
+        Box::new(OriginalRayTracer {}),
+        5,
+    );
     let _ = img.save("simple_ortho.png");
 }
 
@@ -39,11 +51,23 @@ pub fn complex_ortho() {
     let camera_to_world = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0))
         * Matrix4::from_angle_x(Rad(PI / 8.0))
         * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
-    let film = Film::new(600, 400);
-    let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(6.0, 4.0));
+    let resolution = Vector2::new(600, 400);
+    let mut film = Film::new(resolution);
+    let camera = OrthographicCamera::new(
+        camera_to_world,
+        0.0,
+        100.0,
+        Vector2::new(6.0, 4.0),
+        resolution,
+    );
 
-    let img =
-        scene::render::<DemoSampler>(&scene, Box::new(camera), Box::new(OriginalRayTracer {}), 5);
+    let img = scene::render::<DemoSampler>(
+        &scene,
+        Box::new(camera),
+        &mut film,
+        Box::new(OriginalRayTracer {}),
+        5,
+    );
     let _ = img.save("complex_ortho.png");
 }
 
