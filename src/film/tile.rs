@@ -14,7 +14,7 @@ pub struct FilmTile {
 
 impl FilmTile {
     pub fn new(pixel_bounds: Bounds2<i32>) -> Self {
-        let pixels = vec![FilmTilePixel::default(); pixel_bounds.area().min(0) as usize];
+        let pixels = vec![FilmTilePixel::default(); pixel_bounds.area().max(0) as usize];
         Self {
             pixel_bounds,
             pixels,

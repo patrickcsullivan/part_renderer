@@ -2,8 +2,9 @@ use crate::{
     camera::{Camera, OrthographicCamera},
     color::RgbSpectrum,
     film::Film,
+    filter::BoxFilter,
     geometry::matrix::identity4,
-    integrator::OriginalRayTracer,
+    integrator::{render, OriginalRayTracer},
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
@@ -32,13 +33,17 @@ pub fn simple_ortho() {
         resolution,
     );
 
-    let img = scene::render::<ConstantSampler>(
+    let filter = BoxFilter::new(1.5, 1.5);
+    render::<ConstantSampler>(
         &scene,
         Box::new(camera),
         &mut film,
+        Box::new(filter),
         Box::new(OriginalRayTracer {}),
         5,
     );
+    let img = film.write_image();
+
     let _ = img.save("simple_ortho.png");
 }
 
@@ -61,13 +66,17 @@ pub fn complex_ortho() {
         resolution,
     );
 
-    let img = scene::render::<ConstantSampler>(
+    let filter = BoxFilter::new(1.5, 1.5);
+    render::<ConstantSampler>(
         &scene,
         Box::new(camera),
         &mut film,
+        Box::new(filter),
         Box::new(OriginalRayTracer {}),
         5,
     );
+    let img = film.write_image();
+
     let _ = img.save("complex_ortho.png");
 }
 

@@ -58,23 +58,30 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
 ) {
     let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
     let (tile_count_x, tile_count_y) = tile_count(&image_sample_bounds);
-    for ty in 0..tile_count_y {
-        for tx in 0..tile_count_x {
+
+    let xs = 0..tile_count_x;
+    let ys = 0..tile_count_y;
+    let film_tiles: Vec<FilmTile> = ys
+        .flat_map(|y| xs.clone().map(move |x| (x, y)))
+        .filter_map(|(x, y)| {
             render_tile::<S>(
                 &camera,
                 film,
                 scene,
                 &image_sample_bounds,
-                tx,
-                ty,
+                x,
+                y,
                 tile_count_x,
                 &filter,
                 &ray_tracer,
                 max_depth,
-            );
-        }
+            )
+        })
+        .collect();
+
+    for ft in film_tiles {
+        film.merge_tile(&ft);
     }
-    // TODO: Merge film tiles returned by loop.
 }
 
 fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
@@ -99,6 +106,8 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
 
     if let Some(mut tile) = film.tile(&sample_bounds, filter.half_width(), filter.half_height()) {
         for pixel_min_corner in sample_bounds.range() {
+            println!("At ({}, {})", pixel_min_corner.x, pixel_min_corner.y);
+
             sampler.start_pixel(pixel_min_corner);
             loop {
                 let sample = sampler.get_camera_sample(pixel_min_corner);
@@ -148,8 +157,8 @@ fn tile_count(image_sample_bounds: &Bounds2<i32>) -> (usize, usize) {
     let sample_extent = image_sample_bounds.diagonal();
     const TILE_SIZE: usize = 16;
     (
-        (sample_extent.x.min(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
-        (sample_extent.y.min(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
+        (sample_extent.x.max(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
+        (sample_extent.y.max(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
     )
 }
 

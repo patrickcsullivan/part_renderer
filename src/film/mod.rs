@@ -1,9 +1,13 @@
 mod tile;
 
+use image::ImageBuffer;
 pub use tile::FilmTile;
 
-use crate::{color::Xyz, geometry::bounds::Bounds2};
-use cgmath::{Point2, Vector2};
+use crate::{
+    color::{RgbSpectrum, Xyz},
+    geometry::bounds::Bounds2,
+};
+use cgmath::{point2, Point2, Vector2};
 
 use self::tile::FilmTilePixel;
 
@@ -96,6 +100,27 @@ impl Film {
                 self.merge_pixel(pixel, &pixel_min_corner);
             }
         }
+    }
+
+    /// Write the contents of the film to an image buffer.
+    pub fn write_image(&self) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
+        ImageBuffer::from_fn(
+            self.resolution.x as u32,
+            self.resolution.y as u32,
+            |x, y| {
+                let index = self.pixel_index(&point2(x as i32, y as i32));
+                let pixel = self.pixels[index];
+
+                let color = if pixel.filter_weight_sum > 0.0 {
+                    (1.0 / pixel.filter_weight_sum) * RgbSpectrum::from(pixel.xyz)
+                } else {
+                    RgbSpectrum::black()
+                };
+
+                let output: image::Rgb<u8> = color.into();
+                output
+            },
+        )
     }
 
     /// Return a bounding box around the pixels (in raster space) that samples
