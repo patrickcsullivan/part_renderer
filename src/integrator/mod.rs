@@ -51,16 +51,16 @@ pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
 /// * filter -
 pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
-    camera: &dyn Camera,
+    camera: &(dyn Camera + Send + Sync),
     film: &mut Film,
-    filter: &dyn Filter,
-    ray_tracer: &dyn RayTracer<'msh, 'mtrx, 'mtrl, S>,
+    filter: &(dyn Filter + Send + Sync),
+    ray_tracer: &(dyn RayTracer<'msh, 'mtrx, 'mtrl, S> + Send + Sync),
     max_depth: usize,
 ) {
     let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
 
     let film_tiles: Vec<FilmTile> = Tile::span_image_sample_bounds(&image_sample_bounds)
-        .iter()
+        .par_iter()
         .filter_map(|tile| {
             render_tile::<S>(camera, film, scene, tile, filter, ray_tracer, max_depth)
         })
