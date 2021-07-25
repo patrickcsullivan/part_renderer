@@ -1,6 +1,7 @@
+mod original;
 mod whitted;
 
-pub use whitted::WhittedRayTracer;
+pub use {original::OriginalRayTracer, whitted::WhittedRayTracer};
 
 use crate::{
     camera::Camera, color::RgbSpectrum, film::FilmTile, filter::Filter, geometry::bounds::Bounds2,

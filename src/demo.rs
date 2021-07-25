@@ -1,10 +1,12 @@
 use crate::{
     camera::{Camera, OrthographicCamera},
     film::Film,
+    integrator::OriginalRayTracer,
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
-    scene::Scene,
+    sampler::Sampler,
+    scene::{self, Scene},
     shape::Mesh,
 };
 use cgmath::{Matrix4, Transform, Vector2};
@@ -40,7 +42,7 @@ pub fn simple_ortho() {
     let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(6.0, 4.0));
     // let camera = Camera::new(film, Rad(PI / 2.0), camera_to_world);
 
-    let world = Scene::new(
+    let scene = Scene::new(
         PrimitiveAggregate::Vector(vec![
             PrimitiveAggregate::primitive(sphere1, &material),
             PrimitiveAggregate::primitive(sphere2, &material),
@@ -48,7 +50,8 @@ pub fn simple_ortho() {
         ]),
         vec![light],
     );
-    let img = world.render(Box::new(camera), 5);
+    let img =
+        scene::render::<DemoSampler>(&scene, Box::new(camera), Box::new(OriginalRayTracer {}), 5);
     let _ = img.save("simple_ortho.png");
 }
 
@@ -141,7 +144,7 @@ pub fn complex_ortho() {
     let film = Film::new(600, 400);
     let camera = OrthographicCamera::new(film, camera_to_world, 0.0, 100.0, Vector2::new(6.0, 4.0));
 
-    let world = Scene::new(
+    let scene = Scene::new(
         PrimitiveAggregate::Vector(vec![
             PrimitiveAggregate::primitive(floor, &floor_material),
             PrimitiveAggregate::primitive(right, &right_material),
@@ -151,6 +154,55 @@ pub fn complex_ortho() {
         ]),
         vec![light1, light2],
     );
-    let img = world.render(Box::new(camera), 5);
+    let img =
+        scene::render::<DemoSampler>(&scene, Box::new(camera), Box::new(OriginalRayTracer {}), 5);
     let _ = img.save("complex_ortho.png");
+}
+
+pub struct DemoSampler {}
+
+impl Sampler for DemoSampler {
+    fn new(_seed: usize) -> Self {
+        Self {}
+    }
+
+    fn samples_per_pixel(&self) -> usize {
+        todo!()
+    }
+
+    fn start_pixel(&mut self, pixel: cgmath::Point2<i32>) {
+        todo!()
+    }
+
+    fn get_1d(&mut self) -> f32 {
+        todo!()
+    }
+
+    fn get_2d(&mut self) -> cgmath::Point2<f32> {
+        todo!()
+    }
+
+    fn prepare_1d_array(&mut self, count: usize) {
+        todo!()
+    }
+
+    fn prepare_2d_array(&mut self, count: usize) {
+        todo!()
+    }
+
+    fn get_1d_vec(&mut self) -> Option<&Vec<f32>> {
+        todo!()
+    }
+
+    fn get_2d_vec(&mut self) -> Option<&Vec<cgmath::Point2<f32>>> {
+        todo!()
+    }
+
+    fn start_next_sample(&mut self) -> bool {
+        todo!()
+    }
+
+    fn start_nth_sample(&mut self, sample_index: usize) -> bool {
+        todo!()
+    }
 }
