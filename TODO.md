@@ -1,8 +1,8 @@
 # Granular to-do:
 
-[ ] Implement a `Sampler`.
-[ ] Write `Film` to image.
-[ ] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
+[X] Implement a `Sampler`.
+[X] Write `Film` to image.
+[X] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
 [ ] Parallelize render to reduce render times.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`. 
 [ ] Finish fleshing out `Whitted`.
@@ -18,8 +18,7 @@
 
 # Refactoring
 
-[ ] Create a `Tile` struct and a method for generating a `Vec<Tile>`.
-[ ] Maybe create separate newtypes for `PixelBounds` and `SampleBounds`. To make the conversions clearer.
+[X] Create a `Tile` struct and a method for generating a `Vec<Tile>`.
 [X] Refactor `Integrator`.
     [X] No `Integrator` struct. Just a `render` function.
     [X] Create an `RayTrace` type alias for the `incoming_radiance` function type.

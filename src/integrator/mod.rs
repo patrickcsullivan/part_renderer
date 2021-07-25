@@ -57,25 +57,11 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     max_depth: usize,
 ) {
     let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
-    let (tile_count_x, tile_count_y) = tile_count(&image_sample_bounds);
 
-    let xs = 0..tile_count_x;
-    let ys = 0..tile_count_y;
-    let film_tiles: Vec<FilmTile> = ys
-        .flat_map(|y| xs.clone().map(move |x| (x, y)))
-        .filter_map(|(x, y)| {
-            render_tile::<S>(
-                &camera,
-                film,
-                scene,
-                &image_sample_bounds,
-                x,
-                y,
-                tile_count_x,
-                &filter,
-                &ray_tracer,
-                max_depth,
-            )
+    let film_tiles: Vec<FilmTile> = Tile::span_image_sample_bounds(&image_sample_bounds)
+        .iter()
+        .filter_map(|tile| {
+            render_tile::<S>(&camera, film, scene, tile, &filter, &ray_tracer, max_depth)
         })
         .collect();
 
@@ -88,10 +74,7 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
     camera: &Box<dyn Camera>,
     film: &Film,
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
-    image_sample_bounds: &Bounds2<i32>,
-    tile_x_index: usize,
-    tile_y_index: usize,
-    tile_count_x: usize,
+    tile: &Tile,
     filter: &Box<dyn Filter>,
     ray_tracer: &Box<dyn RayTracer<'msh, 'mtrx, 'mtrl, S>>,
     max_depth: usize,
@@ -99,12 +82,13 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
     // If the sampler generates random numbers, we don't want samplers in
     // different tiles generating duplicate sequences of random numbers, so we
     // use the tile's row-major index as a unique seed.
-    let seed = tile_y_index * tile_count_x + tile_x_index;
-    let mut sampler = S::new(seed);
+    let mut sampler = S::new(tile.row_major_index);
 
-    let sample_bounds = tile_sample_bounds(image_sample_bounds, tile_x_index, tile_y_index);
+    let sample_bounds = tile.sample_bounds;
 
-    if let Some(mut tile) = film.tile(&sample_bounds, filter.half_width(), filter.half_height()) {
+    if let Some(mut film_tile) =
+        film.tile(&sample_bounds, filter.half_width(), filter.half_height())
+    {
         for pixel_min_corner in sample_bounds.range() {
             println!("At ({}, {})", pixel_min_corner.x, pixel_min_corner.y);
 
@@ -134,52 +118,17 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
                 };
                 // TODO: Check for NaN or Inf values in spectrum.
 
-                tile.add_sample(&sample.film_point, &radiance, weight, &filter);
+                film_tile.add_sample(&sample.film_point, &radiance, weight, &filter);
 
                 if !sampler.start_next_sample() {
                     break;
                 }
             }
         }
-        Some(tile)
+        Some(film_tile)
     } else {
         None
     }
-}
-
-/// Return the number of 16-by-16 tiles into which the image's sample bounds
-/// can be divided for parallelized rendering.
-///
-/// If a dimension of the sample bounds cannot be evenly divided by 16, then
-/// the number of tiles in that dimension is rounded up so that the entire
-/// sample bounds can be contained in the tiles.
-fn tile_count(image_sample_bounds: &Bounds2<i32>) -> (usize, usize) {
-    let sample_extent = image_sample_bounds.diagonal();
-    const TILE_SIZE: usize = 16;
-    (
-        (sample_extent.x.max(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
-        (sample_extent.y.max(0) as usize + TILE_SIZE - 1) / TILE_SIZE,
-    )
-}
-
-fn tile_sample_bounds(
-    image_sample_bounds: &Bounds2<i32>,
-    tile_x_index: usize,
-    tile_y_index: usize,
-) -> Bounds2<i32> {
-    const TILE_SIZE: usize = 16;
-    let min = Point2::new(
-        image_sample_bounds.min.x + (tile_x_index * TILE_SIZE) as i32,
-        image_sample_bounds.min.y + (tile_y_index * TILE_SIZE) as i32,
-    );
-    let max = Point2::new(
-        // Tiles on the bottom and right edges might extend beyond the image
-        // sample bounds, so be sure to limit the tile sample bounds to the
-        // image sample bounds.
-        (min.x + TILE_SIZE as i32).min(image_sample_bounds.max.x),
-        (min.y + TILE_SIZE as i32).min(image_sample_bounds.max.y),
-    );
-    Bounds2::new(min, max)
 }
 
 /// A tile in an image's sample bounds that can be rendered in parallel with
@@ -196,7 +145,9 @@ struct Tile {
 }
 
 impl Tile {
-    fn from_image_sample_bounds(image_sample_bounds: &Bounds2<i32>) -> Vec<Tile> {
+    /// Return a vector of 16-by-16 tiles that span the given image sample
+    /// bounds.
+    pub fn span_image_sample_bounds(image_sample_bounds: &Bounds2<i32>) -> Vec<Tile> {
         const TILE_SIZE: usize = 16;
         let image_sample_extent = image_sample_bounds.diagonal();
         let tile_count_x = (image_sample_extent.x as usize + TILE_SIZE - 1) / TILE_SIZE;
