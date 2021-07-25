@@ -1,4 +1,13 @@
-# To-do:
+# Granular to-do:
+
+[ ] Implement a `Sampler`.
+[ ] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
+[ ] Parallelize render to reduce render times.
+[ ] Start replacing old `RayTracer` with limited version of `Whitted`. 
+[ ] Finish fleshing out `Whitted`.
+[ ] Move on to new reflection, material, and lighting chapters.
+
+# Old to-do list:
 
 [X] Replace camera with orthographic. Re-run demos.
 [X] Compute ray differentials.
