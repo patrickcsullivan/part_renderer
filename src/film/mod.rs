@@ -78,7 +78,7 @@ impl Film {
     /// * filter_half_height
     pub fn tile(
         &self,
-        sample_bounds: Bounds2<i32>,
+        sample_bounds: &Bounds2<i32>,
         filter_half_width: f32,
         filter_half_height: f32,
     ) -> Option<FilmTile> {
@@ -111,7 +111,7 @@ impl Film {
     /// * filter_half_height
     fn pixel_bounds_for_sample_bounds(
         &self,
-        sample_bounds: Bounds2<i32>,
+        sample_bounds: &Bounds2<i32>,
         filter_half_width: f32,
         filter_half_height: f32,
     ) -> Option<Bounds2<i32>> {

@@ -3,8 +3,8 @@ mod whitted;
 pub use whitted::WhittedRayTracer;
 
 use crate::{
-    camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2, ray::Ray,
-    sampler::Sampler, scene::Scene,
+    camera::Camera, color::RgbSpectrum, film::FilmTile, filter::Filter, geometry::bounds::Bounds2,
+    ray::Ray, sampler::Sampler, scene::Scene,
 };
 use cgmath::{point2, Point2};
 use typed_arena::Arena;
@@ -61,6 +61,7 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
                 tx,
                 ty,
                 tile_count_x,
+                &filter,
                 &ray_tracer,
                 max_depth,
             );
@@ -76,33 +77,36 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
     tile_x_index: usize,
     tile_y_index: usize,
     tile_count_x: usize,
+    filter: &Box<dyn Filter>,
     ray_tracer: &Box<dyn RayTracer<'msh, 'mtrx, 'mtrl, S>>,
     max_depth: usize,
-) {
-    // Generate a unique seed for each tile. If the sampler generates random
-    // numbers, we don't want samplers in different tiles generating
-    // duplicate sequences of random numbers.
+) -> Option<FilmTile> {
+    // If the sampler generates random numbers, we don't want samplers in
+    // different tiles generating duplicate sequences of random numbers, so we
+    // use the tile's row-major index as a unique seed.
     let seed = tile_y_index * tile_count_x + tile_x_index;
     let mut sampler = S::new(seed);
 
-    let tile_sample_bounds = tile_sample_bounds(image_sample_bounds, tile_x_index, tile_y_index);
+    let sample_bounds = tile_sample_bounds(image_sample_bounds, tile_x_index, tile_y_index);
 
-    // TODO: Create a "film tile".
-
-    for y in tile_sample_bounds.min.y..tile_sample_bounds.max.y {
-        for x in tile_sample_bounds.min.x..tile_sample_bounds.max.x {
-            let pixel_min_corner = point2(x, y);
+    if let Some(mut tile) =
+        camera
+            .film()
+            .tile(&sample_bounds, filter.half_width(), filter.half_height())
+    {
+        for pixel_min_corner in sample_bounds.range() {
             sampler.start_pixel(pixel_min_corner);
             loop {
                 let sample = sampler.get_camera_sample(pixel_min_corner);
                 let (ray, _differential, weight) = camera.generate_ray_differential(&sample);
                 // TODO: Scale differential.
+
                 let radiance = if weight > 0.0 {
                     // Recursive calls to `incoming_radiance` may need to
                     // allocate space for many different radiance spectrums.
                     // Rather than repeatedly allocating memory as needed,
                     // it's more efficient to pre-allocate in an arena.
-                    // TODO: Confirm that this is more efficient.
+                    // TODO: Confirm that this is actually more efficient.
                     let mut spectrum_arena = Arena::new();
                     ray_tracer.incoming_radiance(
                         &ray,
@@ -117,16 +121,17 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
                 };
                 // TODO: Check for NaN or Inf values in spectrum.
 
-                // TODO: Add camera ray's contribution to image (film tile).
+                tile.add_sample(&sample.film_point, &radiance, weight, &filter);
+
                 if !sampler.start_next_sample() {
                     break;
                 }
             }
         }
+        Some(tile)
+    } else {
+        None
     }
-
-    // TODO: Return film tile.
-    todo!()
 }
 
 /// Return the number of 16-by-16 tiles into which the image's sample bounds

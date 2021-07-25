@@ -14,3 +14,4 @@
     [ ] No `Integrator` struct. Just a `render` function.
     [ ] Create an `RayTrace` type alias for the `incoming_radiance` function type.
     [ ] `render` function should take a `Scene`, `Camera`, `Filter`, and `RayTrace` as an arg.
+[ ] Pull `Film` out of `Camera`.
