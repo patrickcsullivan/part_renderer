@@ -5,7 +5,7 @@ use super::Sampler;
 pub struct ConstantSampler {}
 
 impl Sampler for ConstantSampler {
-    fn new(_seed: usize) -> Self {
+    fn clone_with_seed(&self, _seed: usize) -> Self {
         Self {}
     }
 

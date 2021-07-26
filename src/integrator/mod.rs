@@ -49,11 +49,12 @@ pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
 /// * camera - Controls how the scene is viewed and contains the `Film` onto
 ///   which the scene is rendered.
 /// * filter -
-pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
+pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler + Send + Sync>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     camera: &(dyn Camera + Send + Sync),
     film: &mut Film,
     filter: &(dyn Filter + Send + Sync),
+    sampler: &S,
     ray_tracer: &(dyn RayTracer<'msh, 'mtrx, 'mtrl, S> + Send + Sync),
     max_depth: usize,
 ) {
@@ -62,7 +63,20 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler>(
     let film_tiles: Vec<FilmTile> = Tile::span_image_sample_bounds(&image_sample_bounds)
         .par_iter()
         .filter_map(|tile| {
-            render_tile::<S>(camera, film, scene, tile, filter, ray_tracer, max_depth)
+            // If the sampler generates random numbers, we don't want samplers in
+            // different tiles generating duplicate sequences of random numbers, so we
+            // use the tile's row-major index as a unique seed.
+            let mut sampler = sampler.clone_with_seed(tile.row_major_index);
+            render_tile::<S>(
+                camera,
+                film,
+                scene,
+                tile,
+                filter,
+                &mut sampler,
+                ray_tracer,
+                max_depth,
+            )
         })
         .collect();
 
@@ -77,14 +91,10 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     tile: &Tile,
     filter: &dyn Filter,
+    sampler: &mut S,
     ray_tracer: &dyn RayTracer<'msh, 'mtrx, 'mtrl, S>,
     max_depth: usize,
 ) -> Option<FilmTile> {
-    // If the sampler generates random numbers, we don't want samplers in
-    // different tiles generating duplicate sequences of random numbers, so we
-    // use the tile's row-major index as a unique seed.
-    let mut sampler = S::new(tile.row_major_index);
-
     let sample_bounds = tile.sample_bounds;
 
     if let Some(mut film_tile) =
@@ -109,7 +119,7 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
                     ray_tracer.incoming_radiance(
                         &ray,
                         scene,
-                        &mut sampler,
+                        sampler,
                         &mut spectrum_arena,
                         0,
                         max_depth,

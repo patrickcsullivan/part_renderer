@@ -8,7 +8,7 @@ use crate::{
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
-    sampler::{ConstantSampler, Sampler},
+    sampler::{ConstantSampler, PixelSampler, Sampler},
     scene::{self, Scene},
     shape::{Mesh, Shape},
 };
@@ -39,6 +39,7 @@ pub fn simple_ortho() {
         &camera,
         &mut film,
         &filter,
+        &ConstantSampler {},
         &OriginalRayTracer {},
         5,
     );
@@ -72,6 +73,7 @@ pub fn complex_ortho() {
         &camera,
         &mut film,
         &filter,
+        &ConstantSampler {},
         &OriginalRayTracer {},
         5,
     );

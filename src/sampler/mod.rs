@@ -17,13 +17,16 @@ use core::f32;
 /// camera to create a ray. They are used to set, respectively, the (x, y)
 /// position on the film, the time, and the (u, v) position on the lens.
 pub trait Sampler {
-    /// Create a new sampler from the given seed.
+    /// Create a new sampler with the given seed.
     ///
-    /// * samples_per_pixel - The number of n-dimensional sample vectors that
-    ///   will be generated for each pixel in the image.
+    /// The returned sampler should have the same state that the source sampler
+    /// had when it was initialized, with the exception that the clone will use
+    /// the given seed to initialize its pseudo-random number generator if it
+    /// has one.
+    ///
     /// * seed - Samplers that use a pseudo-random number generator will use
     ///   this seed to initialize the generator. Other samplers will ignore it.
-    fn new(seed: usize) -> Self;
+    fn clone_with_seed(&self, seed: usize) -> Self;
 
     /// Return the number of n-dimensional sample vectors that will be generated
     /// for each pixel in the image.

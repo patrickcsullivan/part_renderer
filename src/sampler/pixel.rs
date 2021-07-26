@@ -58,8 +58,8 @@ impl PixelSampler {
 }
 
 impl Sampler for PixelSampler {
-    fn new(seed: usize) -> Self {
-        todo!()
+    fn clone_with_seed(&self, _seed: usize) -> Self {
+        Self::new(self.samples_per_pixel, self.max_dimension_requests)
     }
 
     fn samples_per_pixel(&self) -> usize {
