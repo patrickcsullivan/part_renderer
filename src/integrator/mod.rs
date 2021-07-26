@@ -66,7 +66,7 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler + Send + Sync>(
             // If the sampler generates random numbers, we don't want samplers in
             // different tiles generating duplicate sequences of random numbers, so we
             // use the tile's row-major index as a unique seed.
-            let mut sampler = sampler.clone_with_seed(tile.row_major_index);
+            let mut sampler = sampler.clone_with_seed(tile.row_major_index as u64);
             render_tile::<S>(
                 camera,
                 film,

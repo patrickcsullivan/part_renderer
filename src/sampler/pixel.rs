@@ -47,7 +47,7 @@ impl PixelSamplerState {
         }
     }
 
-    fn start_pixel(
+    pub fn start_pixel(
         &mut self,
         precomputed_1d: Vec<Vec<f32>>,
         precomputed_2d: Vec<Vec<Point2<f32>>>,
@@ -59,7 +59,7 @@ impl PixelSamplerState {
         self.precomputed_2d = precomputed_2d;
     }
 
-    fn get_1d(&mut self) -> f32 {
+    pub fn get_1d(&mut self) -> f32 {
         let val = self
             .precomputed_1d
             .get(self.current_1d_index)
@@ -70,7 +70,7 @@ impl PixelSamplerState {
         val
     }
 
-    fn get_2d(&mut self) -> Point2<f32> {
+    pub fn get_2d(&mut self) -> Point2<f32> {
         let val = self
             .precomputed_2d
             .get(self.current_2d_index)
@@ -81,7 +81,7 @@ impl PixelSamplerState {
         val
     }
 
-    fn start_next_sample(&mut self) -> bool {
+    pub fn start_next_sample(&mut self) -> bool {
         self.current_sample_index += 1;
         self.current_1d_index = 0;
         self.current_2d_index = 0;

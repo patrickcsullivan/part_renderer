@@ -532,6 +532,8 @@ dependencies = [
  "cgmath",
  "image",
  "nom_stl",
+ "rand",
+ "rand_chacha",
  "rayon",
  "typed-arena",
 ]

@@ -1,11 +1,15 @@
 mod constant;
 mod pixel;
+mod stratified;
 
 pub use constant::ConstantSampler;
 
 use crate::camera::CameraSample;
 use cgmath::Point2;
 use core::f32;
+
+/// The maximum value that any sample can have, one minus the machine epsilon.
+const MAX_SAMPLE: f32 = 1.0 - f32::EPSILON;
 
 /// A sampler is responsible for generating sequences of n-dimensional sample
 /// vectors, where each element in a sample vector is in the range [0, 1).
@@ -25,7 +29,7 @@ pub trait Sampler {
     ///
     /// * seed - Samplers that use a pseudo-random number generator will use
     ///   this seed to initialize the generator. Other samplers will ignore it.
-    fn clone_with_seed(&self, seed: usize) -> Self;
+    fn clone_with_seed(&self, seed: u64) -> Self;
 
     /// Return the number of n-dimensional sample vectors that will be generated
     /// for each pixel in the image.
