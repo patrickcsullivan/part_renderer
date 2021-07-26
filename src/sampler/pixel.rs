@@ -1,20 +1,14 @@
 use cgmath::{point2, Point2};
 
-use super::Sampler;
-
-/// A sampler that pre-computes all dimensions (up to a fixed number of
-/// dimension) and all samples when each new pixel is started.
-pub struct PixelSampler {
+/// A data structure that maintains the internal state for a "pixel sampler", a
+/// type of sampler that generates all sample vectors for a single pixel at once,
+/// rather than generating sample vectors as they are requested.
+pub struct PixelSamplerState {
     samples_per_pixel: usize,
-
-    /// The maximum number of 1D or 2D dimension requests that will be made for
-    /// any single sample vector.
-    max_dimension_requests: usize,
 
     /// A table containing pre-computed dimensions for all sample vectors for
     /// the current pixel.
     ///
-    /// The table has a size of `max_dimension_requests`-by-`samples_per_pixel`.
     /// Data is stored in "dimension-major" order (as in "row-major" order).
     /// That is, the outer vector contains one nested vector for each
     /// potentially requested dimension. Each nested vector contains one element
@@ -33,44 +27,36 @@ pub struct PixelSampler {
     /// the `i`th 2D request for the pixel's `j`th sample.
     precomputed_2d: Vec<Vec<Point2<f32>>>,
 
-    current_pixel: Point2<i32>,
     current_sample_index: usize,
     current_1d_index: usize,
     current_2d_index: usize,
 }
 
-impl PixelSampler {
+impl PixelSamplerState {
     pub fn new(samples_per_pixel: usize, max_dimension_requests: usize) -> Self {
         let precomputed_1d = vec![vec![0.0; samples_per_pixel]; max_dimension_requests];
         let precomputed_2d =
             vec![vec![point2(0.0, 0.0); samples_per_pixel]; max_dimension_requests];
         Self {
             samples_per_pixel,
-            max_dimension_requests,
             precomputed_1d,
             precomputed_2d,
-            current_pixel: point2(0, 0),
             current_sample_index: 0,
             current_1d_index: 0,
             current_2d_index: 0,
         }
     }
-}
 
-impl Sampler for PixelSampler {
-    fn clone_with_seed(&self, _seed: usize) -> Self {
-        Self::new(self.samples_per_pixel, self.max_dimension_requests)
-    }
-
-    fn samples_per_pixel(&self) -> usize {
-        self.samples_per_pixel
-    }
-
-    fn start_pixel(&mut self, pixel: Point2<i32>) {
-        self.current_pixel = pixel;
+    fn start_pixel(
+        &mut self,
+        precomputed_1d: Vec<Vec<f32>>,
+        precomputed_2d: Vec<Vec<Point2<f32>>>,
+    ) {
         self.current_sample_index = 0;
         self.current_1d_index = 0;
         self.current_2d_index = 0;
+        self.precomputed_1d = precomputed_1d;
+        self.precomputed_2d = precomputed_2d;
     }
 
     fn get_1d(&mut self) -> f32 {

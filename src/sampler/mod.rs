@@ -1,8 +1,7 @@
 mod constant;
 mod pixel;
-mod state;
 
-pub use {constant::ConstantSampler, pixel::PixelSampler};
+pub use constant::ConstantSampler;
 
 use crate::camera::CameraSample;
 use cgmath::Point2;

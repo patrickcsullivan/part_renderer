@@ -8,7 +8,7 @@ use crate::{
     light::LightSource,
     material::Material,
     primitive::PrimitiveAggregate,
-    sampler::{ConstantSampler, PixelSampler, Sampler},
+    sampler::{ConstantSampler, Sampler},
     scene::{self, Scene},
     shape::{Mesh, Shape},
 };
