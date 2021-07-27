@@ -1,3 +1,4 @@
+mod bsdf;
 mod camera;
 mod color;
 mod demo;
