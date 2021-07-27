@@ -1,6 +1,6 @@
 use crate::{
     camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
-    interaction::SurfaceInteraction, ray::Ray, sampler::Sampler, scene::Scene,
+    interaction::SurfaceInteraction, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::InnerSpace;
 use typed_arena::Arena;
@@ -13,7 +13,7 @@ use super::RayTracer;
 pub struct WhittedRayTracer {}
 
 impl WhittedRayTracer {
-    fn specular_reflect<'msh, 'mtrx, 'mtrl, S: Sampler>(
+    fn specular_reflect<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
         &self,
         ray: &Ray,
         interaction: &SurfaceInteraction,
@@ -25,7 +25,7 @@ impl WhittedRayTracer {
         todo!()
     }
 
-    fn specular_transmit<'msh, 'mtrx, 'mtrl, S: Sampler>(
+    fn specular_transmit<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
         &self,
         ray: &Ray,
         interaction: &SurfaceInteraction,
@@ -38,7 +38,9 @@ impl WhittedRayTracer {
     }
 }
 
-impl<'msh, 'mtrx, 'mtrl, S: Sampler> RayTracer<'msh, 'mtrx, 'mtrl, S> for WhittedRayTracer {
+impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
+    for WhittedRayTracer
+{
     fn incoming_radiance(
         &self,
         // TODO: Change to ray differential.

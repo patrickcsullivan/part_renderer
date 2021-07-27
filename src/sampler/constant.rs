@@ -1,10 +1,10 @@
 use cgmath::Point2;
 
-use super::Sampler;
+use super::IncrementalSampler;
 
 pub struct ConstantSampler {}
 
-impl Sampler for ConstantSampler {
+impl IncrementalSampler for ConstantSampler {
     fn clone_with_seed(&self, _seed: u64) -> Self {
         Self {}
     }

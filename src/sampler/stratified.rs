@@ -1,4 +1,4 @@
-use super::{pixel::PixelSamplerState, Sampler, MAX_SAMPLE};
+use super::{pixel::PixelSamplerState, IncrementalSampler, MAX_SAMPLE};
 use cgmath::{point2, Point2};
 use rand::{prelude::SliceRandom, Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -12,7 +12,7 @@ pub struct StratifiedSampler {
     jitter: bool,
 }
 
-impl Sampler for StratifiedSampler {
+impl IncrementalSampler for StratifiedSampler {
     fn clone_with_seed(&self, seed: u64) -> Self {
         let samples_per_pixel = self.x_strata_count * self.y_strata_count;
         Self {
@@ -171,11 +171,11 @@ impl StratifiedSampler {
 #[cfg(test)]
 mod stratified_sampler_tests {
     use cgmath::{point2, Point2};
-    use super::super::Sampler;
+    use super::super::IncrementalSampler;
     use super::StratifiedSampler;
 
     #[test]
-    fn generates_stratified_samples() {
+    fn generates_stratified_samples_incrementally() {
         let mut sampler = StratifiedSampler::new(2, 3, 5, 0, true);
 
         sampler.start_pixel(point2(3, 4)); // The specific pixel doesn't matter.

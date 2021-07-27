@@ -1,7 +1,7 @@
 use crate::{
     camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
     interaction::SurfaceInteraction, light::LightSource, material::Material, ray::Ray,
-    sampler::Sampler, scene::Scene,
+    sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::{InnerSpace, Point3};
 use typed_arena::Arena;
@@ -10,7 +10,9 @@ use super::RayTracer;
 
 pub struct OriginalRayTracer {}
 
-impl<'msh, 'mtrx, 'mtrl, S: Sampler> RayTracer<'msh, 'mtrx, 'mtrl, S> for OriginalRayTracer {
+impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
+    for OriginalRayTracer
+{
     fn incoming_radiance(
         &self,
         // TODO: Change to ray differential.

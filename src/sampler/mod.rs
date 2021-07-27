@@ -19,7 +19,10 @@ const MAX_SAMPLE: f32 = 1.0 - f32::EPSILON;
 /// In general the first five dimensions of a sample vector will be used by a
 /// camera to create a ray. They are used to set, respectively, the (x, y)
 /// position on the film, the time, and the (u, v) position on the lens.
-pub trait Sampler {
+///
+/// An `IncrementalSampler` generates a single 1D or 2D sample for the current
+/// sample vector at a time.
+pub trait IncrementalSampler {
     /// Create a new sampler with the given seed.
     ///
     /// The returned sampler should have the same state that the source sampler

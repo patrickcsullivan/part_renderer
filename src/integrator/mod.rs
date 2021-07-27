@@ -10,14 +10,14 @@ use crate::{
     filter::Filter,
     geometry::bounds::Bounds2,
     ray::Ray,
-    sampler::Sampler,
+    sampler::IncrementalSampler,
     scene::Scene,
 };
 use cgmath::{point2, Point2};
 use rayon::prelude::*;
 use typed_arena::Arena;
 
-pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
+pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> {
     /// Determine the incoming radiance that arrives along the ray at the ray
     /// origin.
     ///
@@ -49,7 +49,7 @@ pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: Sampler> {
 /// * camera - Controls how the scene is viewed and contains the `Film` onto
 ///   which the scene is rendered.
 /// * filter -
-pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler + Send + Sync>(
+pub fn render<'msh, 'mtrx, 'mtrl, S: IncrementalSampler + Send + Sync>(
     scene: &Scene<'msh, 'mtrx, 'mtrl>,
     camera: &(dyn Camera + Send + Sync),
     film: &mut Film,
@@ -85,7 +85,7 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: Sampler + Send + Sync>(
     }
 }
 
-fn render_tile<'msh, 'mtrx, 'mtrl, S: Sampler>(
+fn render_tile<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
     camera: &dyn Camera,
     film: &Film,
     scene: &Scene<'msh, 'mtrx, 'mtrl>,

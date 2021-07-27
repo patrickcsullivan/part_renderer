@@ -22,3 +22,8 @@
     [X] Create an `RayTrace` type alias for the `incoming_radiance` function type.
     [X] `render` function should take a `Scene`, `Camera`, `Filter`, and `RayTrace` as an arg.
 [X] Pull `Film` out of `Camera`.
+[ ] Split `Sampler` trait into three separate traits:
+    [ ] `Sampler` - Has `start_pixel` and `start_next_sample` methods.
+    [ ] `CloneWithSeed` - Enables the sampler to be cloned with a given seed.
+    [ ] `IncrementalSampler` - Generates a single 1D or 2D sample for the current sample vector at a time.
+    [ ] `ArraySampler` - Generates an array of 1D or 2D samples for the current sample vector at a time.
