@@ -11,7 +11,7 @@
 # Backlog:
 
 [ ] Implement a good `Filter`.
-[ ] Implement a good `Sampler`.
+[~] Implement a good `Sampler`.
 [ ] Add perspective camera.
 
 # Refactoring

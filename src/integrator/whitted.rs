@@ -13,29 +13,29 @@ use super::RayTracer;
 pub struct WhittedRayTracer {}
 
 impl WhittedRayTracer {
-    fn specular_reflect<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
-        &self,
-        ray: &Ray,
-        interaction: &SurfaceInteraction,
-        scene: &Scene<'msh, 'mtrx, 'mtrl>,
-        sampler: &mut S,
-        spectrum_arena: &mut Arena<RgbSpectrum>,
-        depth: usize,
-    ) -> RgbSpectrum {
-        todo!()
-    }
+    // fn specular_reflect<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
+    //     &self,
+    //     ray: &Ray,
+    //     interaction: &SurfaceInteraction,
+    //     scene: &Scene<'msh, 'mtrx, 'mtrl>,
+    //     sampler: &mut S,
+    //     spectrum_arena: &mut Arena<RgbSpectrum>,
+    //     depth: usize,
+    // ) -> RgbSpectrum {
+    //     todo!()
+    // }
 
-    fn specular_transmit<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
-        &self,
-        ray: &Ray,
-        interaction: &SurfaceInteraction,
-        scene: &Scene<'msh, 'mtrx, 'mtrl>,
-        sampler: &mut S,
-        spectrum_arena: &mut Arena<RgbSpectrum>,
-        depth: usize,
-    ) -> RgbSpectrum {
-        todo!()
-    }
+    // fn specular_transmit<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
+    //     &self,
+    //     ray: &Ray,
+    //     interaction: &SurfaceInteraction,
+    //     scene: &Scene<'msh, 'mtrx, 'mtrl>,
+    //     sampler: &mut S,
+    //     spectrum_arena: &mut Arena<RgbSpectrum>,
+    //     depth: usize,
+    // ) -> RgbSpectrum {
+    //     todo!()
+    // }
 }
 
 impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
@@ -79,7 +79,9 @@ impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
                     continue;
                 }
                 let f = interaction.bsdf(&point_to_light_direction, &point_to_ray_origin_direction);
-                if !f.is_black() && visibility.unocculuded(scene) {
+                if !f.is_black()
+                /*&& visibility.unocculuded(scene)*/
+                {
                     outgoing_radiance += f
                         * radiance_from_light
                         * (point_to_light_direction.dot(normal).abs() / pdf);
