@@ -203,7 +203,8 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
             return None;
         }
 
-        // Partial deriviates went here...
+        // Compute partial derivatives.
+        let (dpdu, dpdv) = triangle_partial_derivatives((p0, p1, p2), (uv0, uv1, uv2))?;
 
         // Compute baycentric coordinates.
         let b0 = e0 * inv_det;
@@ -221,7 +222,6 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
         let uv_hit = point::add_point2(vec![b0 * uv0, b1 * uv1, b2 * uv2]);
 
         // Test intersection against alpha texture went here...
-
         let dp02 = p0 - p2;
         let dp12 = p1 - p2;
         let normal = if self.reverse_orientation() || self.object_to_world_swaps_handedness() {
@@ -231,7 +231,7 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
         };
 
         // Fill in SurfaceInteraction for triangle hit
-        let interaction = SurfaceInteraction::new(p_hit, -1.0 * ray.direction, normal);
+        let interaction = SurfaceInteraction::new(p_hit, -1.0 * ray.direction, normal, dpdu, dpdv);
 
         Some((t, interaction))
     }
@@ -270,23 +270,23 @@ fn triangle_partial_derivatives(
     world_space_vertices: (Point3<f32>, Point3<f32>, Point3<f32>),
     uv_vertices: (Point2<f32>, Point2<f32>, Point2<f32>),
 ) -> Option<(Vector3<f32>, Vector3<f32>)> {
-    let (p1, p2, p3) = world_space_vertices;
-    let (uv1, uv2, uv3) = uv_vertices;
+    let (p0, p1, p2) = world_space_vertices;
+    let (uv0, uv1, uv2) = uv_vertices;
 
-    let delta_uv1_uv3 = uv1 - uv3;
-    let delta_uv2_uv3 = uv2 - uv3;
-    let delta_p1_p3 = p1 - p3;
-    let delta_p2_p3 = p2 - p3;
+    let delta_uv0_uv2 = uv0 - uv2;
+    let delta_uv1_uv2 = uv1 - uv2;
+    let delta_p0_p2 = p0 - p2;
+    let delta_p1_p2 = p1 - p2;
 
     // Caclculate the determinant of the uv deltas matrix.
-    let determinant = delta_uv1_uv3[0] * delta_uv2_uv3[1] - delta_uv1_uv3[1] * delta_uv2_uv3[0];
+    let determinant = delta_uv0_uv2[0] * delta_uv1_uv2[1] - delta_uv0_uv2[1] * delta_uv1_uv2[0];
 
     // We'll need to invert the uv deltas matrix, so we need to make sure it's
     // not singular.
     if determinant.abs() < 1e-8 {
         // If the uv deltas matrix is singular, the uv coordinates for the
         // triangle vertices must be degenerate.
-        let perp = (p3 - p1).cross(p2 - p1);
+        let perp = (p2 - p0).cross(p1 - p0);
         if perp.magnitude2() == 0.0 {
             // The triangle's (x,y,z) coordinates are also degenerate, so we
             // can't compute partial derivatives.
@@ -300,9 +300,9 @@ fn triangle_partial_derivatives(
     }
 
     let inv_determinant = 1.0 / determinant;
-    let dpdu = (delta_uv2_uv3[1] * delta_p1_p3 - delta_uv1_uv3[1] * delta_p2_p3) * inv_determinant;
+    let dpdu = (delta_uv1_uv2[1] * delta_p0_p2 - delta_uv0_uv2[1] * delta_p1_p2) * inv_determinant;
     let dpdv =
-        (-1.0 * delta_uv2_uv3[0] * delta_p1_p3 - delta_uv1_uv3[0] * delta_p2_p3) * inv_determinant;
+        (-1.0 * delta_uv1_uv2[0] * delta_p0_p2 - delta_uv0_uv2[0] * delta_p1_p2) * inv_determinant;
     Some((dpdu, dpdv))
 }
 
@@ -442,6 +442,32 @@ mod ray_intersection_tests {
             Ok(())
         } else {
             Err("Expected to find intersection.".to_string())
+        }
+    }
+}
+
+#[cfg(test)]
+mod triangle_partial_derivatives_tests {
+    use crate::test::ApproxEq;
+
+    use super::triangle_partial_derivatives;
+    use cgmath::{point2, point3, vec3, Point3, Vector3};
+
+    #[test]
+    fn calculates_partial_derivatives() -> Result<(), String> {
+        let points = (
+            point3(0.0, 0.0, 0.0),
+            point3(1.0, 2.0, 3.0),
+            point3(4.0, 5.0, 6.0),
+        );
+        let uvs = (point2(0.0, 0.0), point2(1.0, 0.0), point2(0.0, 1.0));
+
+        if let Some((dpdu, dpdv)) = triangle_partial_derivatives(points, uvs) {
+            dpdu.assert_approx_eq(&vec3(1.0, 2.0, 3.0));
+            dpdv.assert_approx_eq(&vec3(4.0, 5.0, 6.0));
+            Ok(())
+        } else {
+            Err("Expected result.".to_string())
         }
     }
 }

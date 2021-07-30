@@ -1,7 +1,6 @@
 use crate::{
-    camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
-    interaction::SurfaceInteraction, light::LightSource, material::Material, ray::Ray,
-    sampler::IncrementalSampler, scene::Scene,
+    color::RgbSpectrum, interaction::SurfaceInteraction, light::LightSource,
+    material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::{InnerSpace, Point3};
 use typed_arena::Arena;
@@ -39,7 +38,7 @@ impl OriginalRayTracer {
     pub fn shade_surface_interaction(
         scene: &Scene,
         interaction: &SurfaceInteraction,
-        material: &Material,
+        material: &MaterialV1,
         remaining: usize,
     ) -> RgbSpectrum {
         scene
@@ -84,7 +83,7 @@ impl OriginalRayTracer {
 
     fn reflected_color(
         scene: &Scene,
-        material: &Material,
+        material: &MaterialV1,
         interaction: &SurfaceInteraction,
         remaining: usize,
     ) -> RgbSpectrum {

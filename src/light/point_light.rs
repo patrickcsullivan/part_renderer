@@ -1,6 +1,6 @@
-use cgmath::{InnerSpace, Point3, Vector3};
+use cgmath::Point3;
 
-use crate::{color::RgbSpectrum, geometry::vector, material::Material};
+use crate::color::RgbSpectrum;
 
 pub struct PointLightSource {
     pub intensity: RgbSpectrum,

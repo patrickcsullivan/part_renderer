@@ -3,9 +3,9 @@ mod lambertian;
 mod scale;
 
 use bitflags::bitflags;
-use cgmath::{Point2, Vector3};
+use cgmath::{vec3, InnerSpace, Point2, Vector3};
 
-use crate::color::RgbSpectrum;
+use crate::{color::RgbSpectrum, interaction::SurfaceInteraction};
 
 /// The bidirectional scattering distribution function (BSDF). Describes the way
 /// light scatters at a point on a surface. A BSDF is composed of multiple
@@ -18,7 +18,88 @@ use crate::color::RgbSpectrum;
 /// surface interaction) a bidirectional scattering-surface reflectance
 /// distribution function (BSSRDF) should be used instead.
 pub struct Bsdf {
+    /// The relative index of refraction over the boundry of the surface. This
+    /// should be set to 1 for opaque surfaces.
+    pub relative_refraction: f32,
+
     bxdfs: Vec<Box<dyn Bxdf>>,
+
+    /// The original surface normal.
+    original_normal: Vector3<f32>,
+
+    /// The surface normal after any perturbations (by bump mapping, for
+    /// example). This is used as the z axis of the local shading coordinate
+    /// system.
+    shading_normal: Vector3<f32>,
+
+    /// The primary surface tangent vector after any perturbations (by bump
+    /// mapping, for example). This is used as the x axis of the local shading
+    /// coordinate system.
+    shading_primary_tangent: Vector3<f32>,
+
+    /// The primary surface tangent vector after any perturbations (by bump
+    /// mapping, for example). This is orthogonal to `shading_normal` and
+    /// `shading_primary_tangent` and is used as the y axis of the local shading
+    /// coordinate system.
+    shading_secondary_tangent: Vector3<f32>,
+}
+
+impl Bsdf {
+    /// Construct a BSDF that describes the way light scatters a point on a
+    /// surface.
+    ///
+    /// * interaction - Contains information about the differential geometry at
+    ///   the point on the surface.
+    /// * relative_refraction - The relative index of refraction over the
+    ///   boundry of the surface. This should be set to 1 for opaque surfaces.
+    pub fn new(interaction: SurfaceInteraction, relative_refraction: f32) -> Self {
+        Self {
+            relative_refraction,
+            bxdfs: vec![],
+            original_normal: interaction.original_geometry.normal,
+            shading_normal: interaction.shading_geometry.normal,
+            shading_primary_tangent: interaction.shading_geometry.dpdu,
+            shading_secondary_tangent: interaction
+                .shading_geometry
+                .normal
+                .cross(interaction.shading_geometry.dpdu),
+        }
+    }
+
+    /// Add an element to the BSDF's collection of BxDFs.
+    pub fn add(&mut self, bxdf: Box<dyn Bxdf>) {
+        self.bxdfs.push(bxdf)
+    }
+
+    /// Return the number of elements in the BSDF's collection of BxDFs that
+    /// have the given BxDF type.
+    pub fn count_with_type(&self, ty: BxdfType) -> usize {
+        self.bxdfs.iter().filter(|bxdf| bxdf.has_type(ty)).count()
+    }
+
+    /// Transform the vector from world space to the local shading space.
+    pub fn transform_world_to_local(&self, v: &Vector3<f32>) -> Vector3<f32> {
+        vec3(
+            v.dot(self.shading_primary_tangent),
+            v.dot(self.shading_secondary_tangent),
+            v.dot(self.shading_normal),
+        )
+    }
+
+    /// Transform the vector from the local shading space to world space.
+    pub fn transform_local_to_world(&self, v: &Vector3<f32>) -> Vector3<f32> {
+        vec3(
+            self.shading_primary_tangent.x * v.x
+                + self.shading_secondary_tangent.x * v.y
+                + self.shading_normal.x * v.z,
+            self.shading_primary_tangent.y * v.x
+                + self.shading_secondary_tangent.y * v.y
+                + self.shading_normal.y * v.z,
+            self.shading_primary_tangent.z * v.x
+                + self.shading_secondary_tangent.z * v.y
+                + self.shading_normal.z * v.z,
+        )
+    }
 }
 
 bitflags! {

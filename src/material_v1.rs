@@ -1,7 +1,7 @@
 use crate::color::RgbSpectrum;
 
 #[derive(Debug)]
-pub struct Material {
+pub struct MaterialV1 {
     pub color: RgbSpectrum,
     pub ambient: f32,
     pub diffuse: f32,
@@ -13,7 +13,7 @@ pub struct Material {
     pub reflective: f32,
 }
 
-impl Material {
+impl MaterialV1 {
     pub fn new(
         color: RgbSpectrum,
         ambient: f32,

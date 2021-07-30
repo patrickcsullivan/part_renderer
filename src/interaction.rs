@@ -25,16 +25,28 @@ pub struct SurfaceInteraction {
 /// partial derivatives of the XYZ position with respect to UV coordinates.
 #[derive(Debug, Clone, Copy)]
 pub struct SurfaceGeometry {
-    pub normal: cgmath::Vector3<f32>,
+    pub normal: Vector3<f32>,
+
+    /// The partial derivative of the position with respect to U.
+    pub dpdu: Vector3<f32>,
+
+    /// The partial derivative of the position with respect to V.
+    pub dpdv: Vector3<f32>,
 }
 
 impl SurfaceInteraction {
-    pub fn new(point: Point3<f32>, neg_ray_direction: Vector3<f32>, normal: Vector3<f32>) -> Self {
+    pub fn new(
+        point: Point3<f32>,
+        neg_ray_direction: Vector3<f32>,
+        normal: Vector3<f32>,
+        dpdu: Vector3<f32>,
+        dpdv: Vector3<f32>,
+    ) -> Self {
         Self {
             point,
             neg_ray_direction,
-            original_geometry: SurfaceGeometry { normal },
-            shading_geometry: SurfaceGeometry { normal },
+            original_geometry: SurfaceGeometry { normal, dpdu, dpdv },
+            shading_geometry: SurfaceGeometry { normal, dpdu, dpdv },
         }
     }
 

@@ -2,7 +2,7 @@ mod aggregate;
 
 pub use aggregate::PrimitiveAggregate;
 
-use crate::{material::Material, shape::Shape};
+use crate::{material_v1::MaterialV1, shape::Shape};
 use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 
 /// Combines a shape and a reference to a material. This is the basic primitive
@@ -10,7 +10,7 @@ use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 #[derive(Debug, Clone, Copy)]
 pub struct Primitive<'msh, 'mtrx, 'mtrl> {
     pub shape: Shape<'msh, 'mtrx>,
-    pub material: &'mtrl Material,
+    pub material: &'mtrl MaterialV1,
 
     /// Tracks the index of the primitives in a bounding volume
     /// hierarchy if it is stored in one.
@@ -18,7 +18,7 @@ pub struct Primitive<'msh, 'mtrx, 'mtrl> {
 }
 
 impl<'msh, 'mtrx, 'mtrl> Primitive<'msh, 'mtrx, 'mtrl> {
-    pub fn new(shape: Shape<'msh, 'mtrx>, material: &'mtrl Material) -> Self {
+    pub fn new(shape: Shape<'msh, 'mtrx>, material: &'mtrl MaterialV1) -> Self {
         Self {
             shape,
             material,

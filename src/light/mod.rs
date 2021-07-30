@@ -3,7 +3,7 @@ mod point_light;
 pub use point_light::PointLightSource;
 
 use crate::{
-    color::RgbSpectrum, geometry::vector, interaction::SurfaceInteraction, material::Material,
+    color::RgbSpectrum, geometry::vector, interaction::SurfaceInteraction, material_v1::MaterialV1,
     ray::Ray, scene::Scene,
 };
 use cgmath::{InnerSpace, Point2, Point3, Vector3};
@@ -56,7 +56,7 @@ impl VisibilityTester {
 }
 
 pub fn phong_shading(
-    material: &Material,
+    material: &MaterialV1,
     light: &LightSource,
     position: &Point3<f32>,
     eye: &Vector3<f32>,
@@ -100,14 +100,14 @@ pub fn phong_shading(
 #[cfg(test)]
 mod phong_shading_tests {
     use super::{phong_shading, PointLightSource};
-    use crate::material::Material;
+    use crate::material_v1::MaterialV1;
     use crate::test::ApproxEq;
     use crate::{color::RgbSpectrum, light::LightSource};
     use cgmath::{Point3, Vector3};
 
     #[test]
     fn eye_between_light_and_surface() {
-        let material = Material::new(
+        let material = MaterialV1::new(
             RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
             0.1,
             0.9,
@@ -129,7 +129,7 @@ mod phong_shading_tests {
 
     #[test]
     fn surface_in_shadow() {
-        let material = Material::new(
+        let material = MaterialV1::new(
             RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
             0.1,
             0.9,
@@ -151,7 +151,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_between_light_and_surface_and_offset_45_degrees() {
-        let material = Material::new(
+        let material = MaterialV1::new(
             RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
             0.1,
             0.9,
@@ -173,7 +173,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_opposite_surface_light_offset() {
-        let material = Material::new(
+        let material = MaterialV1::new(
             RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
             0.1,
             0.9,
@@ -195,7 +195,7 @@ mod phong_shading_tests {
 
     #[test]
     fn eye_in_reflection_path() {
-        let material = Material::new(
+        let material = MaterialV1::new(
             RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
             0.1,
             0.9,
@@ -217,7 +217,7 @@ mod phong_shading_tests {
 
     #[test]
     fn light_behind_surface() {
-        let material = Material::new(
+        let material = MaterialV1::new(
             RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
             0.1,
             0.9,

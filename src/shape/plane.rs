@@ -1,6 +1,6 @@
 use crate::interaction::SurfaceInteraction;
 use crate::ray::Ray;
-use cgmath::{InnerSpace, Matrix, Matrix4, Transform, Vector3};
+use cgmath::{vec3, InnerSpace, Matrix, Matrix4, Transform, Vector3};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Plane<'mtrx> {
@@ -43,7 +43,13 @@ impl<'mtrx> Plane<'mtrx> {
 
         let obj_p = obj_ray.at_t(t);
         let world_p = self.object_to_world.transform_point(obj_p);
-        let interaction = SurfaceInteraction::new(world_p, -1.0 * ray.direction, self.normal());
+        let interaction = SurfaceInteraction::new(
+            world_p,
+            -1.0 * ray.direction,
+            self.normal(),
+            vec3(0.0, 0.0, 0.0), // FIXME
+            vec3(0.0, 0.0, 0.0), // FIXME
+        );
         Some((t, interaction))
     }
 }

@@ -6,7 +6,7 @@ use crate::{
     geometry::matrix::identity4,
     integrator::{render, OriginalRayTracer},
     light::LightSource,
-    material::Material,
+    material_v1::MaterialV1,
     primitive::PrimitiveAggregate,
     sampler::{ConstantSampler, IncrementalSampler},
     scene::{self, Scene},
@@ -84,13 +84,13 @@ pub fn bunny_orth() {
 
 fn circles_scene<'msh, 'mtrx, 'mtrl>(
     matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
-    material_arena: &'mtrl mut Arena<Material>,
+    material_arena: &'mtrl mut Arena<MaterialV1>,
 ) -> Scene<'msh, 'mtrx, 'mtrl> {
     let right_transf = matrix_arena.alloc(Matrix4::from_translation(Vector3::new(2.0, 0.0, 0.0)));
     let left_transf = matrix_arena.alloc(Matrix4::from_translation(Vector3::new(-2.0, 0.0, 0.0)));
     let identity = matrix_arena.alloc(identity4());
 
-    let material = material_arena.alloc(Material::new(
+    let material = material_arena.alloc(MaterialV1::new(
         RgbSpectrum::from_rgb(1.0, 0.2, 1.0),
         0.1,
         0.9,
@@ -118,7 +118,7 @@ fn circles_scene<'msh, 'mtrx, 'mtrl>(
 fn bunny_scene<'msh, 'mtrx, 'mtrl>(
     mesh_arena: &'msh mut Arena<Mesh<'mtrx>>,
     matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
-    material_arena: &'mtrl mut Arena<Material>,
+    material_arena: &'mtrl mut Arena<MaterialV1>,
 ) -> Scene<'msh, 'mtrx, 'mtrl> {
     let identity = matrix_arena.alloc(identity4());
     let right_transf = matrix_arena
@@ -135,7 +135,7 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         matrix_arena.alloc(Matrix4::from_angle_x(Rad(PI / -2.0)) * Matrix4::from_scale(0.02));
     let inv_bunny_transf = matrix_arena.alloc(bunny_transf.inverse_transform().unwrap());
 
-    let floor_material = material_arena.alloc(Material::new(
+    let floor_material = material_arena.alloc(MaterialV1::new(
         RgbSpectrum::from_rgb(1.0, 0.9, 0.9),
         0.1,
         0.9,
@@ -143,7 +143,7 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         200.0,
         0.1,
     ));
-    let right_material = material_arena.alloc(Material::new(
+    let right_material = material_arena.alloc(MaterialV1::new(
         RgbSpectrum::from_rgb(0.5, 1.0, 0.1),
         0.1,
         0.7,
@@ -151,7 +151,7 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         200.0,
         0.25,
     ));
-    let left_material = material_arena.alloc(Material::new(
+    let left_material = material_arena.alloc(MaterialV1::new(
         RgbSpectrum::from_rgb(1.0, 0.1, 0.3),
         0.1,
         0.7,
@@ -159,7 +159,7 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         200.0,
         0.0,
     ));
-    let back_material = material_arena.alloc(Material::new(
+    let back_material = material_arena.alloc(MaterialV1::new(
         RgbSpectrum::from_rgb(0.1, 1.0, 0.5),
         0.1,
         0.7,
@@ -167,7 +167,7 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         200.0,
         0.5,
     ));
-    let triangle_material = material_arena.alloc(Material::new(
+    let triangle_material = material_arena.alloc(MaterialV1::new(
         RgbSpectrum::from_rgb(1.0, 0.8, 0.1),
         0.1,
         0.7,
