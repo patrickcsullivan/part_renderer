@@ -16,7 +16,7 @@ use cgmath::{Matrix4, Point3, Rad, Transform, Vector2, Vector3};
 use std::f32::consts::PI;
 use typed_arena::Arena;
 
-pub fn simple_ortho() {
+pub fn circles_ortho() {
     let mut matrix_arena = Arena::new();
     let mut material_arena = Arena::new();
     let scene = circles_scene(&mut matrix_arena, &mut material_arena);
@@ -45,14 +45,14 @@ pub fn simple_ortho() {
     );
     let img = film.write_image();
 
-    let _ = img.save("simple_ortho.png");
+    let _ = img.save("circles_ortho.png");
 }
 
-pub fn complex_ortho() {
+pub fn bunny_orth() {
     let mut mesh_arena = Arena::new();
     let mut matrix_arena = Arena::new();
     let mut material_arena = Arena::new();
-    let scene = teapot_scene(&mut mesh_arena, &mut matrix_arena, &mut material_arena);
+    let scene = bunny_scene(&mut mesh_arena, &mut matrix_arena, &mut material_arena);
 
     let camera_to_world = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0))
         * Matrix4::from_angle_x(Rad(PI / 8.0))
@@ -79,7 +79,7 @@ pub fn complex_ortho() {
     );
     let img = film.write_image();
 
-    let _ = img.save("complex_ortho.png");
+    let _ = img.save("bunny_orth.png");
 }
 
 fn circles_scene<'msh, 'mtrx, 'mtrl>(
@@ -115,7 +115,7 @@ fn circles_scene<'msh, 'mtrx, 'mtrl>(
     )
 }
 
-fn teapot_scene<'msh, 'mtrx, 'mtrl>(
+fn bunny_scene<'msh, 'mtrx, 'mtrl>(
     mesh_arena: &'msh mut Arena<Mesh<'mtrx>>,
     matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
     material_arena: &'mtrl mut Arena<Material>,
@@ -131,9 +131,9 @@ fn teapot_scene<'msh, 'mtrx, 'mtrl>(
     let back_transf = matrix_arena
         .alloc(Matrix4::from_translation(Vector3::new(0.0, 1.0, 1.5)) * Matrix4::from_scale(0.55));
     let back_inv_transf = matrix_arena.alloc(back_transf.inverse_transform().unwrap());
-    let teapot_transf =
-        matrix_arena.alloc(Matrix4::from_angle_x(Rad(PI / -2.0)) * Matrix4::from_scale(0.1));
-    let inv_teapot_transf = matrix_arena.alloc(teapot_transf.inverse_transform().unwrap());
+    let bunny_transf =
+        matrix_arena.alloc(Matrix4::from_angle_x(Rad(PI / -2.0)) * Matrix4::from_scale(0.02));
+    let inv_bunny_transf = matrix_arena.alloc(bunny_transf.inverse_transform().unwrap());
 
     let floor_material = material_arena.alloc(Material::new(
         RgbSpectrum::from_rgb(1.0, 0.9, 0.9),
@@ -181,11 +181,11 @@ fn teapot_scene<'msh, 'mtrx, 'mtrl>(
     let left = Shape::sphere(left_transf, left_inv_transf, false);
     let back = Shape::sphere(back_transf, back_inv_transf, false);
 
-    let file = std::fs::File::open("teapot.stl").unwrap();
+    let file = std::fs::File::open("bunny.stl").unwrap();
     let mut reader = std::io::BufReader::new(&file);
-    let teapot_mesh = mesh_arena
-        .alloc(Mesh::from_stl(teapot_transf, inv_teapot_transf, false, &mut reader).unwrap());
-    let teapot = PrimitiveAggregate::from_mesh(teapot_mesh, triangle_material);
+    let bunny_mesh = mesh_arena
+        .alloc(Mesh::from_stl(bunny_transf, inv_bunny_transf, false, &mut reader).unwrap());
+    let bunny = PrimitiveAggregate::from_mesh(bunny_mesh, triangle_material);
 
     let light1 = LightSource::point_light(
         RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
@@ -202,7 +202,7 @@ fn teapot_scene<'msh, 'mtrx, 'mtrl>(
             PrimitiveAggregate::primitive(right, right_material),
             PrimitiveAggregate::primitive(left, left_material),
             PrimitiveAggregate::primitive(back, back_material),
-            teapot,
+            bunny,
         ]),
         vec![light1, light2],
     )

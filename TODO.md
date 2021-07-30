@@ -4,8 +4,12 @@
 [X] Write `Film` to image.
 [X] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
 [X] Parallelize render to reduce render times.
+[X] Use Stanford bunny model.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`.
     [ ] Implement some working BSDFs.
+        [ ] Perfect specular Fresnel objects.
+        [X] Perfect diffuse Lambertian reflection.
+        [ ] Microfacet model.
 [ ] Finish fleshing out `Whitted`.
 [ ] Move on to new reflection, material, and lighting chapters.
 

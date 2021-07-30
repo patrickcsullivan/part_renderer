@@ -20,7 +20,6 @@ mod shape;
 mod test;
 
 fn main() {
-    println!("Hello, world!");
-    // crate::demo::simple_ortho();
-    crate::demo::complex_ortho();
+    println!("Starting...");
+    crate::demo::bunny_orth();
 }

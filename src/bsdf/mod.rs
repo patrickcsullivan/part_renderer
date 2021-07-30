@@ -1,4 +1,5 @@
 mod geometry;
+mod lambertian;
 mod scale;
 
 use bitflags::bitflags;
@@ -74,6 +75,7 @@ pub trait Bxdf {
     /// * The spetrum of light that is scattered in the viewing direction due to
     ///   light arriving at the surface from the returned incident light
     ///   direction.
+    /// * PDF ?
     ///
     /// This method is useful for evaluating BxDFs that scatter light in only a
     /// single direction, such as perfectly specular BxDFs.
@@ -85,9 +87,10 @@ pub trait Bxdf {
         &self,
         wo: &Vector3<f32>,
         sample: Point2<f32>,
-        pdf: f32,
         sampled_type: BxdfType,
-    ) -> (Vector3<f32>, RgbSpectrum);
+    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+        todo!()
+    }
 
     /// Evaluate the hemispherical-directional reflectance function. This
     /// returns the total reflection in the direction `wo` due to constant
