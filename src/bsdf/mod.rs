@@ -10,6 +10,12 @@ use crate::color::RgbSpectrum;
 /// light scatters at a point on a surface. A BSDF is composed of multiple
 /// different bidirectional reflectance distribution functions and bidirectional
 /// transmission distribution functions.
+///
+/// BSDFs only model the scattering of light that enters and exits a surface at
+/// a single point. To model the scattering of light that occurs as light passes
+/// through a material (rather than just modeling scattering that occurs at a
+/// surface interaction) a bidirectional scattering-surface reflectance
+/// distribution function (BSSRDF) should be used instead.
 pub struct Bsdf {
     bxdfs: Vec<Box<dyn Bxdf>>,
 }

@@ -4,7 +4,8 @@
 [X] Write `Film` to image.
 [X] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
 [X] Parallelize render to reduce render times.
-[ ] Start replacing old `RayTracer` with limited version of `Whitted`. 
+[ ] Start replacing old `RayTracer` with limited version of `Whitted`.
+    [ ] Implement some working BSDFs.
 [ ] Finish fleshing out `Whitted`.
 [ ] Move on to new reflection, material, and lighting chapters.
 
@@ -27,3 +28,4 @@
     [ ] `CloneWithSeed` - Enables the sampler to be cloned with a given seed.
     [ ] `IncrementalSampler` - Generates a single 1D or 2D sample for the current sample vector at a time.
     [ ] `ArraySampler` - Generates an array of 1D or 2D samples for the current sample vector at a time.
+[ ] Replace `BxdfType` flag with two enums, `ScatteringHemisphere` and `Scattering
