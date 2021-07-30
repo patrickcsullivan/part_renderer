@@ -100,6 +100,62 @@ impl Bsdf {
                 + self.shading_normal.z * v.z,
         )
     }
+
+    /// Calculate the spectrum of light that is scattered in the viewing
+    /// direction, `wo_world`, due to light arriving at some point on a surface
+    /// from the incident light direction, `wi_world`.
+    pub fn f(
+        &self,
+        wo_world: &Vector3<f32>,
+        wi_world: &Vector3<f32>,
+        flags: BxdfType,
+    ) -> RgbSpectrum {
+        let wo = self.transform_world_to_local(wo_world);
+        let wi = self.transform_world_to_local(wi_world);
+
+        let reflect_or_transmit =
+            if wi_world.dot(self.original_normal) * wo_world.dot(self.original_normal) > 0.0 {
+                BxdfType::BSDF_REFLECTION
+            } else {
+                BxdfType::BSDF_TRANSMISSION
+            };
+
+        let type_to_eval = flags | reflect_or_transmit;
+
+        self.bxdfs
+            .iter()
+            .filter(|bxdf| bxdf.has_type(type_to_eval))
+            .fold(RgbSpectrum::black(), |light, bxdf| light + bxdf.f(&wo, &wi))
+    }
+
+    /// Evaluate the hemispherical-directional reflectance function. This
+    /// returns the total reflection in the direction `wo` due to constant
+    /// illumination over the hemisphere.
+    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>], flags: BxdfType) -> RgbSpectrum {
+        self.bxdfs
+            .iter()
+            .filter(|bxdf| bxdf.has_type(flags))
+            .fold(RgbSpectrum::black(), |light, bxdf| {
+                light + bxdf.rho_hd(wo, samples)
+            })
+    }
+
+    /// Evaluate the hemispherical-hemispherical reflectance function. This
+    /// returns the fraction of incident light reflected by a surface when
+    /// incident light is the same from all directions.
+    fn rho_hh(
+        &self,
+        samples1: &[Point2<f32>],
+        samples2: &[Point2<f32>],
+        flags: BxdfType,
+    ) -> RgbSpectrum {
+        self.bxdfs
+            .iter()
+            .filter(|bxdf| bxdf.has_type(flags))
+            .fold(RgbSpectrum::black(), |light, bxdf| {
+                light + bxdf.rho_hh(samples1, samples2)
+            })
+    }
 }
 
 bitflags! {
@@ -135,11 +191,11 @@ pub trait Bxdf {
     /// direction, `wo`, due to light arriving at some point on a surface from
     /// the incident light direction, `wi`.
     ///
-    /// This method is useful for evaluating BDFs that scatter light over a
-    /// range of directions. BDFs that scatter light in only a single direction,
-    /// such as perfectly specular BDFs, are better evaluated with `sample_f`,
-    /// since it will be practically impossible to call `f` with `wo` and `wi`
-    /// arguments that result in non-zero light scattering.
+    /// This method is useful for evaluating BxDFs that scatter light over a
+    /// range of directions. BxDFs that scatter light in only a single
+    /// direction, such as perfectly specular BxDFs, are better evaluated with
+    /// `sample_f`, since it will be practically impossible to call `f` with
+    /// `wo` and `wi` arguments that result in non-zero light scattering.
     ///
     /// * wo - The view direction. A normalized vector in the shading coordinate
     ///   system that points from the point on the surface to the point from
