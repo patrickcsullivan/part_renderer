@@ -440,5 +440,39 @@ impl MulAssign<f32> for RgbSpectrum {
     }
 }
 
-// Division by a scalar is excluded because it's always more efficient to
-// multiply by a reciprocal.
+// Scalar division.
+
+impl Div<f32> for RgbSpectrum {
+    type Output = RgbSpectrum;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
+        let inv_rhs = 1.0 / rhs;
+        for (sample, left) in samples.iter_mut().zip(&self.samples) {
+            *sample = left * inv_rhs
+        }
+        Self::Output { samples }
+    }
+}
+
+impl Div<f32> for &RgbSpectrum {
+    type Output = RgbSpectrum;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        let mut samples = [0.0; SAMPLE_COUNT];
+        let inv_rhs = 1.0 / rhs;
+        for (sample, left) in samples.iter_mut().zip(&self.samples) {
+            *sample = left * inv_rhs
+        }
+        Self::Output { samples }
+    }
+}
+
+impl DivAssign<f32> for RgbSpectrum {
+    fn div_assign(&mut self, rhs: f32) {
+        let inv_rhs = 1.0 / rhs;
+        for left in self.samples.iter_mut() {
+            *left *= inv_rhs
+        }
+    }
+}
