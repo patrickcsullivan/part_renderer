@@ -1,26 +1,40 @@
 mod point;
 mod visibility;
 
-pub use point::PointLight;
 pub use visibility::VisibilityTester;
 
 use bitflags::bitflags;
-use cgmath::{Point2, Vector3};
+use cgmath::{Point2, Point3, Vector3};
 
+use self::point::PointLight;
 use crate::{color::RgbSpectrum, interaction::SurfaceInteraction, scene::Scene};
 
-pub trait Light {
+pub enum Light {
+    PointLight(PointLight),
+}
+
+impl Light {
+    pub fn point_light(position: Point3<f32>, intensity: RgbSpectrum) -> Self {
+        Self::PointLight(PointLight::new(position, intensity))
+    }
+
     /// Given a surface interation containing a point and a time, return the
     /// radiance arriving at that point and time due to the light source,
     /// ignoring possible occlusion. In addition to incoming radiance, this
     /// method also returns the incident direction from the surface point to the
     /// light source, and a visibility tester.
     // TODO: Maybe rename to `incident_light`.
-    fn li(&self, interaction: &SurfaceInteraction)
-        -> (RgbSpectrum, Vector3<f32>, VisibilityTester);
+    pub fn li(
+        &self,
+        interaction: &SurfaceInteraction,
+    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester) {
+        match self {
+            Light::PointLight(pl) => pl.li(interaction),
+        }
+    }
 
     // TODO: See p. 716 for explanation.
-    fn sample_li(
+    pub fn sample_li(
         &self,
         interaction: &SurfaceInteraction,
         _u: &Point2<f32>,
@@ -33,17 +47,27 @@ pub trait Light {
     ///
     /// This is useful for light transport algorithms that will spend more time
     /// sampling and modeling lights that emit more power.
-    fn power(&self) -> RgbSpectrum;
+    pub fn power(&self) -> RgbSpectrum {
+        match self {
+            Light::PointLight(pl) => pl.power(),
+        }
+    }
 
     /// Determine characteristics of the scene that could affect the light
     /// before rendering starts. This method should be called before reding
     /// begins.
-    fn preprocess(&mut self, _scene: &Scene) {
-        // Do nothing by default.
+    pub fn preprocess(&mut self, scene: &Scene) {
+        match self {
+            Light::PointLight(pl) => pl.preprocess(scene),
+        }
     }
 
     /// Returns the light flags that describe the type of light source.
-    fn flags(&self) -> LightFlags;
+    pub fn flags(&self) -> LightFlags {
+        match self {
+            Light::PointLight(pl) => pl.flags(),
+        }
+    }
 }
 
 bitflags! {

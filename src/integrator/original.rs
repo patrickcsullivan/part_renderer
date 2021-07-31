@@ -92,7 +92,7 @@ impl OriginalRayTracer {
 
     fn phong_shading(
         material: &MaterialV1,
-        light: &Box<dyn Light + Send + Sync>, // FIXME
+        light: &Light, // FIXME
         interaction: &SurfaceInteraction,
         in_shadow: bool,
     ) -> RgbSpectrum {

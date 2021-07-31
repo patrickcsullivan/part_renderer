@@ -1,16 +1,15 @@
 use crate::{
-    camera::{Camera, OrthographicCamera},
+    camera::OrthographicCamera,
     color::RgbSpectrum,
     film::Film,
     filter::BoxFilter,
     geometry::matrix::identity4,
     integrator::{render, OriginalRayTracer},
-    light::PointLight,
-    light_v1::LightSource,
+    light::Light,
     material_v1::MaterialV1,
     primitive::PrimitiveAggregate,
-    sampler::{ConstantSampler, IncrementalSampler},
-    scene::{self, Scene},
+    sampler::ConstantSampler,
+    scene::Scene,
     shape::{Mesh, Shape},
 };
 use cgmath::{Matrix4, Point3, Rad, Transform, Vector2, Vector3};
@@ -103,7 +102,7 @@ fn circles_scene<'msh, 'mtrx, 'mtrl>(
     let sphere1 = Shape::sphere(identity, identity, false);
     let sphere2 = Shape::sphere(right_transf, left_transf, false);
     let sphere3 = Shape::sphere(left_transf, right_transf, false);
-    let light = PointLight::new(Point3::new(-10.0, 10.0, -10.0), RgbSpectrum::constant(1.0));
+    let light = Light::point_light(Point3::new(-10.0, 10.0, -10.0), RgbSpectrum::constant(1.0));
 
     Scene::new(
         PrimitiveAggregate::Vector(vec![
@@ -111,7 +110,7 @@ fn circles_scene<'msh, 'mtrx, 'mtrl>(
             PrimitiveAggregate::primitive(sphere2, material),
             PrimitiveAggregate::primitive(sphere3, material),
         ]),
-        vec![Box::new(light)],
+        vec![light],
     )
 }
 
@@ -187,11 +186,11 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         .alloc(Mesh::from_stl(bunny_transf, inv_bunny_transf, false, &mut reader).unwrap());
     let bunny = PrimitiveAggregate::from_mesh(bunny_mesh, triangle_material);
 
-    let light1 = PointLight::new(
+    let light1 = Light::point_light(
         Point3::new(-10.0, 10.0, -10.0),
         RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
     );
-    let light2 = PointLight::new(
+    let light2 = Light::point_light(
         Point3::new(10.0, 10.0, -10.0),
         RgbSpectrum::from_rgb(0.2, 0.0, 0.4),
     );
@@ -204,6 +203,6 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
             PrimitiveAggregate::primitive(back, back_material),
             bunny,
         ]),
-        vec![Box::new(light1), Box::new(light2)],
+        vec![light1, light2],
     )
 }

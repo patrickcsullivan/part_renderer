@@ -7,14 +7,11 @@ use crate::{
 
 pub struct Scene<'msh, 'mtrx, 'mtrl> {
     pub primitives: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
-    pub lights: Vec<Box<dyn Light + Send + Sync>>,
+    pub lights: Vec<Light>,
 }
 
 impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
-    pub fn new(
-        renderable: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
-        lights: Vec<Box<dyn Light + Send + Sync>>,
-    ) -> Self {
+    pub fn new(renderable: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>, lights: Vec<Light>) -> Self {
         Self {
             primitives: renderable,
             lights,
