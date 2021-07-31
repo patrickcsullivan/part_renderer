@@ -8,7 +8,6 @@ mod geometry;
 mod integrator;
 mod interaction;
 mod light;
-mod light_v1;
 mod material;
 mod material_v1;
 mod number;
