@@ -5,7 +5,7 @@ use crate::{
     filter::BoxFilter,
     geometry::matrix::identity4,
     integrator::{render, OriginalRayTracer},
-    light::LightSource,
+    light_v1::LightSource,
     material_v1::MaterialV1,
     primitive::PrimitiveAggregate,
     sampler::{ConstantSampler, IncrementalSampler},

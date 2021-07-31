@@ -1,6 +1,6 @@
 use crate::{
     interaction::SurfaceInteraction,
-    light::LightSource,
+    light_v1::LightSource,
     primitive::{Primitive, PrimitiveAggregate},
     ray::Ray,
 };

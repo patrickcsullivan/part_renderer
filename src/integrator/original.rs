@@ -1,5 +1,5 @@
 use crate::{
-    color::RgbSpectrum, interaction::SurfaceInteraction, light::LightSource,
+    color::RgbSpectrum, interaction::SurfaceInteraction, light_v1::LightSource,
     material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::{InnerSpace, Point3};
@@ -49,7 +49,7 @@ impl OriginalRayTracer {
                 // the occlusion check doesn't accidentally intersect the surface.
                 let in_shadow = Self::is_occluded(scene, interaction.over_point(), light);
 
-                let surface = crate::light::phong_shading(
+                let surface = crate::light_v1::phong_shading(
                     material,
                     light,
                     &interaction.point,
