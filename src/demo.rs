@@ -188,11 +188,11 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
 
     let light1 = Light::point_light(
         Point3::new(-10.0, 10.0, -10.0),
-        RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
+        RgbSpectrum::from_rgb(1.0, 1.0, 1.0) * 250.0,
     );
     let light2 = Light::point_light(
         Point3::new(10.0, 10.0, -10.0),
-        RgbSpectrum::from_rgb(0.2, 0.0, 0.4),
+        RgbSpectrum::from_rgb(0.2, 0.0, 0.4) * 250.0,
     );
 
     Scene::new(
