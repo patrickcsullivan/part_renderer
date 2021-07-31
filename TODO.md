@@ -10,6 +10,11 @@
         [ ] Perfect specular Fresnel objects.
         [X] Perfect diffuse Lambertian reflection.
         [ ] Microfacet model.
+    [ ] Minimal material library.
+        [ ] Matte material.
+        [ ] Plastic material.
+    [ ] Light sources.
+        [ ] Point light.
 [ ] Finish fleshing out `Whitted`.
 [ ] Move on to new reflection, material, and lighting chapters.
 
