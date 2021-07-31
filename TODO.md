@@ -10,6 +10,8 @@
         [ ] Perfect specular Fresnel objects.
         [X] Perfect diffuse Lambertian reflection.
         [ ] Microfacet model.
+    [ ] Textures.
+        [ ] Constant texture.
     [ ] Minimal material library.
         [ ] Matte material.
         [ ] Plastic material.
