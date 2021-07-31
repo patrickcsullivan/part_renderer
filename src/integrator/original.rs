@@ -49,7 +49,7 @@ impl OriginalRayTracer {
                 // // the occlusion check doesn't accidentally intersect the surface.
                 // let in_shadow = Self::is_occluded(scene, interaction.over_point(), *light);
 
-                let surface = Self::phong_shading(material, light, &interaction, false);
+                let surface = Self::shading(scene, material, light, &interaction);
 
                 let reflected = Self::reflected_color(scene, material, interaction, remaining);
 
@@ -89,13 +89,13 @@ impl OriginalRayTracer {
         }
     }
 
-    fn phong_shading(
+    fn shading(
+        scene: &Scene,
         material: &MaterialV1,
         light: &Light, // FIXME
         interaction: &SurfaceInteraction,
-        in_shadow: bool,
     ) -> RgbSpectrum {
-        let (incident_light, to_light, _vis) = light.li(interaction);
+        let (incident_light, to_light, vis) = light.li(interaction);
         let effective_color = &material.color * incident_light;
         let ambient = &effective_color * material.ambient;
 
@@ -103,9 +103,7 @@ impl OriginalRayTracer {
         // If it's negative then the light is on the other side of the surface.
         let light_dot_normal = to_light.dot(interaction.original_geometry.normal);
 
-        let (diffuse, specular) = if in_shadow || light_dot_normal < 0.0 {
-            (RgbSpectrum::constant(0.0), RgbSpectrum::constant(0.0))
-        } else {
+        let (diffuse, specular) = if light_dot_normal >= 0.0 && !vis.unocculuded(scene) {
             let diffuse = effective_color * material.diffuse * light_dot_normal;
 
             // reflect_dot_eye is the cosine of the angle between the reflection and
@@ -120,6 +118,8 @@ impl OriginalRayTracer {
             };
 
             (diffuse, specular)
+        } else {
+            (RgbSpectrum::black(), RgbSpectrum::black())
         };
 
         ambient + diffuse + specular

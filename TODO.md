@@ -5,10 +5,10 @@
 [X] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
 [X] Parallelize render to reduce render times.
 [X] Use Stanford bunny model.
-[ ] Light sources. **CURRENT**
-    [ ] Point light.
+[X] Light sources.
+    [X] Point light.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`.
-    [ ] Visibility tester.
+    [ ] Visibility tester. **CURRENT**
     [ ] Implement some working BSDFs.
         [ ] Perfect specular Fresnel objects.
         [X] Perfect diffuse Lambertian reflection.

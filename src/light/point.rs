@@ -33,7 +33,7 @@ impl PointLight {
         let light_to_point = self.position - interaction.point;
         let li = self.intensity / light_to_point.magnitude2();
         let wi = light_to_point.normalize();
-        let vis = VisibilityTester {}; // FIXME;
+        let vis = VisibilityTester::new(interaction.point, self.position);
         (li, wi, vis)
     }
 
