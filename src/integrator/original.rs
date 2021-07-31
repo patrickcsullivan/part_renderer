@@ -1,7 +1,6 @@
 use crate::{
     color::RgbSpectrum, geometry::vector, interaction::SurfaceInteraction, light::Light,
-    light_v1::LightSource, material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler,
-    scene::Scene,
+    material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::{InnerSpace, Point3, Vector3};
 use typed_arena::Arena;
@@ -58,22 +57,22 @@ impl OriginalRayTracer {
             })
     }
 
-    /// Returns true if the specified point is occluded from the light.
-    pub fn is_occluded(scene: &Scene, p: Point3<f32>, light: &LightSource) -> bool {
-        match light {
-            LightSource::PointLight(point_light) => {
-                let to_light = point_light.position - p;
-                let distance = to_light.magnitude();
+    // /// Returns true if the specified point is occluded from the light.
+    // pub fn is_occluded(scene: &Scene, p: Point3<f32>, light: &LightSource) -> bool {
+    //     match light {
+    //         LightSource::PointLight(point_light) => {
+    //             let to_light = point_light.position - p;
+    //             let distance = to_light.magnitude();
 
-                let ray = Ray::new(p, to_light.normalize());
-                if let Some((t, _, _)) = scene.primitives.ray_intersection(&ray) {
-                    t < distance
-                } else {
-                    false
-                }
-            }
-        }
-    }
+    //             let ray = Ray::new(p, to_light.normalize());
+    //             if let Some((t, _, _)) = scene.primitives.ray_intersection(&ray) {
+    //                 t < distance
+    //             } else {
+    //                 false
+    //             }
+    //         }
+    //     }
+    // }
 
     fn reflected_color(
         scene: &Scene,
