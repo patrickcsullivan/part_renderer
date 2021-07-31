@@ -73,8 +73,8 @@ impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
             for light in &scene.lights {
                 // CONTINUE HERE. <<<------
                 let sample = sampler.get_2d();
-                let (radiance_from_light, point_to_light_direction, pdf, visibility) =
-                    light.sample_incoming_radiance_at_surface(&interaction, sample);
+                let (radiance_from_light, point_to_light_direction, visibility, pdf) =
+                    light.sample_li(&interaction, &sample);
                 if radiance_from_light.is_black() || pdf == 0.0 {
                     continue;
                 }

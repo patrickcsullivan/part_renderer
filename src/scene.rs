@@ -1,19 +1,19 @@
 use crate::{
     interaction::SurfaceInteraction,
-    light_v1::LightSource,
+    light::Light,
     primitive::{Primitive, PrimitiveAggregate},
     ray::Ray,
 };
 
 pub struct Scene<'msh, 'mtrx, 'mtrl> {
     pub primitives: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
-    pub lights: Vec<LightSource>,
+    pub lights: Vec<Box<dyn Light + Send + Sync>>,
 }
 
 impl<'msh, 'mtrx, 'mtrl> Scene<'msh, 'mtrx, 'mtrl> {
     pub fn new(
         renderable: PrimitiveAggregate<'msh, 'mtrx, 'mtrl>,
-        lights: Vec<LightSource>,
+        lights: Vec<Box<dyn Light + Send + Sync>>,
     ) -> Self {
         Self {
             primitives: renderable,

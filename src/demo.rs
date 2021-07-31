@@ -5,6 +5,7 @@ use crate::{
     filter::BoxFilter,
     geometry::matrix::identity4,
     integrator::{render, OriginalRayTracer},
+    light::PointLight,
     light_v1::LightSource,
     material_v1::MaterialV1,
     primitive::PrimitiveAggregate,
@@ -102,8 +103,7 @@ fn circles_scene<'msh, 'mtrx, 'mtrl>(
     let sphere1 = Shape::sphere(identity, identity, false);
     let sphere2 = Shape::sphere(right_transf, left_transf, false);
     let sphere3 = Shape::sphere(left_transf, right_transf, false);
-    let light =
-        LightSource::point_light(RgbSpectrum::constant(1.0), Point3::new(-10.0, 10.0, -10.0));
+    let light = PointLight::new(Point3::new(-10.0, 10.0, -10.0), RgbSpectrum::constant(1.0));
 
     Scene::new(
         PrimitiveAggregate::Vector(vec![
@@ -111,7 +111,7 @@ fn circles_scene<'msh, 'mtrx, 'mtrl>(
             PrimitiveAggregate::primitive(sphere2, material),
             PrimitiveAggregate::primitive(sphere3, material),
         ]),
-        vec![light],
+        vec![Box::new(light)],
     )
 }
 
@@ -187,13 +187,13 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
         .alloc(Mesh::from_stl(bunny_transf, inv_bunny_transf, false, &mut reader).unwrap());
     let bunny = PrimitiveAggregate::from_mesh(bunny_mesh, triangle_material);
 
-    let light1 = LightSource::point_light(
-        RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
+    let light1 = PointLight::new(
         Point3::new(-10.0, 10.0, -10.0),
+        RgbSpectrum::from_rgb(1.0, 1.0, 1.0),
     );
-    let light2 = LightSource::point_light(
-        RgbSpectrum::from_rgb(0.2, 0.0, 0.4),
+    let light2 = PointLight::new(
         Point3::new(10.0, 10.0, -10.0),
+        RgbSpectrum::from_rgb(0.2, 0.0, 0.4),
     );
 
     Scene::new(
@@ -204,6 +204,6 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
             PrimitiveAggregate::primitive(back, back_material),
             bunny,
         ]),
-        vec![light1, light2],
+        vec![Box::new(light1), Box::new(light2)],
     )
 }

@@ -1,8 +1,9 @@
 use crate::{
-    color::RgbSpectrum, interaction::SurfaceInteraction, light_v1::LightSource,
-    material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler, scene::Scene,
+    color::RgbSpectrum, geometry::vector, interaction::SurfaceInteraction, light::Light,
+    light_v1::LightSource, material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler,
+    scene::Scene,
 };
-use cgmath::{InnerSpace, Point3};
+use cgmath::{InnerSpace, Point3, Vector3};
 use typed_arena::Arena;
 
 use super::RayTracer;
@@ -45,18 +46,11 @@ impl OriginalRayTracer {
             .lights
             .iter()
             .fold(RgbSpectrum::constant(0.0), |color, light| {
-                // Shift the interaction point away from the surface slightly, so that
-                // the occlusion check doesn't accidentally intersect the surface.
-                let in_shadow = Self::is_occluded(scene, interaction.over_point(), light);
+                // // Shift the interaction point away from the surface slightly, so that
+                // // the occlusion check doesn't accidentally intersect the surface.
+                // let in_shadow = Self::is_occluded(scene, interaction.over_point(), *light);
 
-                let surface = crate::light_v1::phong_shading(
-                    material,
-                    light,
-                    &interaction.point,
-                    &interaction.neg_ray_direction,
-                    &interaction.original_geometry.normal,
-                    in_shadow,
-                );
+                let surface = Self::phong_shading(material, light, &interaction, false);
 
                 let reflected = Self::reflected_color(scene, material, interaction, remaining);
 
@@ -94,5 +88,41 @@ impl OriginalRayTracer {
             let color = Self::color_at(scene, &reflect_ray, remaining - 1);
             color * material.reflective
         }
+    }
+
+    fn phong_shading(
+        material: &MaterialV1,
+        light: &Box<dyn Light + Send + Sync>, // FIXME
+        interaction: &SurfaceInteraction,
+        in_shadow: bool,
+    ) -> RgbSpectrum {
+        let (incident_light, to_light, _vis) = light.li(interaction);
+        let effective_color = &material.color * incident_light;
+        let ambient = &effective_color * material.ambient;
+
+        // light_dot_normal is the cosine of the angle between the light and normal.
+        // If it's negative then the light is on the other side of the surface.
+        let light_dot_normal = to_light.dot(interaction.original_geometry.normal);
+
+        let (diffuse, specular) = if in_shadow || light_dot_normal < 0.0 {
+            (RgbSpectrum::constant(0.0), RgbSpectrum::constant(0.0))
+        } else {
+            let diffuse = effective_color * material.diffuse * light_dot_normal;
+
+            // reflect_dot_eye is the cosine of the angle between the reflection and
+            // the camera. If it's negative then the reflection is not visible.
+            let reflect = vector::reflect(-1.0 * to_light, interaction.original_geometry.normal);
+            let reflect_dot_eye = reflect.dot(interaction.neg_ray_direction);
+            let specular = if reflect_dot_eye <= 0.0 {
+                RgbSpectrum::constant(0.0)
+            } else {
+                let factor = reflect_dot_eye.powf(material.shininess);
+                incident_light * material.specular * factor
+            };
+
+            (diffuse, specular)
+        };
+
+        ambient + diffuse + specular
     }
 }
