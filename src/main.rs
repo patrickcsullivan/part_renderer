@@ -23,5 +23,5 @@ mod test;
 
 fn main() {
     println!("Starting...");
-    crate::demo::bunny_orth();
+    crate::demo::teapot_orth();
 }

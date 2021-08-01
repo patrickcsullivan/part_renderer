@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use cgmath::{InnerSpace, Matrix4, Point3, Vector3};
 
-use super::{Light, LightFlags, VisibilityTester};
+use super::{Light, LightFlags};
 use crate::{color::RgbSpectrum, interaction::SurfaceInteraction, scene::Scene};
 
 /// A point light source that emits the same amount of light in all directions.
@@ -26,15 +26,11 @@ impl PointLight {
         }
     }
 
-    pub fn li(
-        &self,
-        interaction: &SurfaceInteraction,
-    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester) {
+    pub fn li(&self, interaction: &SurfaceInteraction) -> (RgbSpectrum, Vector3<f32>) {
         let light_to_point = self.position - interaction.point;
         let li = self.intensity / light_to_point.magnitude2();
         let wi = light_to_point.normalize();
-        let vis = VisibilityTester::new(interaction.point, self.position);
-        (li, wi, vis)
+        (li, wi)
     }
 
     pub fn power(&self) -> RgbSpectrum {

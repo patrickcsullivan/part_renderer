@@ -4,7 +4,7 @@
 [X] Write `Film` to image.
 [X] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
 [X] Parallelize render to reduce render times.
-[X] Use Stanford bunny model.
+[X] Use Stanford teapot model.
 [X] Light sources.
     [X] Point light.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`.
