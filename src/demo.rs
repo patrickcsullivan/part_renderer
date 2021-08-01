@@ -2,51 +2,19 @@ use crate::{
     camera::OrthographicCamera,
     color::RgbSpectrum,
     film::Film,
-    filter::BoxFilter,
+    filter::{BoxFilter, MitchellFilter},
     geometry::matrix::identity4,
     integrator::{render, OriginalRayTracer},
     light::Light,
     material_v1::MaterialV1,
     primitive::PrimitiveAggregate,
-    sampler::ConstantSampler,
+    sampler::{ConstantSampler, StratifiedSampler},
     scene::Scene,
     shape::{Mesh, Shape},
 };
 use cgmath::{Matrix4, Point3, Rad, Transform, Vector2, Vector3};
 use std::f32::consts::PI;
 use typed_arena::Arena;
-
-pub fn circles_ortho() {
-    let mut matrix_arena = Arena::new();
-    let mut material_arena = Arena::new();
-    let scene = circles_scene(&mut matrix_arena, &mut material_arena);
-
-    let camera_to_world = Matrix4::from_angle_x(Rad(3.0 * PI / 4.0))
-        * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
-    let resolution = Vector2::new(600, 400);
-    let mut film = Film::new(resolution);
-    let camera = OrthographicCamera::new(
-        camera_to_world,
-        0.0,
-        100.0,
-        Vector2::new(6.0, 4.0),
-        resolution,
-    );
-
-    let filter = BoxFilter::new(1.5, 1.5);
-    render::<ConstantSampler>(
-        &scene,
-        &camera,
-        &mut film,
-        &filter,
-        &ConstantSampler {},
-        &OriginalRayTracer {},
-        5,
-    );
-    let img = film.write_image();
-
-    let _ = img.save("circles_ortho.png");
-}
 
 pub fn teapot_orth() {
     let mut mesh_arena = Arena::new();
@@ -57,61 +25,33 @@ pub fn teapot_orth() {
     let camera_to_world = Matrix4::from_translation(Vector3::new(0.0, 1.0, 0.0))
         * Matrix4::from_angle_x(Rad(PI / 8.0))
         * Matrix4::from_translation(Vector3::new(0.0, 0.0, -4.0));
-    let resolution = Vector2::new(1200, 800);
+    let resolution = Vector2::new(800, 800);
     let mut film = Film::new(resolution);
     let camera = OrthographicCamera::new(
         camera_to_world,
         0.0,
         100.0,
-        Vector2::new(6.0, 4.0),
+        Vector2::new(4.0, 4.0),
         resolution,
     );
 
-    let filter = BoxFilter::new(0.5, 0.5);
-    render::<ConstantSampler>(
+    // let filter = BoxFilter::new(0.5, 0.5);
+    let filter = MitchellFilter::new(2.0, 2.0, 1.0 / 3.0, 1.0 / 3.0);
+    let sampler = StratifiedSampler::new(2, 2, 5, 0, true);
+    // let sampler = ConstantSampler {};
+
+    render(
         &scene,
         &camera,
         &mut film,
         &filter,
-        &ConstantSampler {},
+        &sampler,
         &OriginalRayTracer {},
         5,
     );
     let img = film.write_image();
 
     let _ = img.save("teapot_orth.png");
-}
-
-fn circles_scene<'msh, 'mtrx, 'mtrl>(
-    matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
-    material_arena: &'mtrl mut Arena<MaterialV1>,
-) -> Scene<'msh, 'mtrx, 'mtrl> {
-    let right_transf = matrix_arena.alloc(Matrix4::from_translation(Vector3::new(2.0, 0.0, 0.0)));
-    let left_transf = matrix_arena.alloc(Matrix4::from_translation(Vector3::new(-2.0, 0.0, 0.0)));
-    let identity = matrix_arena.alloc(identity4());
-
-    let material = material_arena.alloc(MaterialV1::new(
-        RgbSpectrum::from_rgb(1.0, 0.2, 1.0),
-        0.1,
-        0.9,
-        0.9,
-        200.0,
-        0.0,
-    ));
-
-    let sphere1 = Shape::sphere(identity, identity, false);
-    let sphere2 = Shape::sphere(right_transf, left_transf, false);
-    let sphere3 = Shape::sphere(left_transf, right_transf, false);
-    let light = Light::point_light(Point3::new(-10.0, 10.0, -10.0), RgbSpectrum::constant(1.0));
-
-    Scene::new(
-        PrimitiveAggregate::Vector(vec![
-            PrimitiveAggregate::primitive(sphere1, material),
-            PrimitiveAggregate::primitive(sphere2, material),
-            PrimitiveAggregate::primitive(sphere3, material),
-        ]),
-        vec![light],
-    )
 }
 
 fn teapot_scene<'msh, 'mtrx, 'mtrl>(

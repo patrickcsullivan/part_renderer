@@ -12,66 +12,6 @@ pub struct StratifiedSampler {
     jitter: bool,
 }
 
-impl IncrementalSampler for StratifiedSampler {
-    fn clone_with_seed(&self, seed: u64) -> Self {
-        let samples_per_pixel = self.x_strata_count * self.y_strata_count;
-        Self {
-            x_strata_count: self.x_strata_count,
-            y_strata_count: self.y_strata_count,
-            max_dimension_requests: self.max_dimension_requests,
-            pixel_sampler_state: PixelSamplerState::new(
-                samples_per_pixel,
-                self.max_dimension_requests,
-            ),
-            rng: ChaCha8Rng::seed_from_u64(seed),
-            jitter: self.jitter,
-        }
-    }
-
-    fn samples_per_pixel(&self) -> usize {
-        self.x_strata_count * self.y_strata_count
-    }
-
-    fn start_pixel(&mut self, _pixel: Point2<i32>) {
-        let mut precomputed_1d: Vec<Vec<f32>> = (0..self.max_dimension_requests)
-            .map(|_| {
-                self.stratified_samples_1d(self.x_strata_count * self.y_strata_count, self.jitter)
-            })
-            .collect();
-        let mut precomputed_2d: Vec<Vec<Point2<f32>>> = (0..self.max_dimension_requests)
-            .map(|_| {
-                self.stratified_samples_2d(self.x_strata_count, self.y_strata_count, self.jitter)
-            })
-            .collect();
-
-        // Shuffle the samples in each dimension to eliminate undesirable
-        // correlations between sample values in the same sample vector. (For
-        // example, if we don't do this then two 2D samples in the same sample
-        // vector will be selected from the exact same strata.)
-        for dim in precomputed_1d.iter_mut() {
-            dim.shuffle(&mut self.rng);
-        }
-        for dim in precomputed_2d.iter_mut() {
-            dim.shuffle(&mut self.rng);
-        }
-
-        self.pixel_sampler_state
-            .start_pixel(precomputed_1d, precomputed_2d);
-    }
-
-    fn get_1d(&mut self) -> f32 {
-        self.pixel_sampler_state.get_1d()
-    }
-
-    fn get_2d(&mut self) -> Point2<f32> {
-        self.pixel_sampler_state.get_2d()
-    }
-
-    fn start_next_sample(&mut self) -> bool {
-        self.pixel_sampler_state.start_next_sample()
-    }
-}
-
 impl StratifiedSampler {
     /// Create a new stratified sampler.
     ///
@@ -165,6 +105,67 @@ impl StratifiedSampler {
                 )
             })
             .collect()
+    }
+}
+
+
+impl IncrementalSampler for StratifiedSampler {
+    fn clone_with_seed(&self, seed: u64) -> Self {
+        let samples_per_pixel = self.x_strata_count * self.y_strata_count;
+        Self {
+            x_strata_count: self.x_strata_count,
+            y_strata_count: self.y_strata_count,
+            max_dimension_requests: self.max_dimension_requests,
+            pixel_sampler_state: PixelSamplerState::new(
+                samples_per_pixel,
+                self.max_dimension_requests,
+            ),
+            rng: ChaCha8Rng::seed_from_u64(seed),
+            jitter: self.jitter,
+        }
+    }
+
+    fn samples_per_pixel(&self) -> usize {
+        self.x_strata_count * self.y_strata_count
+    }
+
+    fn start_pixel(&mut self, _pixel: Point2<i32>) {
+        let mut precomputed_1d: Vec<Vec<f32>> = (0..self.max_dimension_requests)
+            .map(|_| {
+                self.stratified_samples_1d(self.x_strata_count * self.y_strata_count, self.jitter)
+            })
+            .collect();
+        let mut precomputed_2d: Vec<Vec<Point2<f32>>> = (0..self.max_dimension_requests)
+            .map(|_| {
+                self.stratified_samples_2d(self.x_strata_count, self.y_strata_count, self.jitter)
+            })
+            .collect();
+
+        // Shuffle the samples in each dimension to eliminate undesirable
+        // correlations between sample values in the same sample vector. (For
+        // example, if we don't do this then two 2D samples in the same sample
+        // vector will be selected from the exact same strata.)
+        for dim in precomputed_1d.iter_mut() {
+            dim.shuffle(&mut self.rng);
+        }
+        for dim in precomputed_2d.iter_mut() {
+            dim.shuffle(&mut self.rng);
+        }
+
+        self.pixel_sampler_state
+            .start_pixel(precomputed_1d, precomputed_2d);
+    }
+
+    fn get_1d(&mut self) -> f32 {
+        self.pixel_sampler_state.get_1d()
+    }
+
+    fn get_2d(&mut self) -> Point2<f32> {
+        self.pixel_sampler_state.get_2d()
+    }
+
+    fn start_next_sample(&mut self) -> bool {
+        self.pixel_sampler_state.start_next_sample()
     }
 }
 

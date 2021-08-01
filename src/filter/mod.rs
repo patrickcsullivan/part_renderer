@@ -1,7 +1,8 @@
 mod box_filter;
+mod mitchell;
 mod precomputed;
 
-pub use {box_filter::BoxFilter, precomputed::PrecomputedFilter};
+pub use {box_filter::BoxFilter, mitchell::MitchellFilter, precomputed::PrecomputedFilter};
 
 use cgmath::Point2;
 

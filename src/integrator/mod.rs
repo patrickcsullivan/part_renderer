@@ -101,10 +101,13 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
         film.tile(&sample_bounds, filter.half_width(), filter.half_height())
     {
         for pixel_min_corner in sample_bounds.range() {
-            println!("At ({}, {})", pixel_min_corner.x, pixel_min_corner.y);
-
+            let mut sample_count = 0;
             sampler.start_pixel(pixel_min_corner);
             loop {
+                println!(
+                    "At ({}, {})\tsample {}",
+                    pixel_min_corner.x, pixel_min_corner.y, sample_count
+                );
                 let sample = sampler.get_camera_sample(pixel_min_corner);
                 let (ray, _differential, weight) = camera.generate_ray_differential(&sample);
                 // TODO: Scale differential.
@@ -131,6 +134,7 @@ fn render_tile<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
 
                 film_tile.add_sample(&sample.film_point, &radiance, weight, filter);
 
+                sample_count += 1;
                 if !sampler.start_next_sample() {
                     break;
                 }

@@ -3,6 +3,7 @@ mod pixel;
 mod stratified;
 
 pub use constant::ConstantSampler;
+pub use stratified::StratifiedSampler;
 
 use crate::camera::CameraSample;
 use cgmath::Point2;
