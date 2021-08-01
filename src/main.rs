@@ -17,6 +17,7 @@ mod resources;
 mod sampler;
 mod scene;
 mod shape;
+mod texture;
 
 #[cfg(test)]
 mod test;
