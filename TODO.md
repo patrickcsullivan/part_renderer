@@ -9,7 +9,7 @@
     [X] Point light.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`.
     [ ] Visibility tester. **COME BACK TO LATER**
-    [ ] Textures.
+    [ ] Textures. **CURRENT**
         [ ] Constant texture.
     [ ] Implement some working BSDFs.
         [ ] Perfect specular Fresnel objects.
@@ -23,8 +23,8 @@
 
 # Backlog:
 
-[ ] Implement a good `Filter`.
-[~] Implement a good `Sampler`.
+[X] Implement a good `Filter`.
+[X] Implement a good `Sampler`.
 [ ] Add perspective camera.
 
 # Refactoring
