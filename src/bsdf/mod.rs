@@ -5,8 +5,11 @@ mod lambertian;
 mod oren_nayar;
 mod scale;
 
+pub use bxdf::{Bxdf, BxdfType};
+pub use lambertian::{LambertianDiffuseReflection, LambertianDiffuseTransmission};
+pub use oren_nayar::OrenNayarDiffuseReflection;
+
 use crate::{color::RgbSpectrum, interaction::SurfaceInteraction};
-use bxdf::{Bxdf, BxdfType};
 use cgmath::{vec3, InnerSpace, Point2, Vector3};
 
 /// The bidirectional scattering distribution function (BSDF). Describes the way
@@ -22,8 +25,7 @@ use cgmath::{vec3, InnerSpace, Point2, Vector3};
 pub struct Bsdf {
     /// The relative index of refraction over the boundry of the surface. This
     /// should be set to 1 for opaque surfaces.
-    pub relative_refraction: f32,
-
+    // pub relative_refraction: f32,
     bxdfs: Vec<Box<dyn Bxdf>>,
 
     /// The original surface normal.
@@ -54,9 +56,12 @@ impl Bsdf {
     ///   the point on the surface.
     /// * relative_refraction - The relative index of refraction over the
     ///   boundry of the surface. This should be set to 1 for opaque surfaces.
-    pub fn new(interaction: SurfaceInteraction, relative_refraction: f32) -> Self {
+    pub fn new(
+        interaction: &SurfaceInteraction,
+        // relative_refraction: f32
+    ) -> Self {
         Self {
-            relative_refraction,
+            // relative_refraction,
             bxdfs: vec![],
             original_normal: interaction.original_geometry.normal,
             shading_normal: interaction.shading_geometry.normal,

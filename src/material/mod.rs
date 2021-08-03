@@ -1,3 +1,5 @@
+use crate::bsdf::{LambertianDiffuseReflection, OrenNayarDiffuseReflection};
+use crate::color::RgbSpectrum;
 use crate::TransportMode;
 use crate::{bsdf::Bsdf, interaction::SurfaceInteraction};
 
@@ -21,9 +23,86 @@ pub trait Material {
     fn scattering_functions(
         &self,
         interaction: &SurfaceInteraction,
-        transport_mode: TransportMode,
-        allow_multiple_lobes: bool,
-    ) -> Bsdf {
-        todo!()
+        // transport_mode: TransportMode,
+        // allow_multiple_lobes: bool,
+    ) -> Bsdf;
+}
+
+/// A purely diffuse surface.
+pub struct MatteMaterial {
+    /// Spectral diffuse reflection.
+    kd: RgbSpectrum,
+
+    /// Roughness. The standard deviation of microfacet orientation angle in
+    /// radians.
+    sigma: f32,
+}
+
+impl MatteMaterial {
+    pub fn new(kd: RgbSpectrum, sigma: f32) -> Self {
+        Self { kd, sigma }
     }
 }
+
+impl Material for MatteMaterial {
+    fn scattering_functions(
+        &self,
+        interaction: &SurfaceInteraction,
+        // transport_mode: TransportMode,
+        // allow_multiple_lobes: bool,
+    ) -> Bsdf {
+        let mut bsdf = Bsdf::new(interaction);
+        if self.sigma == 0.0 {
+            bsdf.add(Box::new(LambertianDiffuseReflection::new(self.kd)));
+        } else {
+            bsdf.add(Box::new(OrenNayarDiffuseReflection::new(
+                self.kd, self.sigma,
+            )));
+        }
+        bsdf
+    }
+}
+
+/// A purely diffuse surface.
+pub struct PlasticMaterial {
+    /// Diffuse reflection.
+    kd: RgbSpectrum,
+
+    /// Glossy specular reflection
+    ks: RgbSpectrum,
+
+    roughness: f32,
+
+    remap_roughness: bool,
+}
+
+// impl PlasticMaterial {
+//     pub fn new(kd: RgbSpectrum, ks: RgbSpectrum, roughness: f32) -> Self {
+//         Self {
+//             kd,
+//             ks,
+//             roughness,
+//         }
+//     }
+// }
+
+// impl Material for PlasticMaterial {
+//     fn scattering_functions(
+//         &self,
+//         interaction: &SurfaceInteraction,
+//         // transport_mode: TransportMode,
+//         // allow_multiple_lobes: bool,
+//     ) -> Bsdf {
+//         let mut bsdf = Bsdf::new(interaction);
+
+//         if !self.kd.is_black() {
+//             bsdf.add(Box::new(LambertianDiffuseReflection::new(self.kd)));
+//         }
+
+//         if !self.ks.is_black() {
+
+//         }
+
+//         bsdf
+//     }
+// }

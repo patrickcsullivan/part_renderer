@@ -13,7 +13,6 @@ mod material_v1;
 mod number;
 mod primitive;
 mod ray;
-mod resources;
 mod sampler;
 mod scene;
 mod shape;
