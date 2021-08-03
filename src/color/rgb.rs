@@ -42,17 +42,17 @@ impl RgbSpectrum {
         self.samples[2]
     }
 
-    /// Creates an RGB spectrum from the given set of arbirary samples. Each
-    /// sample contains a wavelength in nanometers and a sample value.
-    ///
-    /// This method sorts the given samples by wavelength as a side effect.
-    pub fn from_sampled(samples: &mut [(f32, f32)]) -> Self {
-        samples.sort_by(|(wavelength1, _), (wavelength2, _)| {
-            number::f32::total_cmp(wavelength1, wavelength2)
-        });
+    // /// Creates an RGB spectrum from the given set of arbirary samples. Each
+    // /// sample contains a wavelength in nanometers and a sample value.
+    // ///
+    // /// This method sorts the given samples by wavelength as a side effect.
+    // pub fn from_sampled(samples: &mut [(f32, f32)]) -> Self {
+    //     samples.sort_by(|(wavelength1, _), (wavelength2, _)| {
+    //         number::f32::total_cmp(wavelength1, wavelength2)
+    //     });
 
-        todo!() // TODO: Finish implementing. See p. 333.
-    }
+    //     todo!() // TODO: Finish implementing. See p. 333.
+    // }
 
     pub fn is_black(&self) -> bool {
         self.samples.iter().all(|s| s.is_zero())

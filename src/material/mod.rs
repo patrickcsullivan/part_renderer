@@ -1,12 +1,5 @@
+use crate::TransportMode;
 use crate::{bsdf::Bsdf, interaction::SurfaceInteraction};
-
-/// Indicates whether a surface interaction was found along a path starting from
-/// a camera or a path starting from a light source.
-#[derive(Debug, Clone, Copy)]
-pub enum TransportMode {
-    Camera,
-    LightSource,
-}
 
 /// Describes the material properties of a surface. For any given point on a
 /// surface, a material can return a bidirectional scattering distribution

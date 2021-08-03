@@ -9,8 +9,8 @@
     [X] Point light.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`.
     [ ] Visibility tester. **COME BACK TO LATER**
-    [ ] Textures. **CURRENT**
-        [ ] Constant texture.
+    [X] Textures. **CURRENT**
+        [X] Constant texture.
     [ ] Implement some working BSDFs.
         [ ] Perfect specular Fresnel objects.
         [X] Perfect diffuse Lambertian reflection.

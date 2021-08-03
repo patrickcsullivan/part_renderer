@@ -11,7 +11,7 @@
 //! coordinate system. Theta is the angle from the z axis. Phi is the angle from
 //! the x axis after the point is projected onto the xy plane.
 
-use cgmath::Vector3;
+use cgmath::{vec3, InnerSpace, Vector3};
 
 /// Return the cosine of theta, where theta is the angle from the unit vector
 /// `w` to the z axis.
@@ -96,4 +96,30 @@ pub fn sin_phi(w: &Vector3<f32>) -> f32 {
 pub fn sin2_phi(w: &Vector3<f32>) -> f32 {
     let sin_phi = sin_phi(w);
     sin_phi * sin_phi
+}
+
+/// Reflect the vector `w`, which starts at the origin of the shading coordinate
+/// system, across the surface normal.
+pub fn reflect(w: &Vector3<f32>) -> Vector3<f32> {
+    vec3(-1.0 * w.x, -1.0 * w.y, w.z)
+}
+
+/// Compute the refracted direction for a given incident direction. Return
+/// `None` if total internal reflection occurs, in which case there is no
+/// refracted direction.
+///
+/// * n - The surface normal. This must be in the same hemisphere as `w`.
+/// * eta - The ratio of the incident media index of refraction to the
+///   transmitted media index of refraction.
+pub fn refract(wi: &Vector3<f32>, n: &Vector3<f32>, eta: f32) -> Option<Vector3<f32>> {
+    let cos_theta_i = n.dot(*wi);
+    let sin2_theta_i = (1.0 - cos_theta_i * cos_theta_i).max(0.0);
+    let sin2_theta_t = eta * eta * sin2_theta_i;
+    if sin2_theta_t >= 1.0 {
+        // Total internal reflection occurs.
+        return None;
+    }
+    let cos_theta_t = (1.0 - sin2_theta_t).sqrt();
+    let wt = eta * -1.0 * wi + (eta * cos_theta_i - cos_theta_t) * n;
+    Some(wt)
 }

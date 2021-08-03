@@ -1,3 +1,4 @@
+mod fresnel;
 mod geometry;
 mod lambertian;
 mod scale;
@@ -176,10 +177,11 @@ bitflags! {
     }
 }
 
-/// A BxDF is a bidriectional reflectance distribution function or a
-/// bidirectional transmittance distribution function that can be evaluated to
-/// calculate the spectrum of light scattered in a given viewing direction due
-/// to light arriving at a surface from a particular incident light direction.
+/// A BxDF is a bidriectional reflectance distribution function (BRDF), a
+/// bidirectional transmittance distribution function (BTDF), or some
+/// combination of the two. It can be evaluated to calculate the spectrum of
+/// light scattered in a given viewing direction due to light arriving at a
+/// surface from a particular incident light direction.
 pub trait Bxdf {
     fn bxdf_type(&self) -> BxdfType;
 
@@ -209,10 +211,10 @@ pub trait Bxdf {
     ///
     /// * The incident light direction that would scatter light in the viewing
     ///   direction.
+    /// * PDF ?
     /// * The spetrum of light that is scattered in the viewing direction due to
     ///   light arriving at the surface from the returned incident light
     ///   direction.
-    /// * PDF ?
     ///
     /// This method is useful for evaluating BxDFs that scatter light in only a
     /// single direction, such as perfectly specular BxDFs.
@@ -225,17 +227,23 @@ pub trait Bxdf {
         wo: &Vector3<f32>,
         sample: Point2<f32>,
         sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum) {
-        todo!()
-    }
+    ) -> (Vector3<f32>, f32, RgbSpectrum);
 
     /// Evaluate the hemispherical-directional reflectance function. This
     /// returns the total reflection in the direction `wo` due to constant
     /// illumination over the hemisphere.
-    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>]) -> RgbSpectrum;
+    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>]) -> RgbSpectrum {
+        // TODO: There should actually be a default implementation when I get to
+        // Monte Carlo.
+        todo!()
+    }
 
     /// Evaluate the hemispherical-hemispherical reflectance function. This
     /// returns the fraction of incident light reflected by a surface when
     /// incident light is the same from all directions.
-    fn rho_hh(&self, samples1: &[Point2<f32>], samples2: &[Point2<f32>]) -> RgbSpectrum;
+    fn rho_hh(&self, samples1: &[Point2<f32>], samples2: &[Point2<f32>]) -> RgbSpectrum {
+        // TODO: There should actually be a default implementation when I get to
+        // Monte Carlo.
+        todo!()
+    }
 }
