@@ -9,7 +9,6 @@ mod integrator;
 mod interaction;
 mod light;
 mod material;
-mod material_v1;
 mod number;
 mod primitive;
 mod ray;

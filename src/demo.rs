@@ -6,7 +6,7 @@ use crate::{
     geometry::matrix::identity4,
     integrator::{render, OriginalRayTracer},
     light::Light,
-    material_v1::MaterialV1,
+    material::{Material, MatteMaterial},
     primitive::PrimitiveAggregate,
     sampler::{ConstantSampler, StratifiedSampler},
     scene::Scene,
@@ -57,7 +57,7 @@ pub fn teapot_orth() {
 fn teapot_scene<'msh, 'mtrx, 'mtrl>(
     mesh_arena: &'msh mut Arena<Mesh<'mtrx>>,
     matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
-    material_arena: &'mtrl mut Arena<MaterialV1>,
+    material_arena: &'mtrl mut Arena<MatteMaterial>,
 ) -> Scene<'msh, 'mtrx, 'mtrl> {
     let identity = matrix_arena.alloc(identity4());
     let right_transf = matrix_arena
@@ -74,46 +74,50 @@ fn teapot_scene<'msh, 'mtrx, 'mtrl>(
         matrix_arena.alloc(Matrix4::from_angle_x(Rad(PI / -2.0)) * Matrix4::from_scale(0.1));
     let inv_teapot_transf = matrix_arena.alloc(teapot_transf.inverse_transform().unwrap());
 
-    let floor_material = material_arena.alloc(MaterialV1::new(
-        RgbSpectrum::from_rgb(1.0, 0.9, 0.9),
-        0.1,
-        0.9,
-        0.0,
-        200.0,
-        0.1,
-    ));
-    let right_material = material_arena.alloc(MaterialV1::new(
-        RgbSpectrum::from_rgb(0.5, 1.0, 0.1),
-        0.1,
-        0.7,
-        0.3,
-        200.0,
-        0.25,
-    ));
-    let left_material = material_arena.alloc(MaterialV1::new(
-        RgbSpectrum::from_rgb(1.0, 0.1, 0.3),
-        0.1,
-        0.7,
-        0.3,
-        200.0,
+    let material = material_arena.alloc(MatteMaterial::new(
+        RgbSpectrum::from_rgb(0.4, 0.4, 0.4),
         0.0,
     ));
-    let back_material = material_arena.alloc(MaterialV1::new(
-        RgbSpectrum::from_rgb(0.1, 1.0, 0.5),
-        0.1,
-        0.7,
-        0.3,
-        200.0,
-        0.5,
-    ));
-    let triangle_material = material_arena.alloc(MaterialV1::new(
-        RgbSpectrum::from_rgb(1.0, 0.8, 0.1),
-        0.1,
-        0.7,
-        0.3,
-        100.0,
-        0.2,
-    ));
+    // let floor_material = material_arena.alloc(MaterialV1::new(
+    //     RgbSpectrum::from_rgb(1.0, 0.9, 0.9),
+    //     0.1,
+    //     0.9,
+    //     0.0,
+    //     200.0,
+    //     0.1,
+    // ));
+    // let right_material = material_arena.alloc(MaterialV1::new(
+    //     RgbSpectrum::from_rgb(0.5, 1.0, 0.1),
+    //     0.1,
+    //     0.7,
+    //     0.3,
+    //     200.0,
+    //     0.25,
+    // ));
+    // let left_material = material_arena.alloc(MaterialV1::new(
+    //     RgbSpectrum::from_rgb(1.0, 0.1, 0.3),
+    //     0.1,
+    //     0.7,
+    //     0.3,
+    //     200.0,
+    //     0.0,
+    // ));
+    // let back_material = material_arena.alloc(MaterialV1::new(
+    //     RgbSpectrum::from_rgb(0.1, 1.0, 0.5),
+    //     0.1,
+    //     0.7,
+    //     0.3,
+    //     200.0,
+    //     0.5,
+    // ));
+    // let triangle_material = material_arena.alloc(MaterialV1::new(
+    //     RgbSpectrum::from_rgb(1.0, 0.8, 0.1),
+    //     0.1,
+    //     0.7,
+    //     0.3,
+    //     100.0,
+    //     0.2,
+    // ));
 
     let floor = Shape::plane(identity, identity, false);
     let right = Shape::sphere(right_transf, right_inv_transf, false);
@@ -124,23 +128,23 @@ fn teapot_scene<'msh, 'mtrx, 'mtrl>(
     let mut reader = std::io::BufReader::new(&file);
     let teapot_mesh = mesh_arena
         .alloc(Mesh::from_stl(teapot_transf, inv_teapot_transf, false, &mut reader).unwrap());
-    let teapot = PrimitiveAggregate::from_mesh(teapot_mesh, triangle_material);
+    let teapot = PrimitiveAggregate::from_mesh(teapot_mesh, material);
 
     let light1 = Light::point_light(
         Point3::new(-10.0, 10.0, -10.0),
-        RgbSpectrum::from_rgb(1.0, 1.0, 1.0) * 250.0,
+        RgbSpectrum::from_rgb(1.0, 1.0, 1.0) * 2000.0,
     );
     let light2 = Light::point_light(
         Point3::new(10.0, 10.0, -10.0),
-        RgbSpectrum::from_rgb(0.2, 0.0, 0.4) * 250.0,
+        RgbSpectrum::from_rgb(0.2, 0.0, 0.4) * 1000.0,
     );
 
     Scene::new(
         PrimitiveAggregate::Vector(vec![
-            PrimitiveAggregate::primitive(floor, floor_material),
-            PrimitiveAggregate::primitive(right, right_material),
-            PrimitiveAggregate::primitive(left, left_material),
-            PrimitiveAggregate::primitive(back, back_material),
+            PrimitiveAggregate::primitive(floor, material),
+            PrimitiveAggregate::primitive(right, material),
+            PrimitiveAggregate::primitive(left, material),
+            PrimitiveAggregate::primitive(back, material),
             teapot,
         ]),
         vec![light1, light2],

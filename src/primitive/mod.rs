@@ -2,15 +2,15 @@ mod aggregate;
 
 pub use aggregate::PrimitiveAggregate;
 
-use crate::{material_v1::MaterialV1, shape::Shape};
+use crate::{material::Material, shape::Shape};
 use bvh::{aabb::Bounded, bounding_hierarchy::BHShape};
 
 /// Combines a shape and a reference to a material. This is the basic primitive
 /// used in the construction of primitives aggregates.
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Primitive<'msh, 'mtrx, 'mtrl> {
     pub shape: Shape<'msh, 'mtrx>,
-    pub material: &'mtrl MaterialV1,
+    pub material: &'mtrl (dyn Material + Send + Sync),
 
     /// Tracks the index of the primitives in a bounding volume
     /// hierarchy if it is stored in one.
@@ -18,7 +18,7 @@ pub struct Primitive<'msh, 'mtrx, 'mtrl> {
 }
 
 impl<'msh, 'mtrx, 'mtrl> Primitive<'msh, 'mtrx, 'mtrl> {
-    pub fn new(shape: Shape<'msh, 'mtrx>, material: &'mtrl MaterialV1) -> Self {
+    pub fn new(shape: Shape<'msh, 'mtrx>, material: &'mtrl (dyn Material + Send + Sync)) -> Self {
         Self {
             shape,
             material,

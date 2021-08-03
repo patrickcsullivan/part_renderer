@@ -1,6 +1,6 @@
 use crate::{
-    color::RgbSpectrum, geometry::vector, interaction::SurfaceInteraction, light::Light,
-    material_v1::MaterialV1, ray::Ray, sampler::IncrementalSampler, scene::Scene,
+    bsdf::BxdfType, color::RgbSpectrum, geometry::vector, interaction::SurfaceInteraction,
+    light::Light, material::Material, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::{InnerSpace, Point3, Vector3};
 use typed_arena::Arena;
@@ -38,7 +38,7 @@ impl OriginalRayTracer {
     pub fn shade_surface_interaction(
         scene: &Scene,
         interaction: &SurfaceInteraction,
-        material: &MaterialV1,
+        material: &dyn Material,
         remaining: usize,
     ) -> RgbSpectrum {
         scene
@@ -49,11 +49,11 @@ impl OriginalRayTracer {
                 // // the occlusion check doesn't accidentally intersect the surface.
                 // let in_shadow = Self::is_occluded(scene, interaction.over_point(), *light);
 
-                let surface = Self::shading(material, light, &interaction);
+                let surface = Self::shading_due_to_light(material, light, &interaction);
 
-                let reflected = Self::reflected_color(scene, material, interaction, remaining);
+                // let reflected = Self::reflected_color(scene, material, interaction, remaining);
 
-                color + surface + reflected
+                color + surface // + reflected
             })
     }
 
@@ -74,53 +74,65 @@ impl OriginalRayTracer {
     //     }
     // }
 
-    fn reflected_color(
-        scene: &Scene,
-        material: &MaterialV1,
-        interaction: &SurfaceInteraction,
-        remaining: usize,
-    ) -> RgbSpectrum {
-        if remaining < 1 || material.reflective == 0.0 {
-            RgbSpectrum::constant(0.0)
-        } else {
-            let reflect_ray = Ray::new(interaction.over_point(), interaction.reflect());
-            let color = Self::color_at(scene, &reflect_ray, remaining - 1);
-            color * material.reflective
-        }
-    }
+    // fn reflected_color(
+    //     scene: &Scene,
+    //     material: &dyn Material,
+    //     interaction: &SurfaceInteraction,
+    //     remaining: usize,
+    // ) -> RgbSpectrum {
+    //     if remaining < 1 || material.reflective == 0.0 {
+    //         RgbSpectrum::constant(0.0)
+    //     } else {
+    //         let reflect_ray = Ray::new(interaction.over_point(), interaction.reflect());
+    //         let color = Self::color_at(scene, &reflect_ray, remaining - 1);
+    //         color * material.reflective
+    //     }
+    // }
 
-    fn shading(
-        material: &MaterialV1,
+    fn shading_due_to_light(
+        material: &dyn Material,
         light: &Light, // FIXME
         interaction: &SurfaceInteraction,
     ) -> RgbSpectrum {
-        let (incident_light, to_light) = light.li(interaction);
-        let effective_color = &material.color * incident_light;
-        let ambient = &effective_color * material.ambient;
+        let (incident_light, wi) = light.li(interaction);
+        if incident_light.is_black() {
+            return RgbSpectrum::black();
+        }
 
-        // light_dot_normal is the cosine of the angle between the light and normal.
-        // If it's negative then the light is on the other side of the surface.
-        let light_dot_normal = to_light.dot(interaction.original_geometry.normal);
+        let bsdf = material.scattering_functions(interaction);
+        let f = bsdf.f(&interaction.neg_ray_direction, &wi, BxdfType::ALL);
+        if f.is_black() {
+            return RgbSpectrum::black();
+        }
 
-        let (diffuse, specular) = if light_dot_normal >= 0.0 {
-            let diffuse = effective_color * material.diffuse * light_dot_normal;
+        f * incident_light * wi.dot(interaction.original_geometry.normal).abs()
 
-            // reflect_dot_eye is the cosine of the angle between the reflection and
-            // the camera. If it's negative then the reflection is not visible.
-            let reflect = vector::reflect(-1.0 * to_light, interaction.original_geometry.normal);
-            let reflect_dot_eye = reflect.dot(interaction.neg_ray_direction);
-            let specular = if reflect_dot_eye <= 0.0 {
-                RgbSpectrum::constant(0.0)
-            } else {
-                let factor = reflect_dot_eye.powf(material.shininess);
-                incident_light * material.specular * factor
-            };
+        // let effective_color = &material.color * incident_light;
+        // let ambient = &effective_color * material.ambient;
 
-            (diffuse, specular)
-        } else {
-            (RgbSpectrum::black(), RgbSpectrum::black())
-        };
+        // // light_dot_normal is the cosine of the angle between the light and normal.
+        // // If it's negative then the light is on the other side of the surface.
+        // let light_dot_normal = to_light.dot(interaction.original_geometry.normal);
 
-        ambient + diffuse + specular
+        // let (diffuse, specular) = if light_dot_normal >= 0.0 {
+        //     let diffuse = effective_color * material.diffuse * light_dot_normal;
+
+        //     // reflect_dot_eye is the cosine of the angle between the reflection and
+        //     // the camera. If it's negative then the reflection is not visible.
+        //     let reflect = vector::reflect(-1.0 * to_light, interaction.original_geometry.normal);
+        //     let reflect_dot_eye = reflect.dot(interaction.neg_ray_direction);
+        //     let specular = if reflect_dot_eye <= 0.0 {
+        //         RgbSpectrum::constant(0.0)
+        //     } else {
+        //         let factor = reflect_dot_eye.powf(material.shininess);
+        //         incident_light * material.specular * factor
+        //     };
+
+        //     (diffuse, specular)
+        // } else {
+        //     (RgbSpectrum::black(), RgbSpectrum::black())
+        // };
+
+        // ambient + diffuse + specular
     }
 }

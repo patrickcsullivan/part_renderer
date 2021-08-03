@@ -2,7 +2,7 @@ use super::Primitive;
 use crate::number;
 use crate::{
     interaction::SurfaceInteraction,
-    material_v1::MaterialV1,
+    material::Material,
     ray::Ray,
     shape::{Mesh, Shape},
 };
@@ -16,7 +16,10 @@ pub enum PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
 }
 
 impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
-    pub fn primitive(shape: Shape<'msh, 'mtrx>, material: &'mtrl MaterialV1) -> Self {
+    pub fn primitive(
+        shape: Shape<'msh, 'mtrx>,
+        material: &'mtrl (dyn Material + Send + Sync),
+    ) -> Self {
         Self::Primitive(Primitive::new(shape, material))
     }
 
@@ -53,7 +56,10 @@ impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
         }
     }
 
-    pub fn from_mesh(mesh: &'msh Mesh<'mtrx>, material: &'mtrl MaterialV1) -> Self {
+    pub fn from_mesh(
+        mesh: &'msh Mesh<'mtrx>,
+        material: &'mtrl (dyn Material + Send + Sync),
+    ) -> Self {
         let mut primitives: Vec<Primitive> = mesh
             .triangles()
             .into_iter()
@@ -67,8 +73,13 @@ impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
 #[cfg(test)]
 mod ray_intersections_tests {
     use crate::{
-        color::RgbSpectrum, geometry::matrix::identity4, material_v1::MaterialV1,
-        primitive::PrimitiveAggregate, ray::Ray, shape::Shape, test::ApproxEq,
+        color::RgbSpectrum,
+        geometry::matrix::identity4,
+        material::{Material, MatteMaterial},
+        primitive::PrimitiveAggregate,
+        ray::Ray,
+        shape::Shape,
+        test::ApproxEq,
     };
     use cgmath::{Matrix4, Point3, Transform, Vector3};
 
@@ -77,14 +88,7 @@ mod ray_intersections_tests {
         let identity = identity4();
         let scale = Matrix4::from_scale(0.5);
         let inv_scale = scale.inverse_transform().unwrap();
-        let material = MaterialV1::new(
-            RgbSpectrum::from_rgb(0.8, 1.0, 0.6),
-            0.0,
-            0.7,
-            0.2,
-            0.0,
-            0.0,
-        );
+        let material = MatteMaterial::new(RgbSpectrum::from_rgb(1.0, 0.0, 0.0), 0.0);
         let sphere1 = Shape::sphere(&identity, &identity, false);
         let sphere2 = Shape::sphere(&scale, &inv_scale, false);
         let primitive1 = PrimitiveAggregate::primitive(sphere1, &material);
