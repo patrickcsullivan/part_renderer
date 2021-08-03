@@ -20,8 +20,8 @@ impl LambertianDiffuseReflection {
 }
 
 impl Bxdf for LambertianDiffuseReflection {
-    fn bxdf_type(&self) -> super::BxdfType {
-        BxdfType::BSDF_DIFFUSE | BxdfType::BSDF_REFLECTION
+    fn bxdf_type(&self) -> BxdfType {
+        BxdfType::DIFFUSE | BxdfType::REFLECTION
     }
 
     fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
@@ -63,8 +63,8 @@ impl LambertianDiffuseTransmission {
 }
 
 impl Bxdf for LambertianDiffuseTransmission {
-    fn bxdf_type(&self) -> super::BxdfType {
-        BxdfType::BSDF_DIFFUSE | BxdfType::BSDF_TRANSMISSION
+    fn bxdf_type(&self) -> BxdfType {
+        BxdfType::DIFFUSE | BxdfType::TRANSMISSION
     }
 
     fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {

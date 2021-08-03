@@ -3,7 +3,7 @@ use super::{
     Bxdf, BxdfType,
 };
 use crate::color::RgbSpectrum;
-use cgmath::{Point2, Vector3};
+use cgmath::Vector3;
 use std::f32::consts::FRAC_1_PI;
 
 pub struct OrenNayarDiffuseReflection {
@@ -29,7 +29,7 @@ impl OrenNayarDiffuseReflection {
 
 impl Bxdf for OrenNayarDiffuseReflection {
     fn bxdf_type(&self) -> BxdfType {
-        BxdfType::BSDF_REFLECTION | BxdfType::BSDF_DIFFUSE
+        BxdfType::REFLECTION | BxdfType::DIFFUSE
     }
 
     fn f(&self, wo: &Vector3<f32>, wi: &Vector3<f32>) -> RgbSpectrum {

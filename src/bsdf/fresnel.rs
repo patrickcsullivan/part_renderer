@@ -34,8 +34,8 @@ impl FresnelSpecularReflection {
 }
 
 impl Bxdf for FresnelSpecularReflection {
-    fn bxdf_type(&self) -> super::BxdfType {
-        BxdfType::BSDF_REFLECTION | BxdfType::BSDF_SPECULAR
+    fn bxdf_type(&self) -> BxdfType {
+        BxdfType::REFLECTION | BxdfType::SPECULAR
     }
 
     fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
@@ -97,8 +97,8 @@ impl FresnelSpecularTransmission {
 }
 
 impl Bxdf for FresnelSpecularTransmission {
-    fn bxdf_type(&self) -> super::BxdfType {
-        BxdfType::BSDF_TRANSMISSION | BxdfType::BSDF_SPECULAR
+    fn bxdf_type(&self) -> BxdfType {
+        BxdfType::TRANSMISSION | BxdfType::SPECULAR
     }
 
     fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
