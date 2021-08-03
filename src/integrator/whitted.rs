@@ -1,5 +1,5 @@
 use crate::{
-    camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
+    bsdf::BxdfType, camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
     interaction::SurfaceInteraction, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::InnerSpace;
@@ -51,7 +51,7 @@ impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
         depth: usize,
         max_depth: usize,
     ) -> RgbSpectrum {
-        if let Some((_t, _prim, interaction)) = scene.ray_intersection(ray) {
+        if let Some((_t, prim, interaction)) = scene.ray_intersection(ray) {
             // We will calculate the outgoing radiance along the ray at the
             // surface. Since we ignore all particpating media (like smoke or
             // fog), the outgoing radiance at the intersected surface will equal
@@ -61,30 +61,27 @@ impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
             // Initialize the normal and outgoing direction of light at the
             // surface.
             let normal = interaction.shading_geometry.normal;
-            let point_to_ray_origin_direction = interaction.neg_ray_direction;
+            let wo = interaction.neg_ray_direction;
 
-            // // Compute scattering functions for surface interaction.
-            // interaction.compute_scattering_functions(ray, spectrum_arena);
+            // Compute scattering functions for surface interaction.
+            let bsdf = prim.material.scattering_functions(&interaction);
 
             // // Compute emitted light if ray hit an area light source.
             // outgoing_radiance += interaction.emitted_radiance(&point_to_ray_origin_direction);
 
             // Add the contribution of each light source.
             for light in &scene.lights {
-                // CONTINUE HERE. <<<------
                 let sample = sampler.get_2d();
-                let (radiance_from_light, point_to_light_direction, pdf) =
-                    light.sample_li(&interaction, &sample);
-                if radiance_from_light.is_black() || pdf == 0.0 {
+                let (incident_light, wi, pdf) = light.sample_li(&interaction, &sample);
+                if incident_light.is_black() || pdf == 0.0 {
                     continue;
                 }
-                let f = interaction.bsdf(&point_to_light_direction, &point_to_ray_origin_direction);
+
+                let f = bsdf.f(&wo, &wi, BxdfType::ALL);
                 if !f.is_black()
                 /*&& visibility.unocculuded(scene)*/
                 {
-                    outgoing_radiance += f
-                        * radiance_from_light
-                        * (point_to_light_direction.dot(normal).abs() / pdf);
+                    outgoing_radiance += f * incident_light * (wi.dot(normal).abs() / 1.0);
                 }
             }
 

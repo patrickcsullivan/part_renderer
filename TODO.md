@@ -7,18 +7,21 @@
 [X] Use Stanford teapot model.
 [X] Light sources.
     [X] Point light.
-[ ] Start replacing old `RayTracer` with limited version of `Whitted`.
+[X] Start replacing old `RayTracer` with limited version of `Whitted`.
     [X] Textures.
         [X] Constant texture.
-    [ ] Implement some working BSDFs.
+    [X] Implement some working BSDFs.
         [X] Perfect specular Fresnel objects.
         [X] Perfect diffuse Lambertian reflection.
-        [X] Microfacet model.
-    [ ] Minimal material library.
-        [ ] Matte material.
-        [ ] Plastic material.
+        [X] Oren-Nayar model.
+    [X] Minimal material library.
+        [X] Matte material.
 [ ] Finish fleshing out `Whitted`.
     [ ] Visibility tester.
+    [ ] Reflection.
+    [ ] Extra lighting details.
+[ ] More BSDFs and materials.
+    [ ] Microfacet BSDF and plastic material.
 [ ] Move on to new reflection, material, and lighting chapters.
 
 # Backlog:

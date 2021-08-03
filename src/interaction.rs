@@ -50,48 +50,15 @@ impl SurfaceInteraction {
         }
     }
 
-    /// Compute the bidrectional scattering distribution function at the point
-    /// on the surface. This method determines how much of the incoming light
-    /// from some source is scattered in the direction of the destination.
-    ///
-    /// Note that both `point_to_source_direction` and
-    /// `point_to_destination_direction` should be directed outward from the
-    /// point on the surface. Also, both vectors should be normalized.
-    pub fn bsdf(
-        &self,
-        point_to_source_direction: &Vector3<f32>,
-        point_to_destinatino_direction: &Vector3<f32>,
-    ) -> RgbSpectrum {
-        todo!()
-    }
+    // pub fn over_point(&self) -> Point3<f32> {
+    //     self.point + self.original_geometry.normal * 0.01 // FIXME: This adjustment value seems very high.
+    // }
 
-    /// Compute scattering functions for the surface interaction.
-    /// TODO: What does this mean?
-    pub fn compute_scattering_functions(&self, ray: &Ray, spectrum_arena: &mut Arena<RgbSpectrum>) {
-        let mut radiance = RgbSpectrum::constant(0.0);
+    // pub fn under_point(&self) -> Point3<f32> {
+    //     self.point - self.original_geometry.normal * 0.01 // FIXME: This adjustment value seems very high.
+    // }
 
-        // Add emitted light if the surface is emissive.
-        radiance += self.emitted_radiance(&self.neg_ray_direction);
-    }
-
-    /// Determine the radiance emitted by the surface in the given direction if
-    /// the surface is emissive (an area light source, for example). Returns no
-    /// radiance if the surface is not emissive.
-    pub fn emitted_radiance(&self, direction: &Vector3<f32>) -> RgbSpectrum {
-        // TODO: Compute radiance for emissive surface.
-        // TODO: This might have to move or incorporate a primitive parameter.
-        RgbSpectrum::constant(0.0)
-    }
-
-    pub fn over_point(&self) -> Point3<f32> {
-        self.point + self.original_geometry.normal * 0.01 // FIXME: This adjustment value seems very high.
-    }
-
-    pub fn under_point(&self) -> Point3<f32> {
-        self.point - self.original_geometry.normal * 0.01 // FIXME: This adjustment value seems very high.
-    }
-
-    pub fn reflect(&self) -> Vector3<f32> {
-        vector::reflect(-1.0 * self.neg_ray_direction, self.original_geometry.normal)
-    }
+    // pub fn reflect(&self) -> Vector3<f32> {
+    //     vector::reflect(-1.0 * self.neg_ray_direction, self.original_geometry.normal)
+    // }
 }

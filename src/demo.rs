@@ -4,7 +4,7 @@ use crate::{
     film::Film,
     filter::{BoxFilter, MitchellFilter},
     geometry::matrix::identity4,
-    integrator::{render, OriginalRayTracer},
+    integrator::{render, WhittedRayTracer},
     light::Light,
     material::{Material, MatteMaterial},
     primitive::PrimitiveAggregate,
@@ -46,7 +46,7 @@ pub fn bunny_orth() {
         &mut film,
         &filter,
         &sampler,
-        &OriginalRayTracer {},
+        &WhittedRayTracer {},
         5,
     );
     let img = film.write_image();

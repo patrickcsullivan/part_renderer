@@ -1,7 +1,6 @@
-mod original;
 mod whitted;
 
-pub use {original::OriginalRayTracer, whitted::WhittedRayTracer};
+pub use whitted::WhittedRayTracer;
 
 use crate::{
     camera::Camera,
