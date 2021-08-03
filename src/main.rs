@@ -31,5 +31,5 @@ pub enum TransportMode {
 
 fn main() {
     println!("Starting...");
-    crate::demo::teapot_orth();
+    crate::demo::bunny_orth();
 }
