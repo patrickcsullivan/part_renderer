@@ -1,6 +1,7 @@
 mod fresnel;
 mod geometry;
 mod lambertian;
+mod oren_nayar;
 mod scale;
 
 use bitflags::bitflags;
@@ -46,7 +47,7 @@ pub struct Bsdf {
 }
 
 impl Bsdf {
-    /// Construct a BSDF that describes the way light scatters a point on a
+    /// Construct a BSDF that describes the way light scatters at point on a
     /// surface.
     ///
     /// * interaction - Contains information about the differential geometry at
@@ -227,7 +228,10 @@ pub trait Bxdf {
         wo: &Vector3<f32>,
         sample: Point2<f32>,
         sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum);
+    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+        // TODO: There should actually be a default implementation.
+        todo!()
+    }
 
     /// Evaluate the hemispherical-directional reflectance function. This
     /// returns the total reflection in the direction `wo` due to constant

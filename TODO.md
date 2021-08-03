@@ -8,17 +8,17 @@
 [X] Light sources.
     [X] Point light.
 [ ] Start replacing old `RayTracer` with limited version of `Whitted`.
-    [ ] Visibility tester. **COME BACK TO LATER**
-    [X] Textures. **CURRENT**
+    [X] Textures.
         [X] Constant texture.
     [ ] Implement some working BSDFs.
-        [ ] Perfect specular Fresnel objects.
+        [X] Perfect specular Fresnel objects.
         [X] Perfect diffuse Lambertian reflection.
-        [ ] Microfacet model.
+        [X] Microfacet model.
     [ ] Minimal material library.
         [ ] Matte material.
         [ ] Plastic material.
 [ ] Finish fleshing out `Whitted`.
+    [ ] Visibility tester.
 [ ] Move on to new reflection, material, and lighting chapters.
 
 # Backlog:
