@@ -5,6 +5,9 @@ pub struct SurfaceInteraction {
     /// The point in world space where the interaction with a surface occurs.
     pub point: Point3<f32>,
 
+    /// A conservative bound on the amount of floating point error in `point`.
+    pub point_error_bound: Vector3<f32>,
+
     /// The direction of the negative/outgoing ray.
     pub neg_ray_direction: Vector3<f32>,
 
@@ -35,6 +38,7 @@ pub struct SurfaceGeometry {
 impl SurfaceInteraction {
     pub fn new(
         point: Point3<f32>,
+        point_error_bound: Vector3<f32>,
         neg_ray_direction: Vector3<f32>,
         dpdu: Vector3<f32>,
         dpdv: Vector3<f32>,
@@ -42,6 +46,7 @@ impl SurfaceInteraction {
         let normal = dpdu.cross(dpdv);
         Self {
             point,
+            point_error_bound,
             neg_ray_direction,
             original_geometry: SurfaceGeometry { normal, dpdu, dpdv },
             shading_geometry: SurfaceGeometry { normal, dpdu, dpdv },
@@ -50,6 +55,7 @@ impl SurfaceInteraction {
 
     pub fn new_with_normal(
         point: Point3<f32>,
+        point_error_bound: Vector3<f32>,
         neg_ray_direction: Vector3<f32>,
         dpdu: Vector3<f32>,
         dpdv: Vector3<f32>,
@@ -57,6 +63,7 @@ impl SurfaceInteraction {
     ) -> Self {
         Self {
             point,
+            point_error_bound,
             neg_ray_direction,
             original_geometry: SurfaceGeometry { normal, dpdu, dpdv },
             shading_geometry: SurfaceGeometry { normal, dpdu, dpdv },
@@ -64,23 +71,24 @@ impl SurfaceInteraction {
     }
 }
 
-impl crate::geometry::Transform<SurfaceInteraction> for Matrix4<f32> {
-    fn transform(&self, t: &SurfaceInteraction) -> SurfaceInteraction {
-        SurfaceInteraction {
-            point: self.transform_point(t.point),
-            neg_ray_direction: self.transform_vector(t.neg_ray_direction).normalize(),
-            original_geometry: self.transform(&t.original_geometry),
-            shading_geometry: self.transform(&t.shading_geometry),
-        }
-    }
-}
+// TODO: When interaction transformation is needed, account for error introduced by transformation.
+// impl crate::geometry::Transform<SurfaceInteraction> for Matrix4<f32> {
+//     fn transform(&self, t: &SurfaceInteraction) -> SurfaceInteraction {
+//         SurfaceInteraction {
+//             point: self.transform_point(t.point),
+//             neg_ray_direction: self.transform_vector(t.neg_ray_direction).normalize(),
+//             original_geometry: self.transform(&t.original_geometry),
+//             shading_geometry: self.transform(&t.shading_geometry),
+//         }
+//     }
+// }
 
-impl crate::geometry::Transform<SurfaceGeometry> for Matrix4<f32> {
-    fn transform(&self, t: &SurfaceGeometry) -> SurfaceGeometry {
-        SurfaceGeometry {
-            normal: self.transform_vector(t.normal).normalize(),
-            dpdu: self.transform_vector(t.dpdu),
-            dpdv: self.transform_vector(t.dpdv),
-        }
-    }
-}
+// impl crate::geometry::Transform<SurfaceGeometry> for Matrix4<f32> {
+//     fn transform(&self, t: &SurfaceGeometry) -> SurfaceGeometry {
+//         SurfaceGeometry {
+//             normal: self.transform_vector(t.normal).normalize(),
+//             dpdu: self.transform_vector(t.dpdu),
+//             dpdv: self.transform_vector(t.dpdv),
+//         }
+//     }
+// }

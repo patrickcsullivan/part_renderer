@@ -231,8 +231,14 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
         };
 
         // Fill in SurfaceInteraction for triangle hit
-        let interaction =
-            SurfaceInteraction::new_with_normal(p_hit, -1.0 * ray.direction, dpdu, dpdv, normal);
+        let interaction = SurfaceInteraction::new_with_normal(
+            p_hit,
+            p_error,
+            -1.0 * ray.direction,
+            dpdu,
+            dpdv,
+            normal,
+        );
 
         Some((t, interaction))
     }
@@ -331,7 +337,11 @@ mod ray_intersection_tests {
         )
         .build();
         let triangle = mesh.triangle_at(0);
-        let ray = Ray::new(Point3::new(0.0, -1.0, -2.0), Vector3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(
+            Point3::new(0.0, -1.0, -2.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            f32::INFINITY,
+        );
         let result = triangle.ray_intersection(&ray);
         assert!(result.is_none(), "Expected to not find intersection.")
     }
@@ -352,7 +362,11 @@ mod ray_intersection_tests {
         )
         .build();
         let triangle = mesh.triangle_at(0);
-        let ray = Ray::new(Point3::new(1.0, 1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(1.0, 1.0, -2.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            f32::INFINITY,
+        );
         let result = triangle.ray_intersection(&ray);
         assert!(result.is_none(), "Expected to not find intersection.")
     }
@@ -373,7 +387,11 @@ mod ray_intersection_tests {
         )
         .build();
         let triangle = mesh.triangle_at(0);
-        let ray = Ray::new(Point3::new(-1.0, 1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(-1.0, 1.0, -2.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            f32::INFINITY,
+        );
         let result = triangle.ray_intersection(&ray);
         assert!(result.is_none(), "Expected to not find intersection.")
     }
@@ -394,7 +412,11 @@ mod ray_intersection_tests {
         )
         .build();
         let triangle = mesh.triangle_at(0);
-        let ray = Ray::new(Point3::new(0.0, -1.0, -2.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, -1.0, -2.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            f32::INFINITY,
+        );
         let result = triangle.ray_intersection(&ray);
         assert!(result.is_none(), "Expected to not find intersection.")
     }
@@ -415,7 +437,11 @@ mod ray_intersection_tests {
         )
         .build();
         let triangle = mesh.triangle_at(0);
-        let ray = Ray::new(Point3::new(0.0, -1.0, 0.0), Vector3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(
+            Point3::new(0.0, -1.0, 0.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            f32::INFINITY,
+        );
         let result = triangle.ray_intersection(&ray);
         assert!(result.is_none(), "Expected to not find intersection.")
     }
@@ -436,7 +462,11 @@ mod ray_intersection_tests {
         )
         .build();
         let triangle = mesh.triangle_at(0);
-        let ray = Ray::new(Point3::new(0.0, 0.5, -2.0), Vector3::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(
+            Point3::new(0.0, 0.5, -2.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            f32::INFINITY,
+        );
         let result = triangle.ray_intersection(&ray);
         if let Some((t, interaction)) = result {
             assert!(t.approx_eq(&2.0));

@@ -101,7 +101,7 @@ impl OrthographicCamera {
         // TODO: Modify ray for depth of field.
         // TODO: Set ray time.
         // TODO: Set ray medium equal to camera medium.
-        Ray::new(camera_point, Vector3::new(0.0, 0.0, 1.0))
+        Ray::new(camera_point, Vector3::new(0.0, 0.0, 1.0), f32::MAX)
     }
 }
 
@@ -160,6 +160,7 @@ mod generate_ray_tests {
         ray.assert_approx_eq(&Ray::new(
             Point3::new(-1.995, 0.995, 0.0),
             Vector3::new(0.0, 0.0, 1.0),
+            f32::MAX,
         ));
 
         let sample = CameraSample::at_pixel_center(Point2::new(399, 199));
@@ -167,6 +168,7 @@ mod generate_ray_tests {
         ray.assert_approx_eq(&Ray::new(
             Point3::new(1.995, -0.995, 0.0),
             Vector3::new(0.0, 0.0, 1.0),
+            f32::MAX,
         ));
     }
 
@@ -186,6 +188,7 @@ mod generate_ray_tests {
         ray.assert_approx_eq(&Ray::new(
             Point3::new(1.005, 3.995, 3.0),
             Vector3::new(0.0, 0.0, 1.0),
+            f32::MAX,
         ));
 
         let sample = CameraSample::at_pixel_center(Point2::new(399, 199));
@@ -193,6 +196,7 @@ mod generate_ray_tests {
         ray.assert_approx_eq(&Ray::new(
             Point3::new(4.995, 2.005, 3.0),
             Vector3::new(0.0, 0.0, 1.0),
+            f32::MAX,
         ));
     }
 
@@ -212,6 +216,7 @@ mod generate_ray_tests {
         ray.assert_approx_eq(&Ray::new(
             Point3::new(0.0, 0.995, 1.995),
             Vector3::new(1.0, 0.0, 0.0),
+            f32::MAX,
         ));
 
         let sample = CameraSample::at_pixel_center(Point2::new(399, 199));
@@ -219,6 +224,7 @@ mod generate_ray_tests {
         ray.assert_approx_eq(&Ray::new(
             Point3::new(0.0, -0.995, -1.995),
             Vector3::new(1.0, 0.0, 0.0),
+            f32::MAX,
         ));
     }
 }
