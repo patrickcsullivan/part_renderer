@@ -1,3 +1,7 @@
+mod offset;
+
+pub use offset::OffsetRayOrigin;
+
 use cgmath::{InnerSpace, Matrix4, Point3, Transform, Vector3};
 
 #[derive(Debug, Clone, Copy)]

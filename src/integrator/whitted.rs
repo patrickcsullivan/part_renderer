@@ -12,32 +12,6 @@ use super::RayTracer;
 /// mirrors, and water. It does not account for indirect lighting effects.
 pub struct WhittedRayTracer {}
 
-impl WhittedRayTracer {
-    // fn specular_reflect<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
-    //     &self,
-    //     ray: &Ray,
-    //     interaction: &SurfaceInteraction,
-    //     scene: &Scene<'msh, 'mtrx, 'mtrl>,
-    //     sampler: &mut S,
-    //     spectrum_arena: &mut Arena<RgbSpectrum>,
-    //     depth: usize,
-    // ) -> RgbSpectrum {
-    //     todo!()
-    // }
-
-    // fn specular_transmit<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
-    //     &self,
-    //     ray: &Ray,
-    //     interaction: &SurfaceInteraction,
-    //     scene: &Scene<'msh, 'mtrx, 'mtrl>,
-    //     sampler: &mut S,
-    //     spectrum_arena: &mut Arena<RgbSpectrum>,
-    //     depth: usize,
-    // ) -> RgbSpectrum {
-    //     todo!()
-    // }
-}
-
 impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
     for WhittedRayTracer
 {
@@ -72,15 +46,13 @@ impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
             // Add the contribution of each light source.
             for light in &scene.lights {
                 let sample = sampler.get_2d();
-                let (incident_light, wi, pdf) = light.sample_li(&interaction, &sample);
+                let (incident_light, wi, vis, pdf) = light.sample_li(&interaction, &sample);
                 if incident_light.is_black() || pdf == 0.0 {
                     continue;
                 }
 
                 let f = bsdf.f(&wo, &wi, BxdfType::ALL);
-                if !f.is_black()
-                /*&& visibility.unocculuded(scene)*/
-                {
+                if !f.is_black() && vis.unocculuded(scene) {
                     outgoing_radiance += f * incident_light * (wi.dot(normal).abs() / 1.0);
                 }
             }

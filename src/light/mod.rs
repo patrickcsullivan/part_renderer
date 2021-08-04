@@ -1,10 +1,12 @@
 mod point;
+mod visibility;
 
-use bitflags::bitflags;
-use cgmath::{Point2, Point3, Vector3};
+pub use visibility::VisibilityTester;
 
 use self::point::PointLight;
 use crate::{color::RgbSpectrum, interaction::SurfaceInteraction, scene::Scene};
+use bitflags::bitflags;
+use cgmath::{Point2, Point3, Vector3};
 
 pub enum Light {
     PointLight(PointLight),
@@ -21,7 +23,10 @@ impl Light {
     /// method also returns the incident direction from the surface point to the
     /// light source, and a visibility tester.
     // TODO: Maybe rename to `incident_light`.
-    pub fn li(&self, interaction: &SurfaceInteraction) -> (RgbSpectrum, Vector3<f32>) {
+    pub fn li(
+        &self,
+        interaction: &SurfaceInteraction,
+    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester) {
         match self {
             Light::PointLight(pl) => pl.li(interaction),
         }
@@ -32,9 +37,9 @@ impl Light {
         &self,
         interaction: &SurfaceInteraction,
         _u: &Point2<f32>,
-    ) -> (RgbSpectrum, Vector3<f32>, f32) {
-        let (li, wi) = self.li(interaction);
-        (li, wi, 1.0)
+    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester, f32) {
+        let (li, wi, vis) = self.li(interaction);
+        (li, wi, vis, 1.0)
     }
 
     /// Return an approximation of the light's total emitted power.
