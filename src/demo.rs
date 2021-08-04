@@ -13,7 +13,7 @@ use crate::{
     shape::{Mesh, Shape},
 };
 use cgmath::{Matrix4, Point3, Rad, Transform, Vector2, Vector3};
-use std::f32::consts::PI;
+use std::f32::consts::{FRAC_PI_4, PI};
 use typed_arena::Arena;
 
 pub fn bunny_orth() {
@@ -59,79 +59,27 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
     matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
     material_arena: &'mtrl mut Arena<MatteMaterial>,
 ) -> Scene<'msh, 'mtrx, 'mtrl> {
-    let identity = matrix_arena.alloc(identity4());
-    let right_transf = matrix_arena
-        .alloc(Matrix4::from_translation(Vector3::new(1.5, 0.5, -0.5)) * Matrix4::from_scale(0.5));
-    let right_inv_transf = matrix_arena.alloc(right_transf.inverse_transform().unwrap());
-    let left_transf = matrix_arena.alloc(
-        Matrix4::from_translation(Vector3::new(-1.5, 0.33, -0.75)) * Matrix4::from_scale(0.33),
-    );
-    let left_inv_transf = matrix_arena.alloc(left_transf.inverse_transform().unwrap());
-    let back_transf = matrix_arena
-        .alloc(Matrix4::from_translation(Vector3::new(0.0, 1.0, 1.5)) * Matrix4::from_scale(0.55));
-    let back_inv_transf = matrix_arena.alloc(back_transf.inverse_transform().unwrap());
+    let identity = matrix_arena.alloc(Matrix4::from_scale(1.0));
+    let file = std::fs::File::open("plane.stl").unwrap();
+    let mut reader = std::io::BufReader::new(&file);
+    let plane_mesh =
+        mesh_arena.alloc(Mesh::from_stl(identity, identity, false, &mut reader).unwrap());
+
     let bunny_transf = matrix_arena.alloc(
         Matrix4::from_angle_y(Rad(-0.8 * PI))
             * Matrix4::from_angle_x(Rad(PI / -2.0))
             * Matrix4::from_scale(0.02),
     );
     let inv_bunny_transf = matrix_arena.alloc(bunny_transf.inverse_transform().unwrap());
+    let file = std::fs::File::open("bunny.stl").unwrap();
+    let mut reader = std::io::BufReader::new(&file);
+    let bunny_mesh = mesh_arena
+        .alloc(Mesh::from_stl(bunny_transf, inv_bunny_transf, false, &mut reader).unwrap());
 
     let material = material_arena.alloc(MatteMaterial::new(
         RgbSpectrum::from_rgb(0.4, 0.4, 0.4),
         0.3,
     ));
-    // let floor_material = material_arena.alloc(MaterialV1::new(
-    //     RgbSpectrum::from_rgb(1.0, 0.9, 0.9),
-    //     0.1,
-    //     0.9,
-    //     0.0,
-    //     200.0,
-    //     0.1,
-    // ));
-    // let right_material = material_arena.alloc(MaterialV1::new(
-    //     RgbSpectrum::from_rgb(0.5, 1.0, 0.1),
-    //     0.1,
-    //     0.7,
-    //     0.3,
-    //     200.0,
-    //     0.25,
-    // ));
-    // let left_material = material_arena.alloc(MaterialV1::new(
-    //     RgbSpectrum::from_rgb(1.0, 0.1, 0.3),
-    //     0.1,
-    //     0.7,
-    //     0.3,
-    //     200.0,
-    //     0.0,
-    // ));
-    // let back_material = material_arena.alloc(MaterialV1::new(
-    //     RgbSpectrum::from_rgb(0.1, 1.0, 0.5),
-    //     0.1,
-    //     0.7,
-    //     0.3,
-    //     200.0,
-    //     0.5,
-    // ));
-    // let triangle_material = material_arena.alloc(MaterialV1::new(
-    //     RgbSpectrum::from_rgb(1.0, 0.8, 0.1),
-    //     0.1,
-    //     0.7,
-    //     0.3,
-    //     100.0,
-    //     0.2,
-    // ));
-
-    let floor = Shape::plane(identity, identity, false);
-    let right = Shape::sphere(right_transf, right_inv_transf, false);
-    let left = Shape::sphere(left_transf, left_inv_transf, false);
-    let back = Shape::sphere(back_transf, back_inv_transf, false);
-
-    let file = std::fs::File::open("bunny.stl").unwrap();
-    let mut reader = std::io::BufReader::new(&file);
-    let bunny_mesh = mesh_arena
-        .alloc(Mesh::from_stl(bunny_transf, inv_bunny_transf, false, &mut reader).unwrap());
-    let bunny = PrimitiveAggregate::from_mesh(bunny_mesh, material);
 
     let light1 = Light::point_light(
         Point3::new(-10.0, 10.0, -10.0),
@@ -144,11 +92,8 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
 
     Scene::new(
         PrimitiveAggregate::Vector(vec![
-            PrimitiveAggregate::primitive(floor, material),
-            PrimitiveAggregate::primitive(right, material),
-            PrimitiveAggregate::primitive(left, material),
-            PrimitiveAggregate::primitive(back, material),
-            bunny,
+            PrimitiveAggregate::from_mesh(plane_mesh, material),
+            PrimitiveAggregate::from_mesh(bunny_mesh, material),
         ]),
         vec![light1, light2],
     )

@@ -1,6 +1,4 @@
-use crate::{color::RgbSpectrum, geometry::vector, ray::Ray};
-use cgmath::{Point3, Vector3};
-use typed_arena::Arena;
+use cgmath::{InnerSpace, Matrix4, Point3, Transform, Vector3};
 
 #[derive(Debug, Clone, Copy)]
 pub struct SurfaceInteraction {
@@ -38,10 +36,10 @@ impl SurfaceInteraction {
     pub fn new(
         point: Point3<f32>,
         neg_ray_direction: Vector3<f32>,
-        normal: Vector3<f32>,
         dpdu: Vector3<f32>,
         dpdv: Vector3<f32>,
     ) -> Self {
+        let normal = dpdu.cross(dpdv);
         Self {
             point,
             neg_ray_direction,
@@ -50,15 +48,39 @@ impl SurfaceInteraction {
         }
     }
 
-    // pub fn over_point(&self) -> Point3<f32> {
-    //     self.point + self.original_geometry.normal * 0.01 // FIXME: This adjustment value seems very high.
-    // }
+    pub fn new_with_normal(
+        point: Point3<f32>,
+        neg_ray_direction: Vector3<f32>,
+        dpdu: Vector3<f32>,
+        dpdv: Vector3<f32>,
+        normal: Vector3<f32>,
+    ) -> Self {
+        Self {
+            point,
+            neg_ray_direction,
+            original_geometry: SurfaceGeometry { normal, dpdu, dpdv },
+            shading_geometry: SurfaceGeometry { normal, dpdu, dpdv },
+        }
+    }
+}
 
-    // pub fn under_point(&self) -> Point3<f32> {
-    //     self.point - self.original_geometry.normal * 0.01 // FIXME: This adjustment value seems very high.
-    // }
+impl crate::geometry::Transform<SurfaceInteraction> for Matrix4<f32> {
+    fn transform(&self, t: &SurfaceInteraction) -> SurfaceInteraction {
+        SurfaceInteraction {
+            point: self.transform_point(t.point),
+            neg_ray_direction: self.transform_vector(t.neg_ray_direction).normalize(),
+            original_geometry: self.transform(&t.original_geometry),
+            shading_geometry: self.transform(&t.shading_geometry),
+        }
+    }
+}
 
-    // pub fn reflect(&self) -> Vector3<f32> {
-    //     vector::reflect(-1.0 * self.neg_ray_direction, self.original_geometry.normal)
-    // }
+impl crate::geometry::Transform<SurfaceGeometry> for Matrix4<f32> {
+    fn transform(&self, t: &SurfaceGeometry) -> SurfaceGeometry {
+        SurfaceGeometry {
+            normal: self.transform_vector(t.normal).normalize(),
+            dpdu: self.transform_vector(t.dpdu),
+            dpdv: self.transform_vector(t.dpdv),
+        }
+    }
 }

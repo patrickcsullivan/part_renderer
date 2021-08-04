@@ -231,7 +231,8 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
         };
 
         // Fill in SurfaceInteraction for triangle hit
-        let interaction = SurfaceInteraction::new(p_hit, -1.0 * ray.direction, normal, dpdu, dpdv);
+        let interaction =
+            SurfaceInteraction::new_with_normal(p_hit, -1.0 * ray.direction, dpdu, dpdv, normal);
 
         Some((t, interaction))
     }
@@ -245,7 +246,7 @@ impl<'shape, 'msh, 'mtrx> Triangle<'msh, 'mtrx> {
     }
 }
 
-impl<'shape, 'msh, 'mtrx> Bounded for Triangle<'msh, 'mtrx> {
+impl<'msh, 'mtrx> Bounded for Triangle<'msh, 'mtrx> {
     fn aabb(&self) -> bvh::aabb::AABB {
         let (v0, v1, v2) = self.world_space_vertices();
         let min = bvh::Point3::new(

@@ -69,38 +69,3 @@ impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
         Self::Bvh(primitives, bvh)
     }
 }
-
-#[cfg(test)]
-mod ray_intersections_tests {
-    use crate::{
-        color::RgbSpectrum,
-        geometry::matrix::identity4,
-        material::{Material, MatteMaterial},
-        primitive::PrimitiveAggregate,
-        ray::Ray,
-        shape::Shape,
-        test::ApproxEq,
-    };
-    use cgmath::{Matrix4, Point3, Transform, Vector3};
-
-    #[test]
-    fn ray_intersects_spheres() -> Result<(), String> {
-        let identity = identity4();
-        let scale = Matrix4::from_scale(0.5);
-        let inv_scale = scale.inverse_transform().unwrap();
-        let material = MatteMaterial::new(RgbSpectrum::from_rgb(1.0, 0.0, 0.0), 0.0);
-        let sphere1 = Shape::sphere(&identity, &identity, false);
-        let sphere2 = Shape::sphere(&scale, &inv_scale, false);
-        let primitive1 = PrimitiveAggregate::primitive(sphere1, &material);
-        let primitive2 = PrimitiveAggregate::primitive(sphere2, &material);
-        let renderable = PrimitiveAggregate::Vector(vec![primitive1, primitive2]);
-        let ray = Ray::new(Point3::new(0.0, 0.0, -5.0), Vector3::new(0.0, 0.0, 1.0));
-        if let Some((t, _, _)) = renderable.ray_intersection(&ray) {
-            assert!(t.approx_eq(&4.0));
-            // Other intersections would be at 4.5, 5.5, 6.0.
-            Ok(())
-        } else {
-            Err("Expected to find intersection.".to_string())
-        }
-    }
-}

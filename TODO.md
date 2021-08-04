@@ -16,12 +16,17 @@
         [X] Oren-Nayar model.
     [X] Minimal material library.
         [X] Matte material.
+[ ] Update error calculations for parts.
+    [ ] Plane.
+    [ ] Sphere.
 [ ] Finish fleshing out `Whitted`.
     [ ] Visibility tester.
     [ ] Reflection.
     [ ] Extra lighting details.
 [ ] More BSDFs and materials.
-    [ ] Microfacet BSDF and plastic material.
+    [ ] Microfacet BSDF. 
+    [ ] plastic material.
+[ ] More lights.
 [ ] Move on to new reflection, material, and lighting chapters.
 
 # Backlog:
