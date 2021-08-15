@@ -1,19 +1,5 @@
-[package]
-name = "rtc"
-version = "0.1.0"
-authors = ["Patrick Sullivan <patrick.sullivan@hey.com>"]
-edition = "2018"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-bitflags = "1.0"
-bvh = "0.5.0"
-cgmath = "0.18"
-float_next_after = "0.1.5"
-image = "0.23.14"
-nom_stl = "0.2.2"
-rand = "0.8.0"
-rand_chacha = "0.3.1"
-rayon = "1.5"
-typed-arena =  "2"
+members = [
+    "renderer",
+]

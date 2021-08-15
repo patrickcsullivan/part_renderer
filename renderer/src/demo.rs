@@ -59,8 +59,11 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
     matrix_arena: &'mtrx mut Arena<Matrix4<f32>>,
     material_arena: &'mtrl mut Arena<MatteMaterial>,
 ) -> Scene<'msh, 'mtrx, 'mtrl> {
+    let path = std::env::current_dir().unwrap();
+    println!("The current directory is {}", path.display());
+
     let identity = matrix_arena.alloc(Matrix4::from_scale(1.0));
-    let file = std::fs::File::open("plane.stl").unwrap();
+    let file = std::fs::File::open("../renderer/plane.stl").unwrap();
     let mut reader = std::io::BufReader::new(&file);
     let plane_mesh =
         mesh_arena.alloc(Mesh::from_stl(identity, identity, false, &mut reader).unwrap());
@@ -71,7 +74,7 @@ fn bunny_scene<'msh, 'mtrx, 'mtrl>(
             * Matrix4::from_scale(0.02),
     );
     let inv_bunny_transf = matrix_arena.alloc(bunny_transf.inverse_transform().unwrap());
-    let file = std::fs::File::open("bunny.stl").unwrap();
+    let file = std::fs::File::open("../renderer/bunny.stl").unwrap();
     let mut reader = std::io::BufReader::new(&file);
     let bunny_mesh = mesh_arena
         .alloc(Mesh::from_stl(bunny_transf, inv_bunny_transf, false, &mut reader).unwrap());
