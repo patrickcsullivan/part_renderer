@@ -1,28 +1,6 @@
 # To-do:
 
-[X] Implement a `Sampler`.
-[X] Write `Film` to image.
-[X] Start replacing old render function with new one that uses `Sampler`. Make sure demo still works.
-[X] Parallelize render to reduce render times.
-[X] Use Stanford teapot model.
-[X] Light sources.
-    [X] Point light.
-[X] Start replacing old `RayTracer` with limited version of `Whitted`.
-    [X] Textures.
-        [X] Constant texture.
-    [X] Implement some working BSDFs.
-        [X] Perfect specular Fresnel objects.
-        [X] Perfect diffuse Lambertian reflection.
-        [X] Oren-Nayar model.
-    [X] Minimal material library.
-        [X] Matte material.
-[ ] Update error calculations for parts.
-    [ ] Plane.
-    [ ] Sphere.
 [ ] Finish fleshing out `Whitted`.
-    [ ] Visibility tester.
-    [ ] Reflection.
-    [ ] Extra lighting details.
 [ ] More BSDFs and materials.
     [ ] Microfacet BSDF. 
     [ ] plastic material.
