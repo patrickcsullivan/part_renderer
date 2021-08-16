@@ -16,7 +16,7 @@ use cgmath::{point2, Point2};
 use rayon::prelude::*;
 use typed_arena::Arena;
 
-pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> {
+pub trait RayTracer<'msh, 'mtrl, S: IncrementalSampler> {
     /// Determine the incoming radiance that arrives along the ray at the ray
     /// origin.
     ///
@@ -48,13 +48,13 @@ pub trait RayTracer<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> {
 /// * camera - Controls how the scene is viewed and contains the `Film` onto
 ///   which the scene is rendered.
 /// * filter -
-pub fn render<'msh, 'mtrx, 'mtrl, S: IncrementalSampler + Send + Sync>(
-    scene: &Scene<'msh, 'mtrx, 'mtrl>,
+pub fn render<'msh, 'mtrl, S: IncrementalSampler + Send + Sync>(
+    scene: &Scene<'msh, 'mtrl>,
     camera: &(dyn Camera + Send + Sync),
     film: &mut Film,
     filter: &(dyn Filter + Send + Sync),
     sampler: &S,
-    ray_tracer: &(dyn RayTracer<'msh, 'mtrx, 'mtrl, S> + Send + Sync),
+    ray_tracer: &(dyn RayTracer<'msh, 'mtrl, S> + Send + Sync),
     max_depth: usize,
 ) {
     let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
@@ -84,14 +84,14 @@ pub fn render<'msh, 'mtrx, 'mtrl, S: IncrementalSampler + Send + Sync>(
     }
 }
 
-fn render_tile<'msh, 'mtrx, 'mtrl, S: IncrementalSampler>(
+fn render_tile<'msh, 'mtrl, S: IncrementalSampler>(
     camera: &dyn Camera,
     film: &Film,
-    scene: &Scene<'msh, 'mtrx, 'mtrl>,
+    scene: &Scene<'msh, 'mtrl>,
     tile: &Tile,
     filter: &dyn Filter,
     sampler: &mut S,
-    ray_tracer: &dyn RayTracer<'msh, 'mtrx, 'mtrl, S>,
+    ray_tracer: &dyn RayTracer<'msh, 'mtrl, S>,
     max_depth: usize,
 ) -> Option<FilmTile> {
     let sample_bounds = tile.sample_bounds;

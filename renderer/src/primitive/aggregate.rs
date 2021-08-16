@@ -1,25 +1,18 @@
 use super::Primitive;
 use crate::number;
-use crate::{
-    interaction::SurfaceInteraction,
-    material::Material,
-    ray::Ray,
-    shape::{Mesh, Shape},
-};
+use crate::{interaction::SurfaceInteraction, material::Material, ray::Ray, triangle::Triangle};
 use bvh::bvh::BVH;
+use mesh::Mesh;
 
 // An aggregate of primitives, each of which contains a shape and a material.
-pub enum PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
-    Primitive(Primitive<'msh, 'mtrx, 'mtrl>),
-    Vector(Vec<PrimitiveAggregate<'msh, 'mtrx, 'mtrl>>),
-    Bvh(Vec<Primitive<'msh, 'mtrx, 'mtrl>>, BVH),
+pub enum PrimitiveAggregate<'msh, 'mtrl> {
+    Primitive(Primitive<'msh, 'mtrl>),
+    Vector(Vec<PrimitiveAggregate<'msh, 'mtrl>>),
+    Bvh(Vec<Primitive<'msh, 'mtrl>>, BVH),
 }
 
-impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
-    pub fn primitive(
-        shape: Shape<'msh, 'mtrx>,
-        material: &'mtrl (dyn Material + Send + Sync),
-    ) -> Self {
+impl<'msh, 'mtrl> PrimitiveAggregate<'msh, 'mtrl> {
+    pub fn primitive(shape: Triangle<'msh>, material: &'mtrl (dyn Material + Send + Sync)) -> Self {
         Self::Primitive(Primitive::new(shape, material))
     }
 
@@ -29,7 +22,7 @@ impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
     pub fn ray_intersection(
         &self,
         ray: &Ray,
-    ) -> Option<(f32, Primitive<'msh, 'mtrx, 'mtrl>, SurfaceInteraction)> {
+    ) -> Option<(f32, Primitive<'msh, 'mtrl>, SurfaceInteraction)> {
         match self {
             PrimitiveAggregate::Primitive(p) => p
                 .shape
@@ -56,14 +49,11 @@ impl<'msh, 'mtrx, 'mtrl> PrimitiveAggregate<'msh, 'mtrx, 'mtrl> {
         }
     }
 
-    pub fn from_mesh(
-        mesh: &'msh Mesh<'mtrx>,
-        material: &'mtrl (dyn Material + Send + Sync),
-    ) -> Self {
+    pub fn from_mesh(mesh: &'msh Mesh, material: &'mtrl (dyn Material + Send + Sync)) -> Self {
         let mut primitives: Vec<Primitive> = mesh
             .triangles()
             .into_iter()
-            .map(|t| Primitive::new(Shape::Triangle(t), material))
+            .map(|t| Primitive::new(Triangle(t), material))
             .collect();
         let bvh = BVH::build(&mut primitives);
         Self::Bvh(primitives, bvh)

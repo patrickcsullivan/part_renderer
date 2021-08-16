@@ -27,4 +27,4 @@
     [ ] `IncrementalSampler` - Generates a single 1D or 2D sample for the current sample vector at a time.
     [ ] `ArraySampler` - Generates an array of 1D or 2D samples for the current sample vector at a time.
 [ ] Replace `BxdfType` flag with two enums, `ScatteringHemisphere` and `Scattering
-[ ] Maybe allow objects to store their transformation matrices to eliminate the `'mtrx` lifetime.
+[X] Maybe allow objects to store their transformation matrices to eliminate the `'mtrx` lifetime.

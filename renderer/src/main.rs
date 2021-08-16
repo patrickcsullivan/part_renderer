@@ -14,8 +14,8 @@ mod primitive;
 mod ray;
 mod sampler;
 mod scene;
-mod shape;
 mod texture;
+mod triangle;
 
 #[cfg(test)]
 mod test;

@@ -12,9 +12,7 @@ use super::RayTracer;
 /// mirrors, and water. It does not account for indirect lighting effects.
 pub struct WhittedRayTracer {}
 
-impl<'msh, 'mtrx, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrx, 'mtrl, S>
-    for WhittedRayTracer
-{
+impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrl, S> for WhittedRayTracer {
     fn incoming_radiance(
         &self,
         // TODO: Change to ray differential.
