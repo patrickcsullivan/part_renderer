@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use super::{Light, LightFlags, VisibilityTester};
-use crate::{color::RgbSpectrum, interaction::SurfaceInteraction, scene::Scene};
+use crate::{color::RgbaSpectrum, interaction::SurfaceInteraction, scene::Scene};
 use cgmath::{InnerSpace, Matrix4, Point3, Vector3};
 
 /// A point light source that emits the same amount of light in all directions.
@@ -10,7 +10,7 @@ pub struct PointLight {
     position: Point3<f32>,
 
     /// The amount of power emitted per unit solid angle.
-    intensity: RgbSpectrum,
+    intensity: RgbaSpectrum,
 }
 
 impl PointLight {
@@ -18,7 +18,7 @@ impl PointLight {
     ///
     /// * position - The position of the light in world space.
     /// * intensity - The amount of power emitted per unit solid angle.
-    pub fn new(position: Point3<f32>, intensity: RgbSpectrum) -> Self {
+    pub fn new(position: Point3<f32>, intensity: RgbaSpectrum) -> Self {
         Self {
             position,
             intensity,
@@ -28,7 +28,7 @@ impl PointLight {
     pub fn li(
         &self,
         interaction: &SurfaceInteraction,
-    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester) {
+    ) -> (RgbaSpectrum, Vector3<f32>, VisibilityTester) {
         let light_to_point = self.position - interaction.point;
         let li = self.intensity / light_to_point.magnitude2();
         let wi = light_to_point.normalize();
@@ -36,7 +36,7 @@ impl PointLight {
         (li, wi, vis)
     }
 
-    pub fn power(&self) -> RgbSpectrum {
+    pub fn power(&self) -> RgbaSpectrum {
         4.0 * PI * self.intensity
     }
 

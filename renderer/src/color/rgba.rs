@@ -1,24 +1,29 @@
-use super::Xyz;
-use crate::number;
+use super::Xyza;
 use cgmath::Zero;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-const SAMPLE_COUNT: usize = 3;
+const SAMPLE_COUNT: usize = 4;
 
 /// Represents a spectral power distribution (SPD), a distribution function that
 /// describes the amount of light at each wavelength.
 ///
-/// This particular representation of an SPD contains only three samples, one
-/// each for red, green, and blue.
+/// This particular representation of an SPD contains three samples, one each
+/// for red, green, and blue.
+///
+/// A fourth sample, alpha, which describes transparency is also included.
+/// Unlike the other samples, this does not describe a physical property of
+/// light. Nonetheless, it is useful when converting an SPD into a final image
+/// since it allows us to apply the non-phyically-based effect of making some
+/// pixels transparent.
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct RgbSpectrum {
+pub struct RgbaSpectrum {
     samples: [f32; SAMPLE_COUNT],
 }
 
-impl RgbSpectrum {
+impl RgbaSpectrum {
     pub fn constant(value: f32) -> Self {
         Self {
-            samples: [value; SAMPLE_COUNT],
+            samples: [value, value, value, 1.0],
         }
     }
 
@@ -26,8 +31,20 @@ impl RgbSpectrum {
         Self::constant(0.0)
     }
 
+    pub fn transparent() -> Self {
+        Self::from_rgba(0.0, 0.0, 0.0, 0.0)
+    }
+
     pub fn from_rgb(r: f32, g: f32, b: f32) -> Self {
-        Self { samples: [r, g, b] }
+        Self {
+            samples: [r, g, b, 1.0],
+        }
+    }
+
+    pub fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Self {
+            samples: [r, g, b, a],
+        }
     }
 
     pub fn r(&self) -> f32 {
@@ -40,6 +57,14 @@ impl RgbSpectrum {
 
     pub fn b(&self) -> f32 {
         self.samples[2]
+    }
+
+    pub fn a(&self) -> f32 {
+        self.samples[3]
+    }
+
+    pub fn set_a(&mut self, a: f32) {
+        self.samples[3] = a;
     }
 
     // /// Creates an RGB spectrum from the given set of arbirary samples. Each
@@ -55,7 +80,7 @@ impl RgbSpectrum {
     // }
 
     pub fn is_black(&self) -> bool {
-        self.samples.iter().all(|s| s.is_zero())
+        self.r().is_zero() && self.g().is_zero() && self.b().is_zero()
     }
 
     pub fn sqrt(&self) -> Self {
@@ -89,21 +114,33 @@ impl RgbSpectrum {
     }
 }
 
-impl From<Xyz> for RgbSpectrum {
-    fn from(xyz: Xyz) -> Self {
+impl From<Xyza> for RgbaSpectrum {
+    fn from(xyz: Xyza) -> Self {
         let r = 3.240479 * xyz.x() - 1.53715 * xyz.y() - 0.498535 * xyz.z();
         let g = -0.969256 * xyz.x() + 1.875991 * xyz.y() + 0.041556 * xyz.z();
         let b = 0.055648 * xyz.x() - 0.204043 * xyz.y() + 1.057311 * xyz.z();
-        Self::from_rgb(r, g, b)
+        let a = xyz.a();
+        Self::from_rgba(r, g, b, a)
     }
 }
 
-impl From<RgbSpectrum> for image::Rgb<u8> {
-    fn from(rgb: RgbSpectrum) -> Self {
+impl From<RgbaSpectrum> for image::Rgb<u8> {
+    fn from(rgb: RgbaSpectrum) -> Self {
         image::Rgb([
             component_f32_into_u8(rgb.r()),
             component_f32_into_u8(rgb.g()),
             component_f32_into_u8(rgb.b()),
+        ])
+    }
+}
+
+impl From<RgbaSpectrum> for image::Rgba<u8> {
+    fn from(rgb: RgbaSpectrum) -> Self {
+        image::Rgba([
+            component_f32_into_u8(rgb.r()),
+            component_f32_into_u8(rgb.g()),
+            component_f32_into_u8(rgb.b()),
+            component_f32_into_u8(rgb.a()),
         ])
     }
 }
@@ -120,10 +157,10 @@ fn component_f32_into_u8(c: f32) -> u8 {
 
 // Spectrum addition
 
-impl Add<RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Add<RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn add(self, rhs: RgbSpectrum) -> Self::Output {
+    fn add(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
@@ -132,10 +169,10 @@ impl Add<RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Add<&RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Add<&RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn add(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn add(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
@@ -144,10 +181,10 @@ impl Add<&RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Add<RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Add<RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn add(self, rhs: RgbSpectrum) -> Self::Output {
+    fn add(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
@@ -156,10 +193,10 @@ impl Add<RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl Add<&RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Add<&RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn add(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn add(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left + right
@@ -168,16 +205,16 @@ impl Add<&RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl AddAssign<RgbSpectrum> for RgbSpectrum {
-    fn add_assign(&mut self, rhs: RgbSpectrum) {
+impl AddAssign<RgbaSpectrum> for RgbaSpectrum {
+    fn add_assign(&mut self, rhs: RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left += right
         }
     }
 }
 
-impl AddAssign<&RgbSpectrum> for RgbSpectrum {
-    fn add_assign(&mut self, rhs: &RgbSpectrum) {
+impl AddAssign<&RgbaSpectrum> for RgbaSpectrum {
+    fn add_assign(&mut self, rhs: &RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left += right
         }
@@ -186,10 +223,10 @@ impl AddAssign<&RgbSpectrum> for RgbSpectrum {
 
 // Spectrum subtraction
 
-impl Sub<RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Sub<RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn sub(self, rhs: RgbSpectrum) -> Self::Output {
+    fn sub(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
@@ -198,10 +235,10 @@ impl Sub<RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Sub<&RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Sub<&RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn sub(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn sub(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
@@ -210,10 +247,10 @@ impl Sub<&RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Sub<RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Sub<RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn sub(self, rhs: RgbSpectrum) -> Self::Output {
+    fn sub(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
@@ -222,10 +259,10 @@ impl Sub<RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl Sub<&RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Sub<&RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn sub(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn sub(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left - right
@@ -234,16 +271,16 @@ impl Sub<&RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl SubAssign<RgbSpectrum> for RgbSpectrum {
-    fn sub_assign(&mut self, rhs: RgbSpectrum) {
+impl SubAssign<RgbaSpectrum> for RgbaSpectrum {
+    fn sub_assign(&mut self, rhs: RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left -= right
         }
     }
 }
 
-impl SubAssign<&RgbSpectrum> for RgbSpectrum {
-    fn sub_assign(&mut self, rhs: &RgbSpectrum) {
+impl SubAssign<&RgbaSpectrum> for RgbaSpectrum {
+    fn sub_assign(&mut self, rhs: &RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left -= right
         }
@@ -252,10 +289,10 @@ impl SubAssign<&RgbSpectrum> for RgbSpectrum {
 
 // Spectrum multiplication
 
-impl Mul<RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Mul<RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn mul(self, rhs: RgbSpectrum) -> Self::Output {
+    fn mul(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
@@ -264,10 +301,10 @@ impl Mul<RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Mul<&RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Mul<&RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn mul(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn mul(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
@@ -276,10 +313,10 @@ impl Mul<&RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Mul<RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Mul<RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn mul(self, rhs: RgbSpectrum) -> Self::Output {
+    fn mul(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
@@ -288,10 +325,10 @@ impl Mul<RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl Mul<&RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Mul<&RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn mul(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn mul(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left * right
@@ -300,16 +337,16 @@ impl Mul<&RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl MulAssign<RgbSpectrum> for RgbSpectrum {
-    fn mul_assign(&mut self, rhs: RgbSpectrum) {
+impl MulAssign<RgbaSpectrum> for RgbaSpectrum {
+    fn mul_assign(&mut self, rhs: RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left *= right
         }
     }
 }
 
-impl MulAssign<&RgbSpectrum> for RgbSpectrum {
-    fn mul_assign(&mut self, rhs: &RgbSpectrum) {
+impl MulAssign<&RgbaSpectrum> for RgbaSpectrum {
+    fn mul_assign(&mut self, rhs: &RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left *= right
         }
@@ -318,10 +355,10 @@ impl MulAssign<&RgbSpectrum> for RgbSpectrum {
 
 // Spectrum division
 
-impl Div<RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Div<RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn div(self, rhs: RgbSpectrum) -> Self::Output {
+    fn div(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
@@ -330,10 +367,10 @@ impl Div<RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Div<&RgbSpectrum> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Div<&RgbaSpectrum> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn div(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn div(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
@@ -342,10 +379,10 @@ impl Div<&RgbSpectrum> for RgbSpectrum {
     }
 }
 
-impl Div<RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Div<RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn div(self, rhs: RgbSpectrum) -> Self::Output {
+    fn div(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
@@ -354,10 +391,10 @@ impl Div<RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl Div<&RgbSpectrum> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Div<&RgbaSpectrum> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
-    fn div(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn div(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for ((sample, left), right) in samples.iter_mut().zip(&self.samples).zip(&rhs.samples) {
             *sample = left / right
@@ -366,16 +403,16 @@ impl Div<&RgbSpectrum> for &RgbSpectrum {
     }
 }
 
-impl DivAssign<RgbSpectrum> for RgbSpectrum {
-    fn div_assign(&mut self, rhs: RgbSpectrum) {
+impl DivAssign<RgbaSpectrum> for RgbaSpectrum {
+    fn div_assign(&mut self, rhs: RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left /= right
         }
     }
 }
 
-impl DivAssign<&RgbSpectrum> for RgbSpectrum {
-    fn div_assign(&mut self, rhs: &RgbSpectrum) {
+impl DivAssign<&RgbaSpectrum> for RgbaSpectrum {
+    fn div_assign(&mut self, rhs: &RgbaSpectrum) {
         for (left, right) in self.samples.iter_mut().zip(&rhs.samples) {
             *left /= right
         }
@@ -384,10 +421,10 @@ impl DivAssign<&RgbSpectrum> for RgbSpectrum {
 
 // Scalar multiplication
 
-impl Mul<RgbSpectrum> for f32 {
-    type Output = RgbSpectrum;
+impl Mul<RgbaSpectrum> for f32 {
+    type Output = RgbaSpectrum;
 
-    fn mul(self, rhs: RgbSpectrum) -> Self::Output {
+    fn mul(self, rhs: RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, right) in samples.iter_mut().zip(&rhs.samples) {
             *sample = self * right
@@ -396,10 +433,10 @@ impl Mul<RgbSpectrum> for f32 {
     }
 }
 
-impl Mul<&RgbSpectrum> for f32 {
-    type Output = RgbSpectrum;
+impl Mul<&RgbaSpectrum> for f32 {
+    type Output = RgbaSpectrum;
 
-    fn mul(self, rhs: &RgbSpectrum) -> Self::Output {
+    fn mul(self, rhs: &RgbaSpectrum) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
         for (sample, right) in samples.iter_mut().zip(&rhs.samples) {
             *sample = self * right
@@ -408,8 +445,8 @@ impl Mul<&RgbSpectrum> for f32 {
     }
 }
 
-impl Mul<f32> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Mul<f32> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
     fn mul(self, rhs: f32) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
@@ -420,8 +457,8 @@ impl Mul<f32> for RgbSpectrum {
     }
 }
 
-impl Mul<f32> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Mul<f32> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
     fn mul(self, rhs: f32) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
@@ -432,7 +469,7 @@ impl Mul<f32> for &RgbSpectrum {
     }
 }
 
-impl MulAssign<f32> for RgbSpectrum {
+impl MulAssign<f32> for RgbaSpectrum {
     fn mul_assign(&mut self, rhs: f32) {
         for left in self.samples.iter_mut() {
             *left *= rhs
@@ -442,8 +479,8 @@ impl MulAssign<f32> for RgbSpectrum {
 
 // Scalar division.
 
-impl Div<f32> for RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Div<f32> for RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
     fn div(self, rhs: f32) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
@@ -455,8 +492,8 @@ impl Div<f32> for RgbSpectrum {
     }
 }
 
-impl Div<f32> for &RgbSpectrum {
-    type Output = RgbSpectrum;
+impl Div<f32> for &RgbaSpectrum {
+    type Output = RgbaSpectrum;
 
     fn div(self, rhs: f32) -> Self::Output {
         let mut samples = [0.0; SAMPLE_COUNT];
@@ -468,7 +505,7 @@ impl Div<f32> for &RgbSpectrum {
     }
 }
 
-impl DivAssign<f32> for RgbSpectrum {
+impl DivAssign<f32> for RgbaSpectrum {
     fn div_assign(&mut self, rhs: f32) {
         let inv_rhs = 1.0 / rhs;
         for left in self.samples.iter_mut() {

@@ -1,5 +1,5 @@
-mod rgb;
-mod xyz;
+mod rgba;
+mod xyza;
 
-pub use rgb::RgbSpectrum;
-pub use xyz::Xyz;
+pub use rgba::RgbaSpectrum;
+pub use xyza::Xyza;

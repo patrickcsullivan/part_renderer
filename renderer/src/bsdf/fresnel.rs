@@ -1,19 +1,19 @@
 use super::{geometry, Bxdf, BxdfType};
-use crate::{bsdf::geometry::abs_cos_theta, color::RgbSpectrum, TransportMode};
+use crate::{bsdf::geometry::abs_cos_theta, color::RgbaSpectrum, TransportMode};
 use cgmath::{vec3, Point2, Vector3};
 
 /// A BRDF that models reflection off a perfectly specular surface, scattering
 /// incident light in a single directions.
 pub struct FresnelSpecularReflection {
     /// A spectrum that scales the reflected color.
-    r: RgbSpectrum,
+    r: RgbaSpectrum,
 
     /// The Fresnel properties at the surface.
     fresnel: Fresnel,
 }
 
 impl FresnelSpecularReflection {
-    pub fn dielectric(r: RgbSpectrum, eta_i: f32, eta_t: f32) -> Self {
+    pub fn dielectric(r: RgbaSpectrum, eta_i: f32, eta_t: f32) -> Self {
         Self {
             r,
             fresnel: Fresnel::Dielectric { eta_i, eta_t },
@@ -21,10 +21,10 @@ impl FresnelSpecularReflection {
     }
 
     pub fn conductor(
-        r: RgbSpectrum,
-        eta_i: RgbSpectrum,
-        eta_t: RgbSpectrum,
-        k: RgbSpectrum,
+        r: RgbaSpectrum,
+        eta_i: RgbaSpectrum,
+        eta_t: RgbaSpectrum,
+        k: RgbaSpectrum,
     ) -> Self {
         Self {
             r,
@@ -38,8 +38,8 @@ impl Bxdf for FresnelSpecularReflection {
         BxdfType::REFLECTION | BxdfType::SPECULAR
     }
 
-    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
-        RgbSpectrum::black()
+    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbaSpectrum {
+        RgbaSpectrum::black()
     }
 
     fn sample_f(
@@ -47,7 +47,7 @@ impl Bxdf for FresnelSpecularReflection {
         wo: &Vector3<f32>,
         _sample: Point2<f32>,
         _sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+    ) -> (Vector3<f32>, f32, RgbaSpectrum) {
         let wi = geometry::reflect(wo);
         let pdf = 1.0;
         let light =
@@ -101,8 +101,8 @@ impl Bxdf for FresnelSpecularTransmission {
         BxdfType::TRANSMISSION | BxdfType::SPECULAR
     }
 
-    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
-        RgbSpectrum::black()
+    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbaSpectrum {
+        RgbaSpectrum::black()
     }
 
     fn sample_f(
@@ -110,7 +110,7 @@ impl Bxdf for FresnelSpecularTransmission {
         wo: &Vector3<f32>,
         _sample: Point2<f32>,
         _sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+    ) -> (Vector3<f32>, f32, RgbaSpectrum) {
         // Determine if the incident ray would be entering or exiting the
         // refractive medium.
         let wi_is_entering = geometry::cos_theta(wo) > 0.0;
@@ -128,7 +128,7 @@ impl Bxdf for FresnelSpecularTransmission {
         ) {
             let pdf = 1.0;
             let mut ft = self.t
-                * (RgbSpectrum::constant(1.0) - self.fresnel.evaluate(geometry::cos_theta(&wi)));
+                * (RgbaSpectrum::constant(1.0) - self.fresnel.evaluate(geometry::cos_theta(&wi)));
 
             // Account for non-symmetry with transmission to a different medium.
             if self.transport_mode == TransportMode::Radiance {
@@ -143,7 +143,7 @@ impl Bxdf for FresnelSpecularTransmission {
             // transmitted light.
             let wi = geometry::reflect(wo);
             let pdf = 1.0;
-            let light = RgbSpectrum::black();
+            let light = RgbaSpectrum::black();
             (wi, pdf, light)
         }
     }
@@ -164,13 +164,13 @@ enum Fresnel {
     /// conductive media.
     Conductor {
         /// The index of refraction across a spectrum for the incident media.
-        eta_i: RgbSpectrum,
+        eta_i: RgbaSpectrum,
 
         /// The index of refraction across a spectrum for the transmitted media.
-        eta_t: RgbSpectrum,
+        eta_t: RgbaSpectrum,
 
         /// Absorption coefficient.
-        k: RgbSpectrum,
+        k: RgbaSpectrum,
     },
 }
 
@@ -180,10 +180,10 @@ impl Fresnel {
     ///
     /// * cos_theta_i -  The cosine of theta for the incident light direction,
     ///   where theta is the angle from the vector to the z axis.
-    pub fn evaluate(&self, cos_theta_i: f32) -> RgbSpectrum {
+    pub fn evaluate(&self, cos_theta_i: f32) -> RgbaSpectrum {
         match self {
             Fresnel::Dielectric { eta_i, eta_t } => {
-                RgbSpectrum::constant(fresnel_dielectric(cos_theta_i, *eta_i, *eta_t))
+                RgbaSpectrum::constant(fresnel_dielectric(cos_theta_i, *eta_i, *eta_t))
             }
             Fresnel::Conductor { eta_i, eta_t, k } => {
                 fresnel_conductor(cos_theta_i, eta_i, eta_t, k)
@@ -241,10 +241,10 @@ fn fresnel_dielectric(cos_theta_i: f32, eta_i: f32, eta_t: f32) -> f32 {
 /// * k - Absorption coefficient.
 fn fresnel_conductor(
     cos_theta_i: f32,
-    eta_i: &RgbSpectrum,
-    eta_t: &RgbSpectrum,
-    k: &RgbSpectrum,
-) -> RgbSpectrum {
+    eta_i: &RgbaSpectrum,
+    eta_t: &RgbaSpectrum,
+    k: &RgbaSpectrum,
+) -> RgbaSpectrum {
     let cos_theta_i = cos_theta_i.clamp(-1.0, 1.0);
     let eta = eta_t / eta_i;
     let eta_k = k / eta_i;
@@ -254,15 +254,15 @@ fn fresnel_conductor(
     let eta2 = eta * eta;
     let eta_k2 = eta_k * eta_k;
 
-    let t0 = eta2 - eta_k2 - RgbSpectrum::constant(sin_theta_i2);
+    let t0 = eta2 - eta_k2 - RgbaSpectrum::constant(sin_theta_i2);
     let a2_plus_b2 = (t0 * t0 + 4.0 * eta2 * eta_k2).sqrt();
-    let t1 = a2_plus_b2 + RgbSpectrum::constant(cos_theta_i2);
+    let t1 = a2_plus_b2 + RgbaSpectrum::constant(cos_theta_i2);
     let a = (0.5 * (a2_plus_b2 + t0)).sqrt();
-    let t2 = RgbSpectrum::constant(2.0 * cos_theta_i) * a;
+    let t2 = RgbaSpectrum::constant(2.0 * cos_theta_i) * a;
     let rs = (t1 - t2) / (t1 + t2);
 
     let sin_theta_i4 = sin_theta_i2 * sin_theta_i2;
-    let t3 = (cos_theta_i2 * a2_plus_b2) + RgbSpectrum::constant(sin_theta_i4);
+    let t3 = (cos_theta_i2 * a2_plus_b2) + RgbaSpectrum::constant(sin_theta_i4);
     let t4 = t2 * sin_theta_i2;
     let rp = rs * (t3 - t4) / (t3 + t4);
 

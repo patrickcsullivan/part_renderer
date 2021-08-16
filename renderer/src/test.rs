@@ -43,7 +43,7 @@ impl ApproxEq for f32 {
     }
 }
 
-impl ApproxEq for crate::color::RgbSpectrum {
+impl ApproxEq for crate::color::RgbaSpectrum {
     fn approx_eq(&self, other: &Self) -> bool {
         self.r().approx_eq(&other.r())
             && self.g().approx_eq(&other.g())

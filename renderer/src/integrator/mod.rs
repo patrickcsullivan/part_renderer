@@ -4,7 +4,7 @@ pub use whitted::WhittedRayTracer;
 
 use crate::{
     camera::Camera,
-    color::RgbSpectrum,
+    color::RgbaSpectrum,
     film::{Film, FilmTile},
     filter::Filter,
     geometry::bounds::Bounds2,
@@ -12,7 +12,7 @@ use crate::{
     sampler::IncrementalSampler,
     scene::Scene,
 };
-use cgmath::{point2, Point2};
+use cgmath::{point2, Point2, Zero};
 use rayon::prelude::*;
 use typed_arena::Arena;
 
@@ -35,10 +35,10 @@ pub trait RayTracer<'msh, 'mtrl, S: IncrementalSampler> {
         ray: &Ray,
         scene: &Scene,
         sampler: &mut S,
-        spectrum_arena: &mut Arena<RgbSpectrum>,
+        spectrum_arena: &mut Arena<RgbaSpectrum>,
         depth: usize,
         max_depth: usize,
-    ) -> RgbSpectrum;
+    ) -> RgbaSpectrum;
 }
 
 /// * S - The type of sampler that is responsible for (1) choosing points on the image from
@@ -103,10 +103,6 @@ fn render_tile<'msh, 'mtrl, S: IncrementalSampler>(
             let mut sample_count = 0;
             sampler.start_pixel(pixel_min_corner);
             loop {
-                println!(
-                    "At ({}, {})\tsample {}",
-                    pixel_min_corner.x, pixel_min_corner.y, sample_count
-                );
                 let sample = sampler.get_camera_sample(pixel_min_corner);
                 let (ray, _differential, weight) = camera.generate_ray_differential(&sample);
                 // TODO: Scale differential.
@@ -127,8 +123,17 @@ fn render_tile<'msh, 'mtrl, S: IncrementalSampler>(
                         max_depth,
                     )
                 } else {
-                    RgbSpectrum::black()
+                    RgbaSpectrum::transparent()
                 };
+
+                println!(
+                    "At ({}, {})\tsample {}\tradiance {}",
+                    pixel_min_corner.x,
+                    pixel_min_corner.y,
+                    sample_count,
+                    radiance.a()
+                );
+
                 // TODO: Check for NaN or Inf values in spectrum.
 
                 film_tile.add_sample(&sample.film_point, &radiance, weight, filter);

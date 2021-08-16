@@ -9,7 +9,7 @@ pub use bxdf::{Bxdf, BxdfType};
 pub use lambertian::{LambertianDiffuseReflection, LambertianDiffuseTransmission};
 pub use oren_nayar::OrenNayarDiffuseReflection;
 
-use crate::{color::RgbSpectrum, interaction::SurfaceInteraction};
+use crate::{color::RgbaSpectrum, interaction::SurfaceInteraction};
 use cgmath::{vec3, InnerSpace, Point2, Vector3};
 
 /// The bidirectional scattering distribution function (BSDF). Describes the way
@@ -116,7 +116,7 @@ impl Bsdf {
         wo_world: &Vector3<f32>,
         wi_world: &Vector3<f32>,
         flags: BxdfType,
-    ) -> RgbSpectrum {
+    ) -> RgbaSpectrum {
         let wo = self.transform_world_to_local(wo_world);
         let wi = self.transform_world_to_local(wi_world);
 
@@ -132,17 +132,19 @@ impl Bsdf {
         self.bxdfs
             .iter()
             .filter(|bxdf| bxdf.has_type(type_to_eval))
-            .fold(RgbSpectrum::black(), |light, bxdf| light + bxdf.f(&wo, &wi))
+            .fold(RgbaSpectrum::black(), |light, bxdf| {
+                light + bxdf.f(&wo, &wi)
+            })
     }
 
     /// Evaluate the hemispherical-directional reflectance function. This
     /// returns the total reflection in the direction `wo` due to constant
     /// illumination over the hemisphere.
-    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>], flags: BxdfType) -> RgbSpectrum {
+    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>], flags: BxdfType) -> RgbaSpectrum {
         self.bxdfs
             .iter()
             .filter(|bxdf| bxdf.has_type(flags))
-            .fold(RgbSpectrum::black(), |light, bxdf| {
+            .fold(RgbaSpectrum::black(), |light, bxdf| {
                 light + bxdf.rho_hd(wo, samples)
             })
     }
@@ -155,11 +157,11 @@ impl Bsdf {
         samples1: &[Point2<f32>],
         samples2: &[Point2<f32>],
         flags: BxdfType,
-    ) -> RgbSpectrum {
+    ) -> RgbaSpectrum {
         self.bxdfs
             .iter()
             .filter(|bxdf| bxdf.has_type(flags))
-            .fold(RgbSpectrum::black(), |light, bxdf| {
+            .fold(RgbaSpectrum::black(), |light, bxdf| {
                 light + bxdf.rho_hh(samples1, samples2)
             })
     }

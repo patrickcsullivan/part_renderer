@@ -1,4 +1,4 @@
-use crate::color::RgbSpectrum;
+use crate::color::RgbaSpectrum;
 use bitflags::bitflags;
 use cgmath::{Point2, Vector3};
 
@@ -48,7 +48,7 @@ pub trait Bxdf {
     /// * wi - The incident light direction. A normalized vector in the shading
     ///   coordinate system that points from the point on the surface to the
     ///   light source.
-    fn f(&self, wo: &Vector3<f32>, wi: &Vector3<f32>) -> RgbSpectrum;
+    fn f(&self, wo: &Vector3<f32>, wi: &Vector3<f32>) -> RgbaSpectrum;
 
     /// Given a viewing direction, `wo`, this method returns the following:
     ///
@@ -70,7 +70,7 @@ pub trait Bxdf {
         wo: &Vector3<f32>,
         sample: Point2<f32>,
         sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+    ) -> (Vector3<f32>, f32, RgbaSpectrum) {
         // TODO: There should actually be a default implementation.
         todo!()
     }
@@ -78,7 +78,7 @@ pub trait Bxdf {
     /// Evaluate the hemispherical-directional reflectance function. This
     /// returns the total reflection in the direction `wo` due to constant
     /// illumination over the hemisphere.
-    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>]) -> RgbSpectrum {
+    fn rho_hd(&self, wo: &Vector3<f32>, samples: &[Point2<f32>]) -> RgbaSpectrum {
         // TODO: There should actually be a default implementation when I get to
         // Monte Carlo.
         todo!()
@@ -87,7 +87,7 @@ pub trait Bxdf {
     /// Evaluate the hemispherical-hemispherical reflectance function. This
     /// returns the fraction of incident light reflected by a surface when
     /// incident light is the same from all directions.
-    fn rho_hh(&self, samples1: &[Point2<f32>], samples2: &[Point2<f32>]) -> RgbSpectrum {
+    fn rho_hh(&self, samples1: &[Point2<f32>], samples2: &[Point2<f32>]) -> RgbaSpectrum {
         // TODO: There should actually be a default implementation when I get to
         // Monte Carlo.
         todo!()

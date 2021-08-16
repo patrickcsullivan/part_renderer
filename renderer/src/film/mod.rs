@@ -4,7 +4,7 @@ use image::ImageBuffer;
 pub use tile::FilmTile;
 
 use crate::{
-    color::{RgbSpectrum, Xyz},
+    color::{RgbaSpectrum, Xyza},
     geometry::bounds::Bounds2,
 };
 use cgmath::{point2, Point2, Vector2};
@@ -103,7 +103,7 @@ impl Film {
     }
 
     /// Write the contents of the film to an image buffer.
-    pub fn write_image(&self) -> image::ImageBuffer<image::Rgb<u8>, std::vec::Vec<u8>> {
+    pub fn write_image(&self) -> image::ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>> {
         ImageBuffer::from_fn(
             self.resolution.x as u32,
             self.resolution.y as u32,
@@ -112,12 +112,12 @@ impl Film {
                 let pixel = self.pixels[index];
 
                 let color = if pixel.filter_weight_sum > 0.0 {
-                    (1.0 / pixel.filter_weight_sum) * RgbSpectrum::from(pixel.xyz)
+                    (1.0 / pixel.filter_weight_sum) * RgbaSpectrum::from(pixel.xyz)
                 } else {
-                    RgbSpectrum::black()
+                    RgbaSpectrum::transparent()
                 };
 
-                let output: image::Rgb<u8> = color.into();
+                let output: image::Rgba<u8> = color.into();
                 output
             },
         )
@@ -161,7 +161,7 @@ impl Film {
     /// Merge the pixel from the tile into the film.
     fn merge_pixel(&mut self, pixel: &FilmTilePixel, pixel_min_corner: &Point2<i32>) {
         let index = self.pixel_index(pixel_min_corner);
-        self.pixels[index].xyz += Xyz::from(pixel.weighted_spectrum_sum);
+        self.pixels[index].xyz += Xyza::from(pixel.weighted_spectrum_sum);
         self.pixels[index].filter_weight_sum += pixel.filter_weight_sum;
     }
 
@@ -181,7 +181,7 @@ impl Film {
 #[derive(Debug, Clone, Copy)]
 struct FilmPixel {
     /// The color at the pixel in the XYZ color space.
-    xyz: Xyz,
+    xyz: Xyza,
 
     filter_weight_sum: f32,
 }
@@ -189,7 +189,7 @@ struct FilmPixel {
 impl Default for FilmPixel {
     fn default() -> Self {
         Self {
-            xyz: Xyz::black(),
+            xyz: Xyza::transparent(),
             filter_weight_sum: 0.0,
         }
     }

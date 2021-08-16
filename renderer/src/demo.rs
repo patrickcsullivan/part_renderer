@@ -1,6 +1,6 @@
 use crate::{
     camera::OrthographicCamera,
-    color::RgbSpectrum,
+    color::RgbaSpectrum,
     film::Film,
     filter::{BoxFilter, MitchellFilter},
     geometry::matrix::identity4,
@@ -77,17 +77,17 @@ fn bunny_scene<'msh, 'mtrl>(
     );
 
     let material = material_arena.alloc(MatteMaterial::new(
-        RgbSpectrum::from_rgb(0.4, 0.4, 0.4),
+        RgbaSpectrum::from_rgb(0.4, 0.4, 0.4),
         0.3,
     ));
 
     let light1 = Light::point_light(
         Point3::new(-10.0, 10.0, -10.0),
-        RgbSpectrum::from_rgb(1.0, 1.0, 1.0) * 2000.0,
+        RgbaSpectrum::from_rgb(1.0, 1.0, 1.0) * 2000.0,
     );
     let light2 = Light::point_light(
         Point3::new(10.0, 10.0, -10.0),
-        RgbSpectrum::from_rgb(0.2, 0.0, 0.4) * 1000.0,
+        RgbaSpectrum::from_rgb(0.2, 0.0, 0.4) * 1000.0,
     );
 
     Scene::new(

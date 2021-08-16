@@ -1,24 +1,35 @@
-use super::RgbSpectrum;
+use super::RgbaSpectrum;
 use std::ops::{Add, AddAssign};
 
-const COMPONENT_COUNT: usize = 3;
+const COMPONENT_COUNT: usize = 4;
 
 /// A color in the XYZ color space. XYZ colors are display-independent.
+///
+/// A fourth component, alpha, describes transparency is also included. Unlike
+/// Although alpha is not part of the XYZ color space, it is useful when
+/// converting an XYZ color into a final image since it allows us to apply the
+/// non-phyically-based effect of making some pixels transparent.
 #[derive(Debug, Clone, Copy)]
-pub struct Xyz {
+pub struct Xyza {
     components: [f32; COMPONENT_COUNT],
 }
 
-impl Xyz {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+impl Xyza {
+    pub fn new(x: f32, y: f32, z: f32, a: f32) -> Self {
         Self {
-            components: [x, y, z],
+            components: [x, y, z, a],
         }
     }
 
     pub fn black() -> Self {
         Self {
-            components: [0.0, 0.0, 0.0],
+            components: [0.0, 0.0, 0.0, 1.0],
+        }
+    }
+
+    pub fn transparent() -> Self {
+        Self {
+            components: [0.0, 0.0, 0.0, 0.0],
         }
     }
 
@@ -33,23 +44,28 @@ impl Xyz {
     pub fn z(&self) -> f32 {
         self.components[2]
     }
+
+    pub fn a(&self) -> f32 {
+        self.components[3]
+    }
 }
 
-impl From<RgbSpectrum> for Xyz {
-    fn from(rgb: RgbSpectrum) -> Self {
+impl From<RgbaSpectrum> for Xyza {
+    fn from(rgb: RgbaSpectrum) -> Self {
         let x = 0.412453 * rgb.r() + 0.357580 * rgb.g() + 0.180423 * rgb.b();
         let y = 0.212671 * rgb.r() + 0.715160 * rgb.g() + 0.072169 * rgb.b();
         let z = 0.019334 * rgb.r() + 0.119193 * rgb.g() + 0.950227 * rgb.b();
-        Xyz::new(x, y, z)
+        let a = rgb.a();
+        Xyza::new(x, y, z, a)
     }
 }
 
 // Addition
 
-impl Add<Xyz> for Xyz {
-    type Output = Xyz;
+impl Add<Xyza> for Xyza {
+    type Output = Xyza;
 
-    fn add(self, rhs: Xyz) -> Self::Output {
+    fn add(self, rhs: Xyza) -> Self::Output {
         let mut components = [0.0; COMPONENT_COUNT];
         for ((sample, left), right) in components
             .iter_mut()
@@ -62,10 +78,10 @@ impl Add<Xyz> for Xyz {
     }
 }
 
-impl Add<&Xyz> for Xyz {
-    type Output = Xyz;
+impl Add<&Xyza> for Xyza {
+    type Output = Xyza;
 
-    fn add(self, rhs: &Xyz) -> Self::Output {
+    fn add(self, rhs: &Xyza) -> Self::Output {
         let mut components = [0.0; COMPONENT_COUNT];
         for ((sample, left), right) in components
             .iter_mut()
@@ -78,10 +94,10 @@ impl Add<&Xyz> for Xyz {
     }
 }
 
-impl Add<Xyz> for &Xyz {
-    type Output = Xyz;
+impl Add<Xyza> for &Xyza {
+    type Output = Xyza;
 
-    fn add(self, rhs: Xyz) -> Self::Output {
+    fn add(self, rhs: Xyza) -> Self::Output {
         let mut components = [0.0; COMPONENT_COUNT];
         for ((sample, left), right) in components
             .iter_mut()
@@ -94,10 +110,10 @@ impl Add<Xyz> for &Xyz {
     }
 }
 
-impl Add<&Xyz> for &Xyz {
-    type Output = Xyz;
+impl Add<&Xyza> for &Xyza {
+    type Output = Xyza;
 
-    fn add(self, rhs: &Xyz) -> Self::Output {
+    fn add(self, rhs: &Xyza) -> Self::Output {
         let mut components = [0.0; COMPONENT_COUNT];
         for ((sample, left), right) in components
             .iter_mut()
@@ -110,16 +126,16 @@ impl Add<&Xyz> for &Xyz {
     }
 }
 
-impl AddAssign<Xyz> for Xyz {
-    fn add_assign(&mut self, rhs: Xyz) {
+impl AddAssign<Xyza> for Xyza {
+    fn add_assign(&mut self, rhs: Xyza) {
         for (left, right) in self.components.iter_mut().zip(&rhs.components) {
             *left += right
         }
     }
 }
 
-impl AddAssign<&Xyz> for Xyz {
-    fn add_assign(&mut self, rhs: &Xyz) {
+impl AddAssign<&Xyza> for Xyza {
+    fn add_assign(&mut self, rhs: &Xyza) {
         for (left, right) in self.components.iter_mut().zip(&rhs.components) {
             *left += right
         }

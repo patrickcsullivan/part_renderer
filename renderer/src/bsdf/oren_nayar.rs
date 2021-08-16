@@ -2,12 +2,12 @@ use super::{
     geometry::{self, abs_cos_theta},
     Bxdf, BxdfType,
 };
-use crate::color::RgbSpectrum;
+use crate::color::RgbaSpectrum;
 use cgmath::Vector3;
 use std::f32::consts::FRAC_1_PI;
 
 pub struct OrenNayarDiffuseReflection {
-    r: RgbSpectrum,
+    r: RgbaSpectrum,
     a: f32,
     b: f32,
 }
@@ -17,7 +17,7 @@ impl OrenNayarDiffuseReflection {
     ///   scattered.
     /// * sigma - Standard deviation of the microfacet orientation angle in
     ///   radians.
-    pub fn new(r: RgbSpectrum, sigma: f32) -> Self {
+    pub fn new(r: RgbaSpectrum, sigma: f32) -> Self {
         let sigma2 = sigma * sigma;
         Self {
             r,
@@ -32,7 +32,7 @@ impl Bxdf for OrenNayarDiffuseReflection {
         BxdfType::REFLECTION | BxdfType::DIFFUSE
     }
 
-    fn f(&self, wo: &Vector3<f32>, wi: &Vector3<f32>) -> RgbSpectrum {
+    fn f(&self, wo: &Vector3<f32>, wi: &Vector3<f32>) -> RgbaSpectrum {
         let sin_theta_i = geometry::sin_theta(wi);
         let sin_theta_o = geometry::sin_theta(wo);
         let max_cos = if sin_theta_i > 1e-4 && sin_theta_o > 1e-4 {

@@ -1,5 +1,5 @@
 use crate::bsdf::{LambertianDiffuseReflection, OrenNayarDiffuseReflection};
-use crate::color::RgbSpectrum;
+use crate::color::RgbaSpectrum;
 use crate::TransportMode;
 use crate::{bsdf::Bsdf, interaction::SurfaceInteraction};
 
@@ -31,7 +31,7 @@ pub trait Material {
 /// A purely diffuse surface.
 pub struct MatteMaterial {
     /// Spectral diffuse reflection.
-    kd: RgbSpectrum,
+    kd: RgbaSpectrum,
 
     /// Roughness. The standard deviation of microfacet orientation angle in
     /// radians.
@@ -39,7 +39,7 @@ pub struct MatteMaterial {
 }
 
 impl MatteMaterial {
-    pub fn new(kd: RgbSpectrum, sigma: f32) -> Self {
+    pub fn new(kd: RgbaSpectrum, sigma: f32) -> Self {
         Self { kd, sigma }
     }
 }
@@ -66,10 +66,10 @@ impl Material for MatteMaterial {
 /// A purely diffuse surface.
 pub struct PlasticMaterial {
     /// Diffuse reflection.
-    kd: RgbSpectrum,
+    kd: RgbaSpectrum,
 
     /// Glossy specular reflection
-    ks: RgbSpectrum,
+    ks: RgbaSpectrum,
 
     roughness: f32,
 

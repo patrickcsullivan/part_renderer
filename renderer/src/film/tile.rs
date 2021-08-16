@@ -1,6 +1,6 @@
 use cgmath::{Point2, Vector2};
 
-use crate::{color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2};
+use crate::{color::RgbaSpectrum, filter::Filter, geometry::bounds::Bounds2};
 
 /// Stores the pixel data for a subset of a larger `Film`. A `FilmTile` can be
 /// merged into a `Film` to add its pixel contributions to the `Film`.
@@ -34,7 +34,7 @@ impl FilmTile {
     pub fn add_sample(
         &mut self,
         sample_film_point: &Point2<f32>,
-        radiance: &RgbSpectrum,
+        radiance: &RgbaSpectrum,
         sample_weight: f32,
         filter: &dyn Filter,
     ) {
@@ -105,7 +105,7 @@ pub struct FilmTilePixel {
     /// 490 of PBR ed. 3). This value is the sum of the following product for
     /// each contributing sample: the sample's weight, times the filter value at
     /// the sample point, times the sample radiance.
-    pub weighted_spectrum_sum: RgbSpectrum,
+    pub weighted_spectrum_sum: RgbaSpectrum,
 
     /// The running sum for the denominator of the pixel filtering equation (on
     /// p. 490 of PBR ed. 3). This value is the sum of filter values at the
@@ -116,7 +116,7 @@ pub struct FilmTilePixel {
 impl Default for FilmTilePixel {
     fn default() -> Self {
         Self {
-            weighted_spectrum_sum: RgbSpectrum::black(),
+            weighted_spectrum_sum: RgbaSpectrum::from_rgba(0.0, 0.0, 0.0, 0.0),
             filter_weight_sum: 0.0,
         }
     }

@@ -1,5 +1,5 @@
 use crate::{
-    bsdf::BxdfType, camera::Camera, color::RgbSpectrum, filter::Filter, geometry::bounds::Bounds2,
+    bsdf::BxdfType, camera::Camera, color::RgbaSpectrum, filter::Filter, geometry::bounds::Bounds2,
     interaction::SurfaceInteraction, ray::Ray, sampler::IncrementalSampler, scene::Scene,
 };
 use cgmath::InnerSpace;
@@ -19,16 +19,16 @@ impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrl, S> for WhittedRa
         ray: &Ray,
         scene: &Scene,
         sampler: &mut S,
-        spectrum_arena: &mut Arena<RgbSpectrum>,
+        spectrum_arena: &mut Arena<RgbaSpectrum>,
         depth: usize,
         max_depth: usize,
-    ) -> RgbSpectrum {
+    ) -> RgbaSpectrum {
         if let Some((_t, prim, interaction)) = scene.ray_intersection(ray) {
             // We will calculate the outgoing radiance along the ray at the
             // surface. Since we ignore all particpating media (like smoke or
             // fog), the outgoing radiance at the intersected surface will equal
             // the incoming radiance at the ray origin.
-            let mut outgoing_radiance = RgbSpectrum::constant(0.0);
+            let mut outgoing_radiance = RgbaSpectrum::constant(0.0);
 
             // Initialize the normal and outgoing direction of light at the
             // surface.
@@ -59,6 +59,7 @@ impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrl, S> for WhittedRa
                 // Trace rays for specular reflection and refraction.
             }
 
+            outgoing_radiance.set_a(1.0);
             outgoing_radiance
         } else {
             // TODO: Add back in after rest of Whitted is working.
@@ -67,7 +68,11 @@ impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrl, S> for WhittedRa
             //     ray_origin_incoming_radiance += light.outgoing_radiance_onto_ray(ray);
             // }
             // ray_origin_incoming_radiance
-            RgbSpectrum::black()
+            if depth == 0 {
+                RgbaSpectrum::from_rgba(0.0, 0.0, 0.0, 0.0)
+            } else {
+                RgbaSpectrum::black()
+            }
         }
     }
 }

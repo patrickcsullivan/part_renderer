@@ -1,5 +1,5 @@
 use super::{Bxdf, BxdfType};
-use crate::color::RgbSpectrum;
+use crate::color::RgbaSpectrum;
 use cgmath::{Point2, Vector3};
 use std::f32::consts::FRAC_1_PI;
 
@@ -10,11 +10,11 @@ use std::f32::consts::FRAC_1_PI;
 /// modelling matte surfaces.
 pub struct LambertianDiffuseReflection {
     /// Reflectance spectrum. The fraction of incident light that is scattered.
-    r: RgbSpectrum,
+    r: RgbaSpectrum,
 }
 
 impl LambertianDiffuseReflection {
-    pub fn new(r: RgbSpectrum) -> Self {
+    pub fn new(r: RgbaSpectrum) -> Self {
         Self { r }
     }
 }
@@ -24,7 +24,7 @@ impl Bxdf for LambertianDiffuseReflection {
         BxdfType::DIFFUSE | BxdfType::REFLECTION
     }
 
-    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
+    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbaSpectrum {
         self.r * FRAC_1_PI
     }
 
@@ -33,15 +33,15 @@ impl Bxdf for LambertianDiffuseReflection {
         wo: &Vector3<f32>,
         sample: Point2<f32>,
         sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+    ) -> (Vector3<f32>, f32, RgbaSpectrum) {
         todo!()
     }
 
-    fn rho_hd(&self, _wo: &Vector3<f32>, _samples: &[Point2<f32>]) -> RgbSpectrum {
+    fn rho_hd(&self, _wo: &Vector3<f32>, _samples: &[Point2<f32>]) -> RgbaSpectrum {
         self.r
     }
 
-    fn rho_hh(&self, _samples1: &[Point2<f32>], _samples2: &[Point2<f32>]) -> RgbSpectrum {
+    fn rho_hh(&self, _samples1: &[Point2<f32>], _samples2: &[Point2<f32>]) -> RgbaSpectrum {
         self.r
     }
 }
@@ -53,11 +53,11 @@ impl Bxdf for LambertianDiffuseReflection {
 /// modelling matte surfaces.
 pub struct LambertianDiffuseTransmission {
     /// Transmittance spectrum. The fraction of incident light that is scattered.
-    t: RgbSpectrum,
+    t: RgbaSpectrum,
 }
 
 impl LambertianDiffuseTransmission {
-    pub fn new(r: RgbSpectrum) -> Self {
+    pub fn new(r: RgbaSpectrum) -> Self {
         Self { t: r }
     }
 }
@@ -67,7 +67,7 @@ impl Bxdf for LambertianDiffuseTransmission {
         BxdfType::DIFFUSE | BxdfType::TRANSMISSION
     }
 
-    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbSpectrum {
+    fn f(&self, _wo: &Vector3<f32>, _wi: &Vector3<f32>) -> RgbaSpectrum {
         self.t * FRAC_1_PI
     }
 
@@ -76,15 +76,15 @@ impl Bxdf for LambertianDiffuseTransmission {
         wo: &Vector3<f32>,
         sample: Point2<f32>,
         sampled_type: BxdfType,
-    ) -> (Vector3<f32>, f32, RgbSpectrum) {
+    ) -> (Vector3<f32>, f32, RgbaSpectrum) {
         todo!()
     }
 
-    fn rho_hd(&self, _wo: &Vector3<f32>, _samples: &[Point2<f32>]) -> RgbSpectrum {
+    fn rho_hd(&self, _wo: &Vector3<f32>, _samples: &[Point2<f32>]) -> RgbaSpectrum {
         self.t
     }
 
-    fn rho_hh(&self, _samples1: &[Point2<f32>], _samples2: &[Point2<f32>]) -> RgbSpectrum {
+    fn rho_hh(&self, _samples1: &[Point2<f32>], _samples2: &[Point2<f32>]) -> RgbaSpectrum {
         self.t
     }
 }

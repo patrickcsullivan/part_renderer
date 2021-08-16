@@ -4,7 +4,7 @@ mod visibility;
 pub use visibility::VisibilityTester;
 
 use self::point::PointLight;
-use crate::{color::RgbSpectrum, interaction::SurfaceInteraction, scene::Scene};
+use crate::{color::RgbaSpectrum, interaction::SurfaceInteraction, scene::Scene};
 use bitflags::bitflags;
 use cgmath::{Point2, Point3, Vector3};
 
@@ -13,7 +13,7 @@ pub enum Light {
 }
 
 impl Light {
-    pub fn point_light(position: Point3<f32>, intensity: RgbSpectrum) -> Self {
+    pub fn point_light(position: Point3<f32>, intensity: RgbaSpectrum) -> Self {
         Self::PointLight(PointLight::new(position, intensity))
     }
 
@@ -26,7 +26,7 @@ impl Light {
     pub fn li(
         &self,
         interaction: &SurfaceInteraction,
-    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester) {
+    ) -> (RgbaSpectrum, Vector3<f32>, VisibilityTester) {
         match self {
             Light::PointLight(pl) => pl.li(interaction),
         }
@@ -37,7 +37,7 @@ impl Light {
         &self,
         interaction: &SurfaceInteraction,
         _u: &Point2<f32>,
-    ) -> (RgbSpectrum, Vector3<f32>, VisibilityTester, f32) {
+    ) -> (RgbaSpectrum, Vector3<f32>, VisibilityTester, f32) {
         let (li, wi, vis) = self.li(interaction);
         (li, wi, vis, 1.0)
     }
@@ -46,7 +46,7 @@ impl Light {
     ///
     /// This is useful for light transport algorithms that will spend more time
     /// sampling and modeling lights that emit more power.
-    pub fn power(&self) -> RgbSpectrum {
+    pub fn power(&self) -> RgbaSpectrum {
         match self {
             Light::PointLight(pl) => pl.power(),
         }
