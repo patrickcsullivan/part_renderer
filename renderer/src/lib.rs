@@ -1,19 +1,19 @@
 mod bsdf;
-mod camera;
-mod color;
+pub mod camera;
+pub mod color;
 mod demo;
-mod film;
-mod filter;
+pub mod film;
+pub mod filter;
 mod geometry;
-mod integrator;
+pub mod integrator;
 mod interaction;
-mod light;
-mod material;
+pub mod light;
+pub mod material;
 mod number;
-mod primitive;
+pub mod primitive;
 mod ray;
-mod sampler;
-mod scene;
+pub mod sampler;
+pub mod scene;
 mod texture;
 mod triangle;
 
@@ -27,9 +27,4 @@ mod test;
 pub enum TransportMode {
     Radiance,
     Importance,
-}
-
-fn main() {
-    println!("Starting...");
-    crate::demo::bunny_orth();
 }

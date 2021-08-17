@@ -126,13 +126,13 @@ fn render_tile<'msh, 'mtrl, S: IncrementalSampler>(
                     RgbaSpectrum::transparent()
                 };
 
-                println!(
-                    "At ({}, {})\tsample {}\tradiance {}",
-                    pixel_min_corner.x,
-                    pixel_min_corner.y,
-                    sample_count,
-                    radiance.a()
-                );
+                // println!(
+                //     "At ({}, {})\tsample {}\tradiance {}",
+                //     pixel_min_corner.x,
+                //     pixel_min_corner.y,
+                //     sample_count,
+                //     radiance.a()
+                // );
 
                 // TODO: Check for NaN or Inf values in spectrum.
 

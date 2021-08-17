@@ -41,6 +41,13 @@ impl Mesh {
         }
     }
 
+    /// Apply the transformation matrix to the position and normal of each
+    /// vertex in the mesh. Flip the value of `transformation_swaps_handedness`.
+    pub fn transform_swapping_handedness(&mut self, transformation: Matrix4<f32>) {
+        self.transform(transformation);
+        self.transformation_swaps_handedness = !self.transformation_swaps_handedness
+    }
+
     /// Returns the minimum and maximum corners of an axis-aligned bounded box
     /// around the mesh.
     pub fn bounding_box(&self) -> Option<(Point3<f32>, Point3<f32>)> {

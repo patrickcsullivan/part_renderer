@@ -50,9 +50,10 @@ impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrl, S> for WhittedRa
                 }
 
                 let f = bsdf.f(&wo, &wi, BxdfType::ALL);
-                if !f.is_black() && vis.unocculuded(scene) {
-                    outgoing_radiance += f * incident_light * (wi.dot(normal).abs() / 1.0);
-                }
+                outgoing_radiance += f * incident_light * (wi.dot(normal).abs() / 1.0);
+                // if !f.is_black() && vis.unocculuded(scene) {
+                //     outgoing_radiance += f * incident_light * (wi.dot(normal).abs() / 1.0);
+                // }
             }
 
             if depth + 1 < max_depth {
