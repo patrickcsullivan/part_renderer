@@ -1,5 +1,5 @@
 [package]
-name = "wgpu_renderer_cli"
+name = "part_renderer_cli"
 version = "0.1.0"
 edition = "2018"
 
