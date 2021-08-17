@@ -3,5 +3,5 @@
 members = [
     "mesh",
     "renderer",
-    "renderer_cli",
+    "part_renderer_cli",
 ]
