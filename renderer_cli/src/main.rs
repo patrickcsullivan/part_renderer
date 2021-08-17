@@ -190,7 +190,7 @@ fn orthographic_screen_size(aspect_ratio: f32) -> Vector2<f32> {
 /// resulting coordinate system will look at the origin and "up" will be in
 /// roughly the positive y direction.
 fn origin_to_spherical_position(r: f32, theta: Deg<f32>, phi: Deg<f32>) -> Matrix4<f32> {
-    Matrix4::from_angle_z(Rad::from(phi) - Rad(FRAC_PI_2))
+    Matrix4::from_angle_z(Rad(0.0) - Rad(FRAC_PI_2) - Rad::from(phi))
         * Matrix4::from_angle_x(Rad(PI) - Rad::from(theta))
         * Matrix4::from_translation(Vector3::new(0.0, 0.0, -1.0 * r))
 }
