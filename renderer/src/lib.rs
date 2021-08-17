@@ -17,6 +17,8 @@ pub mod scene;
 mod texture;
 mod triangle;
 
+pub use integrator::render;
+
 #[cfg(test)]
 mod test;
 

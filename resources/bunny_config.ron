@@ -1,0 +1,30 @@
+(
+    output_path: "bunny.png",
+    width: 250,
+    height: 250,
+    crop: true,
+    sampler: StratifiedSampler(
+        x_strata_count: 2,
+        y_strata_count: 2,
+        jitter: true,
+    ),
+    part: Part(
+        stl_path: "../resources/bunny.stl",
+        material: MatteMaterial(
+            kd: Rgb(r: 0.4, g: 0.4, b: 0.4),
+            sigma: 0.3,
+        ),
+        handedness: RightHanded,
+    ),
+    lights: [
+        PointLight(
+            position: Spherical(radius: 1.0, theta: 0.0, phi: 0.0),
+            intensity: Rgb(r: 1.0, g: 1.0, b: 1.0),
+        ),
+    ],
+    camera: OrthographicCamera(
+            position: Spherical(radius: 1.0, theta: 90.0, phi: 90.0),
+            z_near: 0.0,
+            z_far: 10.0,
+    )
+)

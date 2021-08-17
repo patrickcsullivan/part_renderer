@@ -1,3 +1,4 @@
+mod config;
 mod error;
 
 use cgmath::{
@@ -7,172 +8,64 @@ use cgmath::{
 use error::{Error, Result};
 use image::{imageops, ImageBuffer, Rgba};
 use mesh::{Mesh, MeshBuilder};
+use renderer::camera::Camera;
 use renderer::color::RgbaSpectrum;
 use renderer::filter::MitchellFilter;
-use renderer::integrator::{render, WhittedRayTracer};
+use renderer::integrator::WhittedRayTracer;
 use renderer::light::{self, Light};
-use renderer::material::MatteMaterial;
+use renderer::material::{Material, MatteMaterial};
 use renderer::primitive::PrimitiveAggregate;
-use renderer::sampler::ConstantSampler;
+use renderer::sampler::{ConstantSampler, IncrementalSampler, StratifiedSampler};
 use renderer::scene::Scene;
 use renderer::{camera::OrthographicCamera, film::Film};
 use std::cmp;
 use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
-use std::io::BufReader;
 use typed_arena::Arena;
+
+use crate::config::Config;
 
 fn main() -> Result<()> {
     let matches = clap::App::new("Part Viewer")
         .arg(
-            clap::Arg::with_name("INPUT")
-                .help("The input STL file to use")
+            clap::Arg::with_name("CONFIG")
+                .help(
+                    "Path to a RON configuration file that describes a scene and an output image.",
+                )
                 .required(true)
                 .index(1),
         )
-        .arg(
-            clap::Arg::with_name("OUTPUT")
-                .help("The output destination")
-                .required(true)
-                .index(2),
-        )
-        .arg(
-            clap::Arg::with_name("WIDTH")
-                .help("Width of the output image in pixels")
-                .required(true)
-                .index(3),
-        )
-        .arg(
-            clap::Arg::with_name("HEIGHT")
-                .help("Height of the output image in pixels")
-                .required(true)
-                .index(4),
-        )
-        .arg(
-            clap::Arg::with_name("CAMERA VERTICAL FOV")
-                .help("The camera's vertical field of view in degrees. Default is 45.")
-                .required(false)
-                .index(5),
-        )
-        .arg(
-            clap::Arg::with_name("CAMERA POSITION POLAR ANGLE")
-                .help("The camera's spherical position theta component. This is the angle between the camera and the z axis. Default is 90.")
-                .required(false)
-                .index(6),
-        )
-        .arg(
-            clap::Arg::with_name("CAMERA POSITION AZIMUTHAL ANGLE")
-                .help("The camera's spherical position phi component. This is the angle between the camera and the x axis in the xy plane. Default is 0.")
-                .required(false)
-                .index(7),
-        )
-        .arg(
-            clap::Arg::with_name("LIGHT POSITION POLAR ANGLE")
-                .help("The light's spherical position theta component. This is the angle between the light and the z axis. Default is 0.")
-                .required(false)
-                .index(8),
-        )
-        .arg(
-            clap::Arg::with_name("LIGHT POSITION AZIMUTHAL ANGLE")
-                .help("The light's spherical position phi component. This is the angle between the light and the x axis in the xy plane. Default is 0.")
-                .required(false)
-                .index(9),
-        )
-        .arg(
-            clap::Arg::with_name("LIGHT INTENSITY")
-                .help("The light's intensity. Default is 1.0.")
-                .required(false)
-                .index(10),
-        )
-        .arg(
-            clap::Arg::with_name("CROP")
-                .short("c")
-                .help("Enables cropping"),
-        )
         .get_matches();
 
-    // The first four arguments are required by Clap, so unwrapping them is ok.
-    let src_path = matches.value_of("INPUT").unwrap();
-    let dst_path = matches.value_of("OUTPUT").unwrap();
-    let width = matches.value_of("WIDTH").unwrap().parse::<u32>()?;
-    let height = matches.value_of("HEIGHT").unwrap().parse::<u32>()?;
+    // The CONFIG argument is required by Clap, so unwrapping is ok.
+    let config_path = matches.value_of("CONFIG").unwrap();
+    let config_file = std::fs::File::open(&config_path)?;
+    let config: Config = ron::de::from_reader(config_file)?;
 
-    let camera_fovy = Deg(matches
-        .value_of("CAMERA VERTICAL FOV")
-        .unwrap_or("45")
-        .parse::<f32>()?);
-    let camera_theta = Deg(matches
-        .value_of("CAMERA POSITION POLAR ANGLE")
-        .unwrap_or("90")
-        .parse::<f32>()?);
-    let camera_phi = Deg(matches
-        .value_of("CAMERA POSITION AZIMUTHAL ANGLE")
-        .unwrap_or("0")
-        .parse::<f32>()?);
-    let light_theta = Deg(matches
-        .value_of("LIGHT POSITION POLAR ANGLE")
-        .unwrap_or("0")
-        .parse::<f32>()?);
-    let light_phi = Deg(matches
-        .value_of("LIGHT POSITION AZIMUTHAL ANGLE")
-        .unwrap_or("0")
-        .parse::<f32>()?);
-    let point_light_intensity = matches
-        .value_of("LIGHT INTENSITY")
-        .unwrap_or("1.0")
-        .parse::<f32>()?;
-    let is_crop_on = matches.is_present("CROP");
+    render_from_config(&config)
+}
 
-    let mesh_arena = Arena::new();
-    let file = std::fs::File::open(&src_path)?;
-    let mut reader = std::io::BufReader::new(&file);
-    let mesh = mesh_arena.alloc(MeshBuilder::from_stl(&mut reader)?.build());
-    let (bounds_min, bounds_max) = mesh.bounding_box().ok_or(Error::EmptyMesh)?;
-    let center = bounds_min + (bounds_max - bounds_min) / 2.0;
-    let center_to_origin = Matrix4::from_translation(Point3::new(0.0f32, 0.0f32, 0.0f32) - center);
-    mesh.transform(center_to_origin);
-    let bounding_sphere_radius = max_distance_from_origin(mesh);
-    println!("RADIUS: {}", bounding_sphere_radius);
-    let scale = Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0)
-        * Matrix4::from_scale(1.0 / bounding_sphere_radius);
-    mesh.transform_swapping_handedness(scale);
-
-    let material_arena = Arena::new();
-    let material = material_arena.alloc(MatteMaterial::new(
-        RgbaSpectrum::from_rgb(0.4, 0.4, 0.4),
-        0.3,
-    ));
-
-    let light_position =
-        origin_to_spherical(1.0, light_theta, light_phi).transform_point(point3(0.0, 0.0, 0.0));
-    let light = Light::point_light(
-        light_position,
-        RgbaSpectrum::from_rgb(1.0, 1.0, 1.0) * point_light_intensity,
-    );
+fn render_from_config(config: &Config) -> Result<()> {
+    let mut mesh_arena = Arena::new();
+    let mesh = load_mesh(&mut mesh_arena, &config.part)?;
+    let mut material_arena = Arena::new();
+    let material = load_material(&mut material_arena, &config.part);
+    let lights = config.lights.iter().map(load_light).collect();
     let scene = Scene::new(
         PrimitiveAggregate::Vector(vec![
             // PrimitiveAggregate::from_mesh(plane_mesh, material),
             PrimitiveAggregate::from_mesh(mesh, material),
         ]),
-        vec![light],
+        lights,
     );
 
-    let camera_to_world = origin_to_spherical(1.0, camera_theta, camera_phi);
-    let resolution = Vector2::new(width as usize, height as usize);
+    let resolution = Vector2::new(config.width, config.height);
     let mut film = Film::new(resolution);
-    let camera = OrthographicCamera::new(
-        camera_to_world,
-        0.0,
-        100.0,
-        Vector2::new(2.0, 2.0),
-        resolution,
-    );
+    let camera = load_camera(&config.camera, resolution);
 
-    // let filter = BoxFilter::new(0.5, 0.5);
     let filter = MitchellFilter::new(2.0, 2.0, 1.0 / 3.0, 1.0 / 3.0);
-    // let sampler = StratifiedSampler::new(2, 2, 5, 0, true);
-    let sampler = ConstantSampler {};
+    let sampler = load_sampler(&config.sampler);
 
-    render(
+    renderer::render(
         &scene,
         &camera,
         &mut film,
@@ -183,12 +76,110 @@ fn main() -> Result<()> {
     );
     let mut image = film.write_image();
 
-    if is_crop_on {
+    if config.crop {
         image = crop_to_non_transparent(&image)?;
     }
 
-    image.save(dst_path)?;
+    image.save(config.output_path.clone())?;
     Ok(())
+}
+
+fn load_mesh<'a>(mesh_arena: &'a mut Arena<Mesh>, part_config: &config::Part) -> Result<&'a Mesh> {
+    let file = std::fs::File::open(part_config.stl_path.clone())?;
+    let mut reader = std::io::BufReader::new(&file);
+    let mesh = mesh_arena.alloc(MeshBuilder::from_stl(&mut reader)?.build());
+    let (bounds_min, bounds_max) = mesh.bounding_box().ok_or(Error::EmptyMesh)?;
+    let center = bounds_min + (bounds_max - bounds_min) / 2.0;
+    let center_to_origin = Matrix4::from_translation(Point3::new(0.0f32, 0.0f32, 0.0f32) - center);
+    mesh.transform(center_to_origin);
+
+    let bounding_sphere_radius = max_distance_from_origin(mesh);
+    mesh.transform(Matrix4::from_scale(1.0 / bounding_sphere_radius));
+
+    if part_config.handedness == config::Handedness::RightHanded {
+        mesh.transform_swapping_handedness(Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0));
+    }
+
+    Ok(mesh)
+}
+
+fn load_material<'a>(
+    material_arena: &'a mut Arena<MatteMaterial>,
+    part_config: &config::Part,
+) -> &'a MatteMaterial {
+    // TODO: Return Material trait object instead.
+    match part_config.material {
+        config::Material::MatteMaterial { kd, sigma } => material_arena.alloc(MatteMaterial::new(
+            RgbaSpectrum::from_rgb(kd.r, kd.g, kd.b),
+            sigma,
+        )),
+    }
+}
+
+fn load_light(light_config: &config::Light) -> Light {
+    match light_config {
+        config::Light::PointLight {
+            position,
+            intensity,
+        } => {
+            let light_position = origin_to_spherical_position(
+                position.radius,
+                Deg(position.theta),
+                Deg(position.phi),
+            )
+            .transform_point(point3(0.0, 0.0, 0.0));
+            Light::point_light(
+                light_position,
+                RgbaSpectrum::from_rgb(intensity.r, intensity.g, intensity.b),
+            )
+        }
+    }
+}
+
+fn load_camera(camera_config: &config::Camera, resolution: Vector2<usize>) -> OrthographicCamera {
+    // TODO: Return Camera trait object instead.
+    match camera_config {
+        config::Camera::OrthographicCamera {
+            position,
+            z_near,
+            z_far,
+        } => {
+            let camera_to_world = origin_to_spherical_position(
+                position.radius,
+                Deg(position.theta),
+                Deg(position.phi),
+            );
+            OrthographicCamera::new(
+                camera_to_world,
+                *z_near,
+                *z_far,
+                orthographic_screen_size(resolution.x as f32 / resolution.y as f32),
+                resolution,
+            )
+        }
+        config::Camera::PerspectiveCamera { .. } => todo!(),
+    }
+}
+
+fn load_sampler(sampler_config: &config::Sampler) -> StratifiedSampler {
+    match sampler_config {
+        config::Sampler::StratifiedSampler {
+            x_strata_count,
+            y_strata_count,
+            jitter,
+        } => StratifiedSampler::new(*x_strata_count, *y_strata_count, 5, 0, *jitter),
+    }
+}
+
+/// Return the screen size necessary for an orthographic camera with the given
+/// aspect ratio to fit a unit sphere centered at the origin.
+fn orthographic_screen_size(aspect_ratio: f32) -> Vector2<f32> {
+    let diameter = 2.0;
+    if aspect_ratio >= 1.0 {
+        vec2(aspect_ratio * diameter, diameter)
+    } else {
+        vec2(diameter, 1.0 / aspect_ratio * diameter)
+    }
 }
 
 /// Returns a transformation matrix that translates a point at the origin to the
@@ -198,7 +189,7 @@ fn main() -> Result<()> {
 /// looks towards positive z and has positive y as its "up" direction, then the
 /// resulting coordinate system will look at the origin and "up" will be in
 /// roughly the positive y direction.
-fn origin_to_spherical(r: f32, theta: Deg<f32>, phi: Deg<f32>) -> Matrix4<f32> {
+fn origin_to_spherical_position(r: f32, theta: Deg<f32>, phi: Deg<f32>) -> Matrix4<f32> {
     Matrix4::from_angle_z(Rad::from(phi) - Rad(FRAC_PI_2))
         * Matrix4::from_angle_x(Rad(PI) - Rad::from(theta))
         * Matrix4::from_translation(Vector3::new(0.0, 0.0, -1.0 * r))
