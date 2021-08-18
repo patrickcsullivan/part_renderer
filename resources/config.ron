@@ -9,21 +9,24 @@
         jitter: true,
     ),
     part: Part(
-        stl_path: "../resources/bunny.stl",
-        material: MatteMaterial(
-            kd: Rgb(r: 0.8, g: 0.8, b: 0.8),
-            sigma: 0.3,
+        stl_path: "resources/bunny.stl",
+        material: Material(
+            color: Rgb(r: 1.0, g: 1.0, b: 1.0),
+            ambient: 0.2,
+            diffuse: 0.7,
+            specular: 0.5,
+            shininess: 100.0,
         ),
         handedness: RightHanded,
     ),
     lights: [
         PointLight(
             position: Spherical(radius: 5.0, theta: 50, phi: -130),
-            intensity: Rgb(r: 85.0, g: 85.0, b: 85.0),
+            intensity: Rgb(r: 20.0, g: 20.0, b: 20.0),
         ),
         PointLight(
-            position: Spherical(radius: 10.0, theta: 70, phi: -45),
-            intensity: Rgb(r: 60.0, g: 60.0, b: 60.0),
+            position: Spherical(radius: 5.0, theta: 50, phi: -45),
+            intensity: Rgb(r: 5.0, g: 5.0, b: 5.0),
         ),
     ],
     camera: OrthographicCamera(

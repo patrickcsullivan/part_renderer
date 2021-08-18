@@ -13,10 +13,8 @@ use renderer::color::RgbaSpectrum;
 use renderer::filter::MitchellFilter;
 use renderer::integrator::WhittedRayTracer;
 use renderer::light::{self, Light};
-use renderer::material::{Material, MatteMaterial};
-use renderer::primitive::PrimitiveAggregate;
 use renderer::sampler::{ConstantSampler, IncrementalSampler, StratifiedSampler};
-use renderer::scene::Scene;
+use renderer::simple::{Material, OriginalRayTracer, PrimitiveAggregate, Scene};
 use renderer::{camera::OrthographicCamera, film::Film};
 use std::cmp;
 use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
@@ -47,8 +45,7 @@ fn main() -> Result<()> {
 fn render_from_config(config: &Config) -> Result<()> {
     let mut mesh_arena = Arena::new();
     let mesh = load_mesh(&mut mesh_arena, &config.part)?;
-    let mut material_arena = Arena::new();
-    let material = load_material(&mut material_arena, &config.part);
+    let material = load_material(&config.part.material);
     let lights = config.lights.iter().map(load_light).collect();
     let scene = Scene::new(
         PrimitiveAggregate::Vector(vec![
@@ -71,7 +68,7 @@ fn render_from_config(config: &Config) -> Result<()> {
         &mut film,
         &filter,
         &sampler,
-        &WhittedRayTracer {},
+        &OriginalRayTracer {},
         5,
     );
     let mut image = film.write_image();
@@ -103,17 +100,19 @@ fn load_mesh<'a>(mesh_arena: &'a mut Arena<Mesh>, part_config: &config::Part) ->
     Ok(mesh)
 }
 
-fn load_material<'a>(
-    material_arena: &'a mut Arena<MatteMaterial>,
-    part_config: &config::Part,
-) -> &'a MatteMaterial {
-    // TODO: Return Material trait object instead.
-    match part_config.material {
-        config::Material::MatteMaterial { kd, sigma } => material_arena.alloc(MatteMaterial::new(
-            RgbaSpectrum::from_rgb(kd.r, kd.g, kd.b),
-            sigma,
-        )),
-    }
+fn load_material<'a>(material_config: &config::Material) -> Material {
+    Material::new(
+        RgbaSpectrum::from_rgb(
+            material_config.color.r,
+            material_config.color.g,
+            material_config.color.b,
+        ),
+        material_config.ambient,
+        material_config.diffuse,
+        material_config.specular,
+        material_config.shininess,
+        0.0,
+    )
 }
 
 fn load_light(light_config: &config::Light) -> Light {

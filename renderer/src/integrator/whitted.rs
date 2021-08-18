@@ -12,14 +12,13 @@ use super::RayTracer;
 /// mirrors, and water. It does not account for indirect lighting effects.
 pub struct WhittedRayTracer {}
 
-impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<'msh, 'mtrl, S> for WhittedRayTracer {
+impl<'msh, 'mtrl, S: IncrementalSampler> RayTracer<Scene<'msh, 'mtrl>, S> for WhittedRayTracer {
     fn incoming_radiance(
         &self,
         // TODO: Change to ray differential.
         ray: &Ray,
         scene: &Scene,
         sampler: &mut S,
-        spectrum_arena: &mut Arena<RgbaSpectrum>,
         depth: usize,
         max_depth: usize,
     ) -> RgbaSpectrum {

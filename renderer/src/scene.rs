@@ -11,11 +11,8 @@ pub struct Scene<'msh, 'mtrl> {
 }
 
 impl<'msh, 'mtrl> Scene<'msh, 'mtrl> {
-    pub fn new(renderable: PrimitiveAggregate<'msh, 'mtrl>, lights: Vec<Light>) -> Self {
-        Self {
-            primitives: renderable,
-            lights,
-        }
+    pub fn new(primitives: PrimitiveAggregate<'msh, 'mtrl>, lights: Vec<Light>) -> Self {
+        Self { primitives, lights }
     }
 
     // Find the first primitive the ray intersects. Return the parametric value

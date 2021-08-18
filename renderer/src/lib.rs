@@ -14,6 +14,7 @@ pub mod primitive;
 mod ray;
 pub mod sampler;
 pub mod scene;
+pub mod simple;
 mod texture;
 mod triangle;
 

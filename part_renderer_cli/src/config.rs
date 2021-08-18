@@ -53,16 +53,12 @@ pub struct Part {
 }
 
 #[derive(Debug, Deserialize)]
-pub enum Material {
-    /// A purely diffuse surface.
-    MatteMaterial {
-        /// Spectral diffuse reflection.
-        kd: Rgb,
-
-        /// Roughness. The standard deviation of microfacet orientation angle in
-        /// radians.
-        sigma: f32,
-    },
+pub struct Material {
+    pub color: Rgb,
+    pub ambient: f32,
+    pub diffuse: f32,
+    pub specular: f32,
+    pub shininess: f32,
 }
 
 #[derive(Debug, Deserialize)]

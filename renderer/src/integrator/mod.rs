@@ -10,13 +10,12 @@ use crate::{
     geometry::bounds::Bounds2,
     ray::Ray,
     sampler::IncrementalSampler,
-    scene::Scene,
+    // scene::Scene,
 };
 use cgmath::{point2, Point2, Zero};
 use rayon::prelude::*;
-use typed_arena::Arena;
 
-pub trait RayTracer<'msh, 'mtrl, S: IncrementalSampler> {
+pub trait RayTracer<Scene, Sampler: IncrementalSampler> {
     /// Determine the incoming radiance that arrives along the ray at the ray
     /// origin.
     ///
@@ -34,8 +33,7 @@ pub trait RayTracer<'msh, 'mtrl, S: IncrementalSampler> {
         // TODO: Change to ray differential.
         ray: &Ray,
         scene: &Scene,
-        sampler: &mut S,
-        spectrum_arena: &mut Arena<RgbaSpectrum>,
+        sampler: &mut Sampler,
         depth: usize,
         max_depth: usize,
     ) -> RgbaSpectrum;
@@ -48,13 +46,13 @@ pub trait RayTracer<'msh, 'mtrl, S: IncrementalSampler> {
 /// * camera - Controls how the scene is viewed and contains the `Film` onto
 ///   which the scene is rendered.
 /// * filter -
-pub fn render<'msh, 'mtrl, S: IncrementalSampler + Send + Sync>(
-    scene: &Scene<'msh, 'mtrl>,
+pub fn render<Scene: Send + Sync, Sampler: IncrementalSampler + Send + Sync>(
+    scene: &Scene,
     camera: &(dyn Camera + Send + Sync),
     film: &mut Film,
     filter: &(dyn Filter + Send + Sync),
-    sampler: &S,
-    ray_tracer: &(dyn RayTracer<'msh, 'mtrl, S> + Send + Sync),
+    sampler: &Sampler,
+    ray_tracer: &(dyn RayTracer<Scene, Sampler> + Send + Sync),
     max_depth: usize,
 ) {
     let image_sample_bounds = film.sample_bounds(filter.half_width(), filter.half_height());
@@ -66,7 +64,7 @@ pub fn render<'msh, 'mtrl, S: IncrementalSampler + Send + Sync>(
             // different tiles generating duplicate sequences of random numbers, so we
             // use the tile's row-major index as a unique seed.
             let mut sampler = sampler.clone_with_seed(tile.row_major_index as u64);
-            render_tile::<S>(
+            render_tile::<Scene, Sampler>(
                 camera,
                 film,
                 scene,
@@ -84,14 +82,14 @@ pub fn render<'msh, 'mtrl, S: IncrementalSampler + Send + Sync>(
     }
 }
 
-fn render_tile<'msh, 'mtrl, S: IncrementalSampler>(
+fn render_tile<Scene, Sampler: IncrementalSampler>(
     camera: &dyn Camera,
     film: &Film,
-    scene: &Scene<'msh, 'mtrl>,
+    scene: &Scene,
     tile: &Tile,
     filter: &dyn Filter,
-    sampler: &mut S,
-    ray_tracer: &dyn RayTracer<'msh, 'mtrl, S>,
+    sampler: &mut Sampler,
+    ray_tracer: &dyn RayTracer<Scene, Sampler>,
     max_depth: usize,
 ) -> Option<FilmTile> {
     let sample_bounds = tile.sample_bounds;
@@ -108,20 +106,7 @@ fn render_tile<'msh, 'mtrl, S: IncrementalSampler>(
                 // TODO: Scale differential.
 
                 let radiance = if weight > 0.0 {
-                    // Recursive calls to `incoming_radiance` may need to
-                    // allocate space for many different radiance spectrums.
-                    // Rather than repeatedly allocating memory as needed,
-                    // it's more efficient to pre-allocate in an arena.
-                    // TODO: Confirm that this is actually more efficient.
-                    let mut spectrum_arena = Arena::new();
-                    ray_tracer.incoming_radiance(
-                        &ray,
-                        scene,
-                        sampler,
-                        &mut spectrum_arena,
-                        0,
-                        max_depth,
-                    )
+                    ray_tracer.incoming_radiance(&ray, scene, sampler, 0, max_depth)
                 } else {
                     RgbaSpectrum::transparent()
                 };
